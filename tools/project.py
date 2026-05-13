@@ -191,6 +191,84 @@ def check_git(result: Result) -> None:
         result.warnings.append("git status failed")
 
 
+def check_panel_runs(result: Result) -> None:
+    """Check that tools/panel.py can execute without errors."""
+    panel = ROOT / "tools" / "panel.py"
+    if not panel.exists():
+        result.issues.append("missing tools/panel.py")
+        return
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(panel)],
+            cwd=ROOT, capture_output=True, text=True, timeout=10,
+        )
+        if completed.returncode != 0:
+            result.issues.append(f"tools/panel.py failed: {completed.stderr.strip()}")
+        elif not completed.stdout.strip():
+            result.warnings.append("tools/panel.py produced no output")
+        else:
+            result.notices.append("panel hook is functional")
+    except subprocess.TimeoutExpired:
+        result.warnings.append("tools/panel.py timed out after 10s")
+    except Exception as exc:
+        result.warnings.append(f"tools/panel.py error: {exc}")
+
+
+def check_init_status_consistency(result: Result) -> None:
+    """Check that contract/state/ledger are consistent with each other."""
+    contract = ROOT / "control" / "contract.md"
+    state = ROOT / "control" / "state.md"
+    if not contract.exists() or not state.exists():
+        return
+    contract_text = contract.read_text(encoding="utf-8")
+    state_text = state.read_text(encoding="utf-8")
+    seed_placeholder = "复制本底座后，先更新本节和"
+    contract_initialized = seed_placeholder not in contract_text
+    state_initialized = "初始化时间" in state_text
+    if contract_initialized != state_initialized:
+        result.warnings.append(
+            "init status mismatch: contract.md and state.md disagree on initialization state"
+        )
+    elif contract_initialized:
+        result.notices.append("init status is consistent across contract/state")
+
+
+def check_claude_hook_files(result: Result) -> None:
+    """Check that Claude hook files exist if settings.example.json references them."""
+    example = ROOT / ".claude" / "settings.example.json"
+    if not example.exists():
+        return
+    hook_script = ROOT / ".claude" / "hooks" / "panel_hook.py"
+    if not hook_script.exists():
+        result.warnings.append("missing .claude/hooks/panel_hook.py (referenced by settings)")
+    else:
+        result.notices.append("Claude hook files present")
+
+
+def check_work_dirs_have_gitkeep(result: Result) -> None:
+    """Check that work subdirectories have .gitkeep files."""
+    for subdir in ["work/in", "work/out", "work/tmp"]:
+        gitkeep = ROOT / subdir / ".gitkeep"
+        if not gitkeep.exists():
+            result.warnings.append(f"missing {subdir}/.gitkeep (dir may not survive git clone)")
+
+
+def check_no_platform_junk_tracked(result: Result) -> None:
+    """Check that no platform junk files (._*, .DS_Store) are tracked."""
+    if not (ROOT / ".git").exists():
+        return
+    completed = run_git(["ls-files"])
+    if completed.returncode != 0:
+        return
+    junk = []
+    for line in completed.stdout.splitlines():
+        name = line.strip()
+        if name.startswith("._") or name == ".DS_Store":
+            junk.append(name)
+    if junk:
+        result.warnings.append(f"platform junk files tracked in git: {', '.join(junk)}")
+
+
 def print_result(result: Result, quiet: bool) -> None:
     if result.issues:
         print("[check] issues:")
@@ -213,8 +291,13 @@ def check(args: argparse.Namespace) -> int:
     check_required(result)
     check_agent_sync(result)
     check_package_import(result)
+    check_panel_runs(result)
+    check_init_status_consistency(result)
+    check_claude_hook_files(result)
+    check_work_dirs_have_gitkeep(result)
     if not args.skip_git:
         check_git(result)
+        check_no_platform_junk_tracked(result)
     print_result(result, args.quiet)
     return 1 if result.issues else 0
 
