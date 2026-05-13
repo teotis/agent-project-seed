@@ -292,10 +292,19 @@ def init_project(args: argparse.Namespace) -> int:
     package_name = args.package_name or package_name_from_project(args.name)
     replace_text(args.name, package_name)
     rename_package(package_name)
+    activate_settings()
     if not args.no_git:
         run_git_init(args.name)
     print(f"Initialized {args.name} with package {package_name}.")
     return 0
+
+
+def activate_settings() -> None:
+    """Copy settings.example.json to settings.json if settings.json does not exist."""
+    example = ROOT / ".claude" / "settings.example.json"
+    target = ROOT / ".claude" / "settings.json"
+    if example.exists() and not target.exists():
+        target.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def parse_status_line(line: str) -> GitChange:
