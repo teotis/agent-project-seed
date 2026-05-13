@@ -292,6 +292,9 @@ def init_project(args: argparse.Namespace) -> int:
     package_name = args.package_name or package_name_from_project(args.name)
     replace_text(args.name, package_name)
     rename_package(package_name)
+    update_contract(args.name)
+    update_state(args.name, package_name)
+    append_init_ledger(args.name, package_name)
     activate_settings()
     if not args.no_git:
         run_git_init(args.name)
@@ -305,6 +308,80 @@ def activate_settings() -> None:
     target = ROOT / ".claude" / "settings.json"
     if example.exists() and not target.exists():
         target.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def now_iso() -> str:
+    from datetime import datetime
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def update_contract(project_name: str) -> None:
+    """Replace Current Intent section with initialized template."""
+    path = ROOT / "control" / "contract.md"
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    new_intent = (
+        f"## Current Intent\n"
+        f"\n"
+        f"**项目**: {project_name}\n"
+        f"**状态**: 已初始化，目标待补全\n"
+        f"\n"
+        f"请编辑本节，写清：\n"
+        f"- 项目目标\n"
+        f"- 非目标\n"
+        f"- 验收标准\n"
+    )
+    text = re.sub(r"## Current Intent\n\n.*?(?=\n## |\Z)", new_intent, text, flags=re.DOTALL)
+    path.write_text(text, encoding="utf-8")
+
+
+def update_state(project_name: str, package_name: str) -> None:
+    """Replace state.md with initialized content."""
+    path = ROOT / "control" / "state.md"
+    content = (
+        f"# State\n"
+        f"\n"
+        f"## Current State\n"
+        f"\n"
+        f"- 项目名: {project_name}\n"
+        f"- 包名: {package_name}\n"
+        f"- 初始化时间: {now_iso()}\n"
+        f"- 状态: 已初始化，目标待补全\n"
+        f"\n"
+        f"## Next Maintenance Action\n"
+        f"\n"
+        f"- 编辑 `control/contract.md` 的 Current Intent，写清项目目标、非目标、验收标准。\n"
+    )
+    path.write_text(content, encoding="utf-8")
+
+
+def append_init_ledger(project_name: str, package_name: str) -> None:
+    """Append an initialization record to ledger.md."""
+    path = ROOT / "control" / "ledger.md"
+    if not path.exists():
+        return
+    existing = path.read_text(encoding="utf-8")
+    record = (
+        f"\n## {now_iso()} - Project initialized from seed\n"
+        f"\n"
+        f"type: decision\n"
+        f"tags: init, scaffold\n"
+        f"\n"
+        f"summary:\n"
+        f"- 从 Agent Project Seed 初始化项目 `{project_name}`\n"
+        f"- 包名: `{package_name}`\n"
+        f"\n"
+        f"details:\n"
+        f"- 已完成: 文本替换、包重命名、settings 激活、contract/state 更新\n"
+        f"- 待办: 编辑 `control/contract.md` 写清项目目标\n"
+        f"\n"
+        f"links:\n"
+        f"- control/contract.md\n"
+        f"- control/state.md\n"
+    )
+    separator = "\n" if existing.endswith("\n\n") else "\n\n"
+    path.write_text(existing.rstrip() + separator + record, encoding="utf-8")
 
 
 def parse_status_line(line: str) -> GitChange:
@@ -393,7 +470,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("sync-agents", help="sync thin agent entry files")
 
     commit_cmd = sub.add_parser("commit", help="safely commit allowed changes")
-    commit_cmd.add_argument("--message", default="chore: auto commit agent task")
+    commit_cmd.add_argument("--message", default="chore: checkpoint agent work")
     commit_cmd.add_argument("--dry-run", action="store_true")
     return parser
 

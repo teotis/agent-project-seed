@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 tools/project.py commit --message \"chore: auto commit agent task\""
+            "command": "python3 tools/project.py commit --message \"chore: checkpoint agent work\""
           }
         ]
       }
