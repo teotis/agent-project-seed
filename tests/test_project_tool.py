@@ -53,7 +53,7 @@ def test_check_and_sync_agents_are_healthy():
     assert sync.returncode == 0, sync.stdout + sync.stderr
 
 
-def test_init_project_copy_no_git(tmp_path):
+def _copy_and_init(tmp_path, name="Demo Project", package="demo_project"):
     target = tmp_path / "copied_project"
     ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
     shutil.copytree(ROOT, target, ignore=ignore)
@@ -63,10 +63,8 @@ def test_init_project_copy_no_git(tmp_path):
             sys.executable,
             "tools/project.py",
             "init",
-            "--name",
-            "Demo Project",
-            "--package-name",
-            "demo_project",
+            "--name", name,
+            "--package-name", package,
             "--no-git",
         ],
         cwd=target,
@@ -74,12 +72,33 @@ def test_init_project_copy_no_git(tmp_path):
         capture_output=True,
         check=False,
     )
-
     assert completed.returncode == 0, completed.stderr
+    return target
+
+
+def test_init_project_copy_no_git(tmp_path):
+    target = _copy_and_init(tmp_path)
     assert (target / "src" / "demo_project" / "__init__.py").exists()
     assert "demo-project" in (target / "pyproject.toml").read_text(encoding="utf-8")
     assert (target / "control" / "contract.md").exists()
     assert (target / "work" / "in" / ".gitkeep").exists()
+
+
+def test_init_updates_contract_state_and_ledger(tmp_path):
+    target = _copy_and_init(tmp_path, name="My App", package="my_app")
+
+    contract = (target / "control" / "contract.md").read_text(encoding="utf-8")
+    assert "My App" in contract
+    assert "已初始化，目标待补全" in contract
+    assert "复制本底座后" not in contract
+
+    state = (target / "control" / "state.md").read_text(encoding="utf-8")
+    assert "My App" in state
+    assert "my_app" in state
+
+    ledger = (target / "control" / "ledger.md").read_text(encoding="utf-8")
+    assert "Project initialized from seed" in ledger
+    assert "My App" in ledger
 
 
 def test_no_legacy_directories_in_template():
