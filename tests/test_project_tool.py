@@ -22,6 +22,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
     module = load_project_tool()
     changes = [
         module.GitChange("??", "control/ledger.md"),
+        module.GitChange("??", ".codex/config.example.toml"),
         module.GitChange("??", ".env"),
         module.GitChange("??", "work/tmp/scratch.txt"),
         module.GitChange("??", "work/out/result.png"),
@@ -29,7 +30,10 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
 
     allowed, rejected = module.classify_changes(changes)
 
-    assert [change.path for change in allowed] == ["control/ledger.md"]
+    assert [change.path for change in allowed] == [
+        "control/ledger.md",
+        ".codex/config.example.toml",
+    ]
     assert [change.path for change in rejected] == [".env", "work/tmp/scratch.txt", "work/out/result.png"]
 
 
@@ -81,7 +85,19 @@ def test_init_project_copy_no_git(tmp_path):
     assert (target / "src" / "demo_project" / "__init__.py").exists()
     assert "demo-project" in (target / "pyproject.toml").read_text(encoding="utf-8")
     assert (target / "control" / "contract.md").exists()
+    assert (target / ".codex" / "config.example.toml").exists()
     assert (target / "work" / "in" / ".gitkeep").exists()
+
+
+def test_codex_notify_hook_finds_project_root():
+    hook = ROOT / "tools" / "hooks" / "codex_notify.py"
+    spec = importlib.util.spec_from_file_location("codex_notify", hook)
+    hook_module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules["codex_notify"] = hook_module
+    spec.loader.exec_module(hook_module)
+
+    assert hook_module.find_project_root({"cwd": str(ROOT / "tools" / "hooks")}) == ROOT
 
 
 def test_init_updates_contract_state_and_ledger(tmp_path):

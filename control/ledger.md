@@ -50,6 +50,25 @@ links:
 - README.md
 - control/contract.md
 
+## 2026-05-14T14:41:23 - Codex hook support added
+
+type: artifact
+tags: codex, hooks, git, panel
+
+summary:
+- Added Codex-friendly hook helpers for guarded end-of-turn commits and manual status panel printing.
+- Updated agent entry sync, health checks, README guidance, and tests to cover Codex helper files.
+
+details:
+- `tools/hooks/codex_notify.py` reuses `tools/project.py commit` so Codex can share the same allowlist-based safe commit behavior as the Claude Code Stop hook.
+- `.codex/config.example.toml` documents the user-level Codex notify configuration path.
+- `tools/hooks/panel_print.py` exposes the existing panel generator for tools that cannot inject prompt context.
+
+links:
+- tools/hooks/codex_notify.py
+- tools/hooks/panel_print.py
+- .codex/config.example.toml
+
 ## 2026-05-14T14:03:35 - README repositioned for GitHub launch
 
 type: artifact

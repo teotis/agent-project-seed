@@ -21,6 +21,7 @@ REQUIRED_FILES = [
     "AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",
+    ".codex/config.example.toml",
     "pyproject.toml",
     ".gitignore",
     ".env.example",
@@ -37,6 +38,7 @@ ALLOWED_PREFIXES = (
     "pyproject.toml",
     ".gitignore",
     ".env.example",
+    ".codex/",
     ".claude/",
     "control/",
     "tools/",
@@ -93,6 +95,12 @@ Shared engineering rules are in:
 `control/contract.md`
 
 Codex should read this file before starting a task, then read `control/state.md`, `control/ledger.md`, and task-related files.
+
+## Codex Notes
+
+- After modifying shared rules, run `python3 tools/project.py sync-agents`.
+- `AGENTS.md` is the Codex entry point; do not copy shared rules into this file.
+- For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
 """
 
 
@@ -245,6 +253,21 @@ def check_claude_hook_files(result: Result) -> None:
         result.notices.append("Claude hook files present")
 
 
+def check_codex_hook_files(result: Result) -> None:
+    """Check that Codex helper files exist."""
+    example = ROOT / ".codex" / "config.example.toml"
+    notify = ROOT / "tools" / "hooks" / "codex_notify.py"
+    panel = ROOT / "tools" / "hooks" / "panel_print.py"
+    if not example.exists():
+        result.warnings.append("missing .codex/config.example.toml")
+    elif not notify.exists():
+        result.warnings.append("missing tools/hooks/codex_notify.py (referenced by Codex config example)")
+    elif not panel.exists():
+        result.warnings.append("missing tools/hooks/panel_print.py")
+    else:
+        result.notices.append("Codex hook helper files present")
+
+
 def check_work_dirs_have_gitkeep(result: Result) -> None:
     """Check that work subdirectories have .gitkeep files."""
     for subdir in ["work/in", "work/out", "work/tmp"]:
@@ -294,6 +317,7 @@ def check(args: argparse.Namespace) -> int:
     check_panel_runs(result)
     check_init_status_consistency(result)
     check_claude_hook_files(result)
+    check_codex_hook_files(result)
     check_work_dirs_have_gitkeep(result)
     if not args.skip_git:
         check_git(result)

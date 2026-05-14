@@ -15,7 +15,7 @@ AI agents work better when they share the same operating context. This scaffold 
 - A structured ledger for requirements, decisions, risks, issues, and artifacts
 - Safe commit tooling that rejects secrets, temp files, generated outputs, and unexpected paths
 - Synced `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` entry points
-- A lightweight status panel for Claude Code hooks
+- A lightweight status panel for Claude Code hooks and Codex-friendly helper commands
 
 ## What's Included
 
@@ -24,7 +24,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Status Panel | Shows project status, git status, ledger count, goal, and next action |
 | Safe Commit | Whitelist-based commit command for agent-made changes |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
-| Health Check | Validates required files, entry-file sync, hooks, gitkeep files, imports, and platform junk |
+| Health Check | Validates required files, entry-file sync, Claude/Codex hook helpers, gitkeep files, imports, and platform junk |
 | Agent Sync | Regenerates `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `control/contract.md` |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
@@ -46,6 +46,8 @@ AI agents work better when they share the same operating context. This scaffold 
 ├── src/
 │   └── base_scaffold/      # Small reusable Python utilities
 ├── tests/
+├── .codex/
+│   └── config.example.toml
 ├── .claude/
 │   ├── hooks/panel_hook.py
 │   └── settings.example.json
@@ -53,3 +55,9 @@ AI agents work better when they share the same operating context. This scaffold 
 ├── CLAUDE.md
 └── GEMINI.md
 ```
+
+## Codex Hooks
+
+Codex reads the shared entry point from `AGENTS.md`. For end-of-turn guarded commits, copy the `notify` example from `.codex/config.example.toml` into your user-level `~/.codex/config.toml` and replace the placeholder path with this repository's absolute path.
+
+The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Codex does not currently use the Claude-style prompt-injection hook in this scaffold; run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.

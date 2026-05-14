@@ -1,0 +1,13 @@
+# Codex user config example.
+#
+# Codex configuration normally lives outside the repository in:
+#
+#   ~/.codex/config.toml
+#
+# Copy the notify line below into that file and replace the path with this
+# repository's absolute path after copying/initializing the scaffold.
+
+notify = [
+  "python3",
+  "/absolute/path/to/project/tools/hooks/codex_notify.py"
+]
