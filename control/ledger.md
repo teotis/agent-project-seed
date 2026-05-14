@@ -33,6 +33,21 @@ details:
 
 links:
 - README.md
+
+## 2026-05-14T14:11:25 - README simplified after feedback
+
+type: artifact
+tags: readme, simplification
+
+summary:
+- Simplified `README.md` to keep the overview concise and remove low-value detail.
+
+details:
+- Kept the homepage focused on positioning, quick start, core features, and a short comparison note.
+- Removed longer explanatory sections that were better left to agent tooling or deeper documentation.
+
+links:
+- README.md
 - control/contract.md
 
 ## 2026-05-14T14:03:35 - README repositioned for GitHub launch
