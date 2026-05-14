@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Project Seed</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --code-bg: #1c2128;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+  h1 {
+    font-size: 2.2em;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  h1 .badge {
+    display: inline-block;
+    font-size: 0.45em;
+    vertical-align: middle;
+    background: var(--green);
+    color: #000;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-left: 12px;
+    font-weight: 600;
+  }
+  h2 {
+    font-size: 1.45em;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 14px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; }
+  ul, ol { margin: 0 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--accent); }
+  code {
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin-bottom: 18px;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 18px;
+    font-size: 0.93em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface);
+    font-weight: 600;
+    color: var(--accent);
+  }
+  td { background: var(--bg); }
+  tr:hover td { background: var(--surface); }
+  blockquote {
+    border-left: 4px solid var(--orange);
+    background: var(--surface);
+    padding: 12px 18px;
+    margin: 0 0 18px 0;
+    border-radius: 0 6px 6px 0;
+    color: var(--text-muted);
+    font-size: 0.93em;
+  }
+  .tip {
+    border-left: 4px solid var(--green);
+    background: rgba(63, 185, 80, 0.08);
+    padding: 12px 18px;
+    margin: 0 0 18px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .warn {
+    border-left: 4px solid var(--orange);
+    background: rgba(210, 153, 34, 0.08);
+    padding: 12px 18px;
+    margin: 0 0 18px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .tree {
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+  .tree .dir { color: var(--accent); font-weight: 600; }
+  .tree .file { color: var(--text); }
+  .tree .comment { color: var(--text-muted); font-style: italic; }
+  .panel-demo {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.88em;
+    line-height: 1.8;
+    color: var(--green);
+  }
+  .status-list { list-style: none; margin-left: 0; }
+  .status-list li { padding: 6px 0; }
+  .status-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .dot-seed { background: var(--text-muted); }
+  .dot-pending { background: var(--orange); }
+  .dot-ready { background: var(--green); }
+  .cmd-table code { white-space: nowrap; }
+  .footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Agent Project Seed <span class="badge">v1.0</span></h1>
+<p>复制即用的多 Agent 协作项目底座。一条命令初始化，得到一个已命名、可检查、有面板、有规则、有安全提交的新项目。</p>
+<ul>
+  <li>Python >= 3.9，零外部依赖</li>
+  <li>支持 Codex / Claude Code / Gemini CLI</li>
+</ul>
+
+<h2>适合什么</h2>
+<ul>
+  <li>用 AI Agent 辅助开发，需要统一工程纪律</li>
+  <li>多 Agent 协作的代码库</li>
+  <li>需要结构化记录需求、决策、风险的轻量项目</li>
+</ul>
+
+<h2>5 分钟 Quick Start</h2>
+
+<h3>方式一：GitHub Template（推荐）</h3>
+<ol>
+  <li>点击仓库页 <strong>"Use this template"</strong> 创建新仓库</li>
+  <li>Clone 新仓库到本地</li>
+  <li>运行初始化：</li>
+</ol>
+<pre><code>python3 tools/project.py init --name "你的项目名"
+python3 tools/project.py check</code></pre>
+
+<h3>方式二：本地复制</h3>
+<pre><code>cp -R agent_project_seed my_new_project
+cd my_new_project
+python3 tools/project.py init --name "你的项目名"</code></pre>
+
+<h3>方式三：直接 clone（不推荐）</h3>
+<pre><code>git clone &lt;repo&gt; my_new_project
+cd my_new_project
+rm -rf .git
+python3 tools/project.py init --name "你的项目名"</code></pre>
+<blockquote>直接 clone 不删除 <code>.git</code> 的话，remote 仍指向 seed 仓库。</blockquote>
+
+<h2>初始化后你会得到什么</h2>
+<p><code>init</code> 自动完成：</p>
+<table>
+  <thead><tr><th>步骤</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>文本替换</td><td>项目名、包名、slug 替换到所有文件</td></tr>
+    <tr><td>包重命名</td><td><code>src/base_scaffold/</code> &rarr; <code>src/你的包名/</code></td></tr>
+    <tr><td>更新 contract.md</td><td>Current Intent 写入项目名和待补全状态</td></tr>
+    <tr><td>更新 state.md</td><td>记录项目名、包名、初始化时间</td></tr>
+    <tr><td>追加 ledger.md</td><td>记录一条 <code>type: decision</code> 的初始化记录</td></tr>
+    <tr><td>激活 settings</td><td>复制 <code>.claude/settings.example.json</code> &rarr; <code>settings.json</code></td></tr>
+    <tr><td>Git 初始化</td><td>创建仓库并首次提交（<code>--no-git</code> 可跳过）</td></tr>
+  </tbody>
+</table>
+
+<h2>面板</h2>
+<p>每次 Claude Code 对话开始时，自动注入项目状态面板：</p>
+<div class="panel-demo">
+[你的项目名] 2026-05-14 (Wed)<br>
+Status: Initialized, goals pending<br>
+Git: clean | Ledger: 2 records | Package: your_pkg<br>
+Goal: 项目目标<br>
+Next: Edit Current Intent in control/contract.md
+</div>
+<p>三档状态：</p>
+<ul class="status-list">
+  <li><span class="status-dot dot-seed"></span><strong>Seed Template</strong> — 尚未运行 <code>init</code></li>
+  <li><span class="status-dot dot-pending"></span><strong>Initialized, goals pending</strong> — <code>init</code> 已运行，但 <code>contract.md</code> 的目标未编辑</li>
+  <li><span class="status-dot dot-ready"></span><strong>Ready</strong> — 目标已定制</li>
+</ul>
+<p>手动验证面板：</p>
+<pre><code>python3 tools/panel.py</code></pre>
+
+<h2>常用命令</h2>
+<table class="cmd-table">
+  <thead><tr><th>命令</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>python3 tools/project.py init --name "名称"</code></td><td>初始化项目</td></tr>
+    <tr><td><code>python3 tools/project.py check</code></td><td>健康检查（文件、同步、面板、一致性）</td></tr>
+    <tr><td><code>python3 tools/project.py sync-agents</code></td><td>从 contract.md 重新生成入口文件</td></tr>
+    <tr><td><code>python3 tools/project.py commit --message "type: msg"</code></td><td>安全提交</td></tr>
+    <tr><td><code>python3 tools/project.py commit --dry-run</code></td><td>预览哪些文件会被提交</td></tr>
+    <tr><td><code>python3 tools/panel.py</code></td><td>手动查看面板输出</td></tr>
+  </tbody>
+</table>
+
+<h2>安全提交机制</h2>
+<p><code>commit</code> 命令只允许提交白名单文件（<code>control/</code>、<code>tools/</code>、<code>src/</code>、<code>tests/</code> 等），自动拒绝：</p>
+<ul>
+  <li><code>.env</code>、<code>work/tmp/</code>、<code>work/out/</code> 中的文件</li>
+  <li>不在白名单中的文件</li>
+</ul>
+<p>Claude Code 的 Stop hook 会在每次对话结束时自动尝试安全提交。配置见 <code>.claude/settings.example.json</code>。</p>
+
+<h2>目录说明</h2>
+<div class="tree">
+<span class="dir">control/</span>                <span class="comment"># 治理层</span><br>
+├── <span class="file">contract.md</span>         <span class="comment"># 唯一共享规则源</span><br>
+├── <span class="file">ledger.md</span>           <span class="comment"># 统一记录账本</span><br>
+└── <span class="file">state.md</span>            <span class="comment"># 当前态快照</span><br>
+<span class="dir">work/</span>                   <span class="comment"># 工作层</span><br>
+├── <span class="dir">in/</span>                 <span class="comment"># 输入材料</span><br>
+├── <span class="dir">out/</span>                <span class="comment"># 正式产物（不提交）</span><br>
+└── <span class="dir">tmp/</span>                <span class="comment"># 临时文件（不提交）</span><br>
+<span class="dir">tools/</span><br>
+├── <span class="file">project.py</span>          <span class="comment"># 初始化、预检、同步、安全提交</span><br>
+└── <span class="file">panel.py</span>            <span class="comment"># 面板生成器</span><br>
+<span class="dir">src/</span><br>
+└── <span class="dir">base_scaffold/</span>      <span class="comment"># Python 工具包</span><br>
+<span class="dir">tests/</span>                  <span class="comment"># 测试</span><br>
+<span class="dir">.claude/</span><br>
+├── <span class="dir">hooks/</span><span class="file">panel_hook.py</span> <span class="comment"># 面板注入 hook</span><br>
+└── <span class="file">settings.example.json</span><br>
+<span class="file">AGENTS.md</span>               <span class="comment"># Codex 入口</span><br>
+<span class="file">CLAUDE.md</span>               <span class="comment"># Claude Code 入口</span><br>
+<span class="file">GEMINI.md</span>               <span class="comment"># Gemini CLI 入口</span>
+</div>
+
+<h2>Python 工具包</h2>
+<p><code>src/base_scaffold/</code> 提供可复用的基础能力：</p>
+<ul>
+  <li><strong>core</strong> — 路径管理、原子文件写入、环境变量加载、API 门控</li>
+  <li><strong>records</strong> — <code>Record</code> / <code>Ledger</code> 统一记录、<code>Manifest</code> 产物清单、<code>QCResult</code> 质量检查</li>
+  <li><strong>review</strong> — 生成 HTML Review 页面（图片/链接审阅）</li>
+</ul>
+<p>测试依赖：<code>python3 -m pip install -e ".[test]"</code></p>
+
+<h2>初始化后的必填项</h2>
+<p>运行 <code>init</code> 后，编辑 <code>control/contract.md</code> 的 <code>Current Intent</code> 部分，写清：</p>
+<ol>
+  <li>项目目标</li>
+  <li>非目标</li>
+  <li>验收标准</li>
+</ol>
+<p>完成后面板状态会从 "goals pending" 变为 "ready"。</p>
+
+<h2>故障排查</h2>
+
+<div class="warn">
+<strong>面板显示 "Seed Template"</strong><br>
+&rarr; 运行 <code>python3 tools/project.py init --name "你的项目名"</code>
+</div>
+
+<div class="warn">
+<strong>面板显示 "goals pending"</strong><br>
+&rarr; 编辑 <code>control/contract.md</code> 的 Current Intent，删除 "Initialized, goals pending" 标记
+</div>
+
+<div class="warn">
+<strong>check 报告 agent entry files not synced</strong><br>
+&rarr; 运行 <code>python3 tools/project.py sync-agents</code>
+</div>
+
+<div class="warn">
+<strong>check 报告 platform junk files tracked</strong><br>
+&rarr; 运行 <code>git rm --cached ._文件名</code>，确认 <code>.gitignore</code> 包含 <code>._*</code>
+</div>
+
+<div class="warn">
+<strong>check 报告 missing .gitkeep</strong><br>
+&rarr; 运行 <code>touch work/in/.gitkeep work/out/.gitkeep work/tmp/.gitkeep</code>
+</div>
+
+<h2>Agent 使用规则</h2>
+<ul>
+  <li>开始任务前按顺序读取：<code>contract.md</code> &rarr; <code>state.md</code> &rarr; <code>ledger.md</code> &rarr; 任务相关文件</li>
+  <li>需求、决策、风险等统一作为 <code>Record</code> 追加到 <code>ledger.md</code></li>
+  <li>每个逻辑任务结束：运行 <code>check</code> &rarr; 提交 &rarr; 记录风险 &rarr; 给出下一步</li>
+  <li>外部 API 调用需同时满足环境变量启用 + 用户明确授权</li>
+  <li>冲突无法自动裁决时写入 <code>ledger.md</code>，等用户裁定</li>
+</ul>
+
+<div class="footer">
+  Agent Project Seed &mdash; Multi-agent collaboration scaffold
+</div>
+
+</div>
+</body>
+</html>
