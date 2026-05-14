@@ -1,36 +1,36 @@
 # Project Contract
 
-本文件是本仓库多 Agent 协作的唯一共享规则源。`AGENTS.md`、`CLAUDE.md`、`GEMINI.md` 是平台入口，只指向本文件。
+This file is the single source of shared rules for multi-agent collaboration in this repository. `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` are platform entry points that only point to this file.
 
 ## Project Shape
 
-这是一个复制即用的轻量项目底座。它只预装最小结构：
+This is a copy-and-use lightweight project scaffold. It ships with only the minimum structure:
 
-- `control/contract.md`：规则、目标、工作方式、可选能力清单。
-- `control/ledger.md`：统一记录账本，保存需求、决策、会话、风险、问题、产物。
-- `control/state.md`：当前态快照，方便下一轮接手。
-- `work/in/`：输入材料。
-- `work/out/`：正式产物和 manifest。
-- `work/tmp/`：临时文件，不提交。
-- `tools/project.py`：初始化、预检、同步入口、安全提交。
-- `src/`：极薄通用工具。
+- `control/contract.md`: Rules, goals, working methods, optional capability checklist.
+- `control/ledger.md`: Unified record ledger for requirements, decisions, sessions, risks, issues, artifacts.
+- `control/state.md`: Current state snapshot for easy handoff.
+- `work/in/`: Input materials.
+- `work/out/`: Final artifacts and manifest.
+- `work/tmp/`: Temporary files, not committed.
+- `tools/project.py`: Initialization, preflight checks, sync entry points, safe commits.
+- `src/`: Minimal general-purpose utilities.
 
 ## Current Intent
 
-复制本底座后，先更新本节和 `control/state.md`，写清项目目标、非目标、验收标准。不要为了“完整”提前创建领域目录；当某类材料自然长大时，再让目录分裂。
+After copying this scaffold, update this section and `control/state.md` first. Specify project goals, non-goals, and acceptance criteria. Do not create domain directories prematurely; let them split out naturally when a category of materials grows.
 
 ## Reading Order
 
-开始任务前读取：
+Before starting a task, read:
 
 1. `control/contract.md`
 2. `control/state.md`
-3. `control/ledger.md` 中与任务相关的最近记录
-4. 当前任务直接涉及的文件
+3. Recent records in `control/ledger.md` related to the task
+4. Files directly involved in the current task
 
 ## Ledger Rule
 
-需求、决策、风险、会话、冲突、产物都先写成 `Record`，追加到 `control/ledger.md`。统一格式：
+Requirements, decisions, risks, sessions, conflicts, and artifacts are all written as `Record` entries and appended to `control/ledger.md`. Unified format:
 
 ```text
 ## YYYY-MM-DDTHH:MM:SS - short title
@@ -48,47 +48,47 @@ links:
 - path/or/url
 ```
 
-只记录对项目未来有用的事实，不保存完整聊天流水，不记录密钥和隐私原文。
+Only record facts useful for the project's future. Do not save complete chat logs, keys, or raw private data.
 
 ## Git Rule
 
-默认使用 Git。每个逻辑任务结束前：
+Git is used by default. Before each logical task ends:
 
-1. 运行 `python3 tools/project.py check` 或等价验证。
-2. 查看改动，只提交本轮应提交文件。
-3. 使用 `python3 tools/project.py commit --message "type: summary"` 辅助安全提交。
-4. 不提交 `.env`、`work/tmp/`、`work/out/` 的正式输出、大体积缓存或密钥。
-5. 不 push，除非用户明确要求。
+1. Run `python3 tools/project.py check` or equivalent verification.
+2. Review changes, commit only files relevant to this round.
+3. Use `python3 tools/project.py commit --message "type: summary"` for assisted safe commits.
+4. Do not commit `.env`, `work/tmp/`, formal outputs in `work/out/`, large caches, or secrets.
+5. Do not push unless the user explicitly requests it.
 
 ## External Capability Gate
 
-任何外部 API、成本调用、材料上传或大规模改写必须同时满足：
+Any external API call, cost-incurring operation, material upload, or large-scale rewrite must satisfy both:
 
-- 环境变量显式启用。
-- CLI 参数或用户本轮明确授权。
+- Environment variable explicitly enabled.
+- CLI argument or explicit user authorization in this session.
 
-API key 只能来自环境变量或 `.env`。
+API keys may only come from environment variables or `.env`.
 
 ## Optional Capabilities
 
-以下能力不预建目录；需要时再生成：
+The following capabilities do not have pre-built directories; generate them when needed:
 
-- data lifecycle：CSV/JSONL 状态主表、schema、同步脚本。
-- content pipeline：draft/approved 分层、发布门控、冲突裁定。
-- image generation：provider、队列、manifest、成本门控。
-- html delivery：Markdown + self-contained HTML 双交付。
+- data lifecycle: CSV/JSONL state tables, schema, sync scripts.
+- content pipeline: draft/approved layering, publish gating, conflict resolution.
+- image generation: provider, queue, manifest, cost gating.
+- html delivery: Markdown + self-contained HTML dual delivery.
 
 ## Conflict Rule
 
-冲突无法自动裁决时，追加 `type: issue` 到 `control/ledger.md`。用户或权威文件裁定后，追加 `type: decision`。不要靠静默重写制造“已经解决”的假象。
+When conflicts cannot be auto-resolved, append `type: issue` to `control/ledger.md`. After the user or an authoritative file resolves it, append `type: decision`. Do not create the illusion of resolution by silently rewriting.
 
 ## Final Response Rule
 
-每次任务结束必须包含：
+Every task completion must include:
 
-- 本次结果
-- 修改/新增文件
-- 风险点
-- 建议下一步
+- This round's results
+- Modified/new files
+- Risk points
+- Suggested next steps
 
-若无新增风险，明确写“未发现新增风险”。下一步必须是具体可执行动作。
+If there are no new risks, explicitly write "No new risks found." Next steps must be concrete, actionable items.

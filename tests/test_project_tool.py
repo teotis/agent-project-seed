@@ -89,8 +89,8 @@ def test_init_updates_contract_state_and_ledger(tmp_path):
 
     contract = (target / "control" / "contract.md").read_text(encoding="utf-8")
     assert "My App" in contract
-    assert "已初始化，目标待补全" in contract
-    assert "复制本底座后" not in contract
+    assert "Initialized, goals pending" in contract
+    assert "After copying this scaffold" not in contract
 
     state = (target / "control" / "state.md").read_text(encoding="utf-8")
     assert "My App" in state

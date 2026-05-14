@@ -1,171 +1,171 @@
 # Agent Project Seed
 
-复制即用的多 Agent 协作项目底座。一条命令初始化，得到一个已命名、可检查、有面板、有规则、有安全提交的新项目。
+A copy-and-use multi-agent collaboration project scaffold. One command to initialize, and you get a named, checkable, paneled, rule-governed project with safe commits.
 
-- Python >= 3.9，零外部依赖
-- 支持 Codex / Claude Code / Gemini CLI
+- Python >= 3.9, zero external dependencies
+- Supports Codex / Claude Code / Gemini CLI
 
-## 适合什么
+## Who Is This For
 
-- 用 AI Agent 辅助开发，需要统一工程纪律
-- 多 Agent 协作的代码库
-- 需要结构化记录需求、决策、风险的轻量项目
+- Teams using AI agents for development who need unified engineering discipline
+- Multi-agent codebases
+- Lightweight projects that need structured tracking of requirements, decisions, and risks
 
-## 5 分钟 Quick Start
+## 5-Minute Quick Start
 
-**方式一：GitHub Template（推荐）**
+**Option 1: GitHub Template (Recommended)**
 
-1. 点击仓库页 "Use this template" 创建新仓库
-2. Clone 新仓库到本地
-3. 运行初始化：
+1. Click "Use this template" on the repository page to create a new repo
+2. Clone the new repo locally
+3. Run initialization:
 
 ```bash
-python3 tools/project.py init --name "你的项目名"
+python3 tools/project.py init --name "your-project-name"
 python3 tools/project.py check
 ```
 
-**方式二：本地复制**
+**Option 2: Local Copy**
 
 ```bash
 cp -R agent_project_seed my_new_project
 cd my_new_project
-python3 tools/project.py init --name "你的项目名"
+python3 tools/project.py init --name "your-project-name"
 ```
 
-**方式三：直接 clone（不推荐）**
+**Option 3: Direct Clone (Not Recommended)**
 
 ```bash
 git clone <repo> my_new_project
 cd my_new_project
 rm -rf .git
-python3 tools/project.py init --name "你的项目名"
+python3 tools/project.py init --name "your-project-name"
 ```
 
-> 直接 clone 不删除 `.git` 的话，remote 仍指向 seed 仓库。
+> Cloning without deleting `.git` means the remote still points to the seed repo.
 
-## 初始化后你会得到什么
+## What You Get After Initialization
 
-`init` 自动完成：
+`init` automatically completes:
 
-| 步骤 | 说明 |
-|------|------|
-| 文本替换 | 项目名、包名、slug 替换到所有文件 |
-| 包重命名 | `src/base_scaffold/` → `src/你的包名/` |
-| 更新 contract.md | Current Intent 写入项目名和待补全状态 |
-| 更新 state.md | 记录项目名、包名、初始化时间 |
-| 追加 ledger.md | 记录一条 `type: decision` 的初始化记录 |
-| 激活 settings | 复制 `.claude/settings.example.json` → `settings.json` |
-| Git 初始化 | 创建仓库并首次提交（`--no-git` 可跳过） |
+| Step | Description |
+|------|-------------|
+| Text replacement | Project name, package name, slug replaced across all files |
+| Package rename | `src/base_scaffold/` → `src/your_package_name/` |
+| Update contract.md | Current Intent populated with project name and pending status |
+| Update state.md | Records project name, package name, initialization time |
+| Append ledger.md | Adds a `type: decision` initialization record |
+| Activate settings | Copies `.claude/settings.example.json` → `settings.json` |
+| Git init | Creates repo and initial commit (`--no-git` to skip) |
 
-## 面板
+## Panel
 
-每次 Claude Code 对话开始时，自动注入项目状态面板。
+A project status panel is automatically injected at the start of every Claude Code conversation.
 
 ```
-【你的项目名】2026-05-14 (周四)
-状态: 已初始化，目标待补全
-Git: clean | Ledger: 2 条 | Package: your_pkg
-目标: 项目目标
-下一步: 编辑 control/contract.md 的 Current Intent
+[Your Project] 2026-05-14 (Wed)
+Status: Initialized, goals pending
+Git: clean | Ledger: 2 records | Package: your_pkg
+Goal: Project goal
+Next: Edit Current Intent in control/contract.md
 ```
 
-三档状态：
-- **Seed 模板** — 尚未运行 `init`
-- **已初始化，目标待补全** — `init` 已运行，但 `contract.md` 的目标未编辑
-- **已就绪** — 目标已定制
+Three status levels:
+- **Seed Template** — `init` has not been run yet
+- **Initialized, goals pending** — `init` has been run, but goals in `contract.md` have not been edited
+- **Ready** — Goals have been customized
 
-手动验证面板：
+Verify the panel manually:
 
 ```bash
 python3 tools/panel.py
 ```
 
-## 常用命令
+## Commands
 
-| 命令 | 说明 |
-|------|------|
-| `python3 tools/project.py init --name "名称"` | 初始化项目 |
-| `python3 tools/project.py check` | 健康检查（文件、同步、面板、一致性） |
-| `python3 tools/project.py sync-agents` | 从 contract.md 重新生成入口文件 |
-| `python3 tools/project.py commit --message "type: msg"` | 安全提交 |
-| `python3 tools/project.py commit --dry-run` | 预览哪些文件会被提交 |
-| `python3 tools/panel.py` | 手动查看面板输出 |
+| Command | Description |
+|---------|-------------|
+| `python3 tools/project.py init --name "name"` | Initialize project |
+| `python3 tools/project.py check` | Health check (files, sync, panel, consistency) |
+| `python3 tools/project.py sync-agents` | Regenerate entry files from contract.md |
+| `python3 tools/project.py commit --message "type: msg"` | Safe commit |
+| `python3 tools/project.py commit --dry-run` | Preview which files would be committed |
+| `python3 tools/panel.py` | View panel output manually |
 
-## 安全提交机制
+## Safe Commit Mechanism
 
-`commit` 命令只允许提交白名单文件（`control/`、`tools/`、`src/`、`tests/` 等），自动拒绝：
+The `commit` command only allows committing whitelisted files (`control/`, `tools/`, `src/`, `tests/`, etc.). It automatically rejects:
 
-- `.env`、`work/tmp/`、`work/out/` 中的文件
-- 不在白名单中的文件
+- Files in `.env`, `work/tmp/`, `work/out/`
+- Files not in the allowlist
 
-Claude Code 的 Stop hook 会在每次对话结束时自动尝试安全提交。配置见 `.claude/settings.example.json`。
+Claude Code's Stop hook automatically attempts a safe commit at the end of each conversation. See `.claude/settings.example.json` for configuration.
 
-## 目录说明
+## Directory Layout
 
 ```
-├── control/                # 治理层
-│   ├── contract.md         # 唯一共享规则源
-│   ├── ledger.md           # 统一记录账本
-│   └── state.md            # 当前态快照
-├── work/                   # 工作层
-│   ├── in/                 # 输入材料
-│   ├── out/                # 正式产物（不提交）
-│   └── tmp/                # 临时文件（不提交）
+├── control/                # Governance layer
+│   ├── contract.md         # Single source of shared rules
+│   ├── ledger.md           # Unified record ledger
+│   └── state.md            # Current state snapshot
+├── work/                   # Work layer
+│   ├── in/                 # Input materials
+│   ├── out/                # Final artifacts (not committed)
+│   └── tmp/                # Temporary files (not committed)
 ├── tools/
-│   ├── project.py          # 初始化、预检、同步、安全提交
-│   └── panel.py            # 面板生成器
+│   ├── project.py          # Init, check, sync, safe commit
+│   └── panel.py            # Panel generator
 ├── src/
-│   └── base_scaffold/      # Python 工具包
-├── tests/                  # 测试
+│   └── base_scaffold/      # Python utility package
+├── tests/                  # Tests
 ├── .claude/
-│   ├── hooks/panel_hook.py # 面板注入 hook
+│   ├── hooks/panel_hook.py # Panel injection hook
 │   └── settings.example.json
-├── AGENTS.md               # Codex 入口
-├── CLAUDE.md               # Claude Code 入口
-└── GEMINI.md               # Gemini CLI 入口
+├── AGENTS.md               # Codex entry point
+├── CLAUDE.md               # Claude Code entry point
+└── GEMINI.md               # Gemini CLI entry point
 ```
 
-## Python 工具包
+## Python Utility Package
 
-`src/base_scaffold/` 提供可复用的基础能力：
+`src/base_scaffold/` provides reusable foundational capabilities:
 
-- **core** — 路径管理、原子文件写入、环境变量加载、API 门控
-- **records** — `Record` / `Ledger` 统一记录、`Manifest` 产物清单、`QCResult` 质量检查
-- **review** — 生成 HTML Review 页面（图片/链接审阅）
+- **core** — Path management, atomic file writes, environment variable loading, API gating
+- **records** — `Record` / `Ledger` unified records, `Manifest` artifact manifest, `QCResult` quality checks
+- **review** — Generate HTML review pages (image/link review)
 
-测试依赖：`python3 -m pip install -e ".[test]"`
+Test dependencies: `python3 -m pip install -e ".[test]"`
 
-## 初始化后的必填项
+## Required Steps After Initialization
 
-运行 `init` 后，编辑 `control/contract.md` 的 `Current Intent` 部分，写清：
+After running `init`, edit the `Current Intent` section in `control/contract.md` to specify:
 
-1. 项目目标
-2. 非目标
-3. 验收标准
+1. Project goals
+2. Non-goals
+3. Acceptance criteria
 
-完成后面板状态会从"目标待补全"变为"已就绪"。
+Once complete, the panel status will change from "goals pending" to "ready".
 
-## 故障排查
+## Troubleshooting
 
-**面板显示 Seed 模板**
-→ 运行 `python3 tools/project.py init --name "你的项目名"`
+**Panel shows "Seed Template"**
+→ Run `python3 tools/project.py init --name "your-project-name"`
 
-**面板显示"目标待补全"**
-→ 编辑 `control/contract.md` 的 Current Intent，删除"已初始化，目标待补全"标记
+**Panel shows "goals pending"**
+→ Edit Current Intent in `control/contract.md` and remove the "initialized, goals pending" marker
 
-**check 报告 agent entry files not synced**
-→ 运行 `python3 tools/project.py sync-agents`
+**check reports "agent entry files not synced"**
+→ Run `python3 tools/project.py sync-agents`
 
-**check 报告 platform junk files tracked**
-→ 运行 `git rm --cached ._文件名`，确认 `.gitignore` 包含 `._*`
+**check reports "platform junk files tracked"**
+→ Run `git rm --cached ._filename` and confirm `.gitignore` contains `._*`
 
-**check 报告 missing .gitkeep**
-→ 运行 `touch work/in/.gitkeep work/out/.gitkeep work/tmp/.gitkeep`
+**check reports "missing .gitkeep"**
+→ Run `touch work/in/.gitkeep work/out/.gitkeep work/tmp/.gitkeep`
 
-## Agent 使用规则
+## Agent Usage Rules
 
-- 开始任务前按顺序读取：`contract.md` → `state.md` → `ledger.md` → 任务相关文件
-- 需求、决策、风险等统一作为 `Record` 追加到 `ledger.md`
-- 每个逻辑任务结束：运行 `check` → 提交 → 记录风险 → 给出下一步
-- 外部 API 调用需同时满足环境变量启用 + 用户明确授权
-- 冲突无法自动裁决时写入 `ledger.md`，等用户裁定
+- Before starting a task, read in order: `contract.md` → `state.md` → `ledger.md` → task-related files
+- Requirements, decisions, risks, etc. are recorded as `Record` entries appended to `ledger.md`
+- At the end of each logical task: run `check` → commit → record risks → provide next steps
+- External API calls require both environment variable enablement and explicit user authorization
+- When conflicts cannot be auto-resolved, write to `ledger.md` and wait for user decision

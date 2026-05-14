@@ -88,11 +88,11 @@ def render_agents() -> str:
 
 {NOTICE}
 
-共享工程规则来自：
+Shared engineering rules are in:
 
 `control/contract.md`
 
-Codex 开始任务前应先读取该文件，再读取 `control/state.md`、`control/ledger.md` 以及任务相关文件。
+Codex should read this file before starting a task, then read `control/state.md`, `control/ledger.md`, and task-related files.
 """
 
 
@@ -101,15 +101,15 @@ def render_claude() -> str:
 
 {NOTICE}
 
-共享工程规则来自：
+Shared engineering rules are in:
 
 @./control/contract.md
 
 ## Claude Code Notes
 
-- 修改共享规则后，运行 `python3 tools/project.py sync-agents`。
-- 可配置 `.claude/settings.json` Stop hook 调用 `tools/project.py commit`。
-- 不要在本文件复制共享主规则。
+- After modifying shared rules, run `python3 tools/project.py sync-agents`.
+- You can configure `.claude/settings.json` Stop hook to call `tools/project.py commit`.
+- Do not copy shared rules into this file.
 """
 
 
@@ -118,14 +118,14 @@ def render_gemini() -> str:
 
 {NOTICE}
 
-共享工程规则来自：
+Shared engineering rules are in:
 
 @./control/contract.md
 
 ## Gemini CLI Notes
 
-- 修改共享规则后，运行 `python3 tools/project.py sync-agents`，并在 Gemini CLI 中重新加载上下文。
-- 不要在本文件复制共享主规则。
+- After modifying shared rules, run `python3 tools/project.py sync-agents` and reload context in Gemini CLI.
+- Do not copy shared rules into this file.
 """
 
 
@@ -222,9 +222,9 @@ def check_init_status_consistency(result: Result) -> None:
         return
     contract_text = contract.read_text(encoding="utf-8")
     state_text = state.read_text(encoding="utf-8")
-    seed_placeholder = "复制本底座后，先更新本节和"
+    seed_placeholder = "After copying this scaffold, update this section and"
     contract_initialized = seed_placeholder not in contract_text
-    state_initialized = "初始化时间" in state_text
+    state_initialized = "Initialized at:" in state_text
     if contract_initialized != state_initialized:
         result.warnings.append(
             "init status mismatch: contract.md and state.md disagree on initialization state"
@@ -407,13 +407,13 @@ def update_contract(project_name: str) -> None:
     new_intent = (
         f"## Current Intent\n"
         f"\n"
-        f"**项目**: {project_name}\n"
-        f"**状态**: 已初始化，目标待补全\n"
+        f"**Project**: {project_name}\n"
+        f"**Status**: Initialized, goals pending\n"
         f"\n"
-        f"请编辑本节，写清：\n"
-        f"- 项目目标\n"
-        f"- 非目标\n"
-        f"- 验收标准\n"
+        f"Edit this section to specify:\n"
+        f"- Project goals\n"
+        f"- Non-goals\n"
+        f"- Acceptance criteria\n"
     )
     text = re.sub(r"## Current Intent\n\n.*?(?=\n## |\Z)", new_intent, text, flags=re.DOTALL)
     path.write_text(text, encoding="utf-8")
@@ -427,14 +427,14 @@ def update_state(project_name: str, package_name: str) -> None:
         f"\n"
         f"## Current State\n"
         f"\n"
-        f"- 项目名: {project_name}\n"
-        f"- 包名: {package_name}\n"
-        f"- 初始化时间: {now_iso()}\n"
-        f"- 状态: 已初始化，目标待补全\n"
+        f"- Project name: {project_name}\n"
+        f"- Package name: {package_name}\n"
+        f"- Initialized at: {now_iso()}\n"
+        f"- Status: Initialized, goals pending\n"
         f"\n"
         f"## Next Maintenance Action\n"
         f"\n"
-        f"- 编辑 `control/contract.md` 的 Current Intent，写清项目目标、非目标、验收标准。\n"
+        f"- Edit Current Intent in `control/contract.md` to specify project goals, non-goals, and acceptance criteria.\n"
     )
     path.write_text(content, encoding="utf-8")
 
@@ -452,12 +452,12 @@ def append_init_ledger(project_name: str, package_name: str) -> None:
         f"tags: init, scaffold\n"
         f"\n"
         f"summary:\n"
-        f"- 从 Agent Project Seed 初始化项目 `{project_name}`\n"
-        f"- 包名: `{package_name}`\n"
+        f"- Initialized project `{project_name}` from Agent Project Seed\n"
+        f"- Package name: `{package_name}`\n"
         f"\n"
         f"details:\n"
-        f"- 已完成: 文本替换、包重命名、settings 激活、contract/state 更新\n"
-        f"- 待办: 编辑 `control/contract.md` 写清项目目标\n"
+        f"- Completed: text replacement, package rename, settings activation, contract/state update\n"
+        f"- Todo: edit `control/contract.md` to specify project goals\n"
         f"\n"
         f"links:\n"
         f"- control/contract.md\n"

@@ -82,8 +82,8 @@ def main() -> int:
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
             "additionalContext": (
-                "【系统指令】请在本轮回答开始前，先原样输出以下项目状态面板"
-                "（如上下文中有多条历史面板，只展示最后一条）：\n\n"
+                "[System Instruction] Before answering, output the following project status panel verbatim "
+                "(if multiple historical panels exist in context, show only the last one):\n\n"
                 + panel_text
             ),
         }

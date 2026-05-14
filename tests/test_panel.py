@@ -31,31 +31,31 @@ def _copy_and_init(tmp_path, name="Demo Project", package="demo_project"):
 
 
 def test_panel_detects_seed_status():
-    """当前仓库是 seed 模板，面板应显示 Seed 模板状态。"""
+    """Current repo is a seed template; panel should show Seed Template status."""
     panel = load_panel()
     assert panel.detect_status() == "seed"
 
 
 def test_panel_distinguishes_seed_pending_ready(tmp_path):
-    """三档状态检测：seed → pending → ready。"""
+    """Three-level status detection: seed -> pending -> ready."""
     panel = load_panel()
 
     # seed
     assert panel.detect_status() == "seed"
 
-    # init 后是 pending
+    # after init it should be pending
     target = _copy_and_init(tmp_path)
-    # 重载模块让 ROOT 指向 target
+    # Reload module so ROOT points to target
     import tools.panel as panel_mod
     original_root = panel_mod.ROOT
     try:
         panel_mod.ROOT = target
         assert panel_mod.detect_status() == "pending"
 
-        # 手动编辑 contract.md 写入明确目标 → ready
+        # Manually edit contract.md with explicit goals -> ready
         contract = target / "control" / "contract.md"
         text = contract.read_text(encoding="utf-8")
-        text = text.replace("已初始化，目标待补全", "目标：构建一个演示应用")
+        text = text.replace("Initialized, goals pending", "Goal: Build a demo application")
         contract.write_text(text, encoding="utf-8")
         assert panel_mod.detect_status() == "ready"
     finally:
@@ -63,7 +63,7 @@ def test_panel_distinguishes_seed_pending_ready(tmp_path):
 
 
 def test_panel_after_init_shows_project_name(tmp_path):
-    """init 后面板应显示项目名而非 'Agent Project Seed'。"""
+    """After init, panel should show project name instead of 'Agent Project Seed'."""
     target = _copy_and_init(tmp_path, name="My App", package="my_app")
 
     result = subprocess.run(
@@ -72,12 +72,12 @@ def test_panel_after_init_shows_project_name(tmp_path):
     )
     assert result.returncode == 0
     assert "My App" in result.stdout
-    assert "Seed 模板" not in result.stdout
-    assert "已初始化" in result.stdout
+    assert "Seed Template" not in result.stdout
+    assert "Initialized" in result.stdout
 
 
 def test_panel_shows_package_and_records(tmp_path):
-    """面板应显示包名和 ledger 记录数。"""
+    """Panel should show package name and ledger record count."""
     target = _copy_and_init(tmp_path)
 
     result = subprocess.run(

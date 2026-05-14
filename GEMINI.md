@@ -2,11 +2,11 @@
 
 <!-- Generated from control/contract.md. Do not edit directly. -->
 
-共享工程规则来自：
+Shared engineering rules are in:
 
 @./control/contract.md
 
 ## Gemini CLI Notes
 
-- 修改共享规则后，运行 `python3 tools/project.py sync-agents`，并在 Gemini CLI 中重新加载上下文。
-- 不要在本文件复制共享主规则。
+- After modifying shared rules, run `python3 tools/project.py sync-agents` and reload context in Gemini CLI.
+- Do not copy shared rules into this file.
