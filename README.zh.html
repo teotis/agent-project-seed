@@ -113,19 +113,6 @@
   <li>Claude Code hooks 使用的轻量状态面板</li>
 </ul>
 
-<h2>Quick Start</h2>
-
-<pre><code>python3 tools/project.py init --name "你的项目名"
-python3 tools/project.py check</code></pre>
-
-<p>然后编辑：</p>
-
-<pre><code>control/contract.md</code></pre>
-
-<p>共享规则变更时：</p>
-
-<pre><code>python3 tools/project.py sync-agents</code></pre>
-
 <h2>已搭建的功能</h2>
 
 <table>
@@ -140,10 +127,6 @@ python3 tools/project.py check</code></pre>
     <tr><td>多 Agent 入口</td><td>各工具专属文件统一指向同一份共享合约</td></tr>
   </tbody>
 </table>
-
-<h2>定位</h2>
-
-<p>如果只需要一个指令文件，用 <code>AGENTS.md</code>。需要指令生成或 lint，看 agentkit 类工具。需要自动生成上下文，看 agentseed 类工具。需要一个轻量的仓库级治理层让多个 AI 编程工具保持一致——用 Agent Project Seed。</p>
 
 <h2>目录结构</h2>
 

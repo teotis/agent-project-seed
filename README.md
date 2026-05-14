@@ -17,25 +17,6 @@ AI agents work better when they share the same operating context. This scaffold 
 - Synced `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` entry points
 - A lightweight status panel for Claude Code hooks
 
-## Quick Start
-
-```bash
-python3 tools/project.py init --name "Your Project Name"
-python3 tools/project.py check
-```
-
-Then edit:
-
-```text
-control/contract.md
-```
-
-When shared rules change:
-
-```bash
-python3 tools/project.py sync-agents
-```
-
 ## What's Included
 
 | Feature | Description |
@@ -47,10 +28,6 @@ python3 tools/project.py sync-agents
 | Agent Sync | Regenerates `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `control/contract.md` |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
-
-## Positioning
-
-Use `AGENTS.md` if you only need one instruction file. Look at agentkit-style tools if you want instruction generation or linting. Look at agentseed-style tools if you want automatic context generation. Use Agent Project Seed when you want a small repo-level governance layer that keeps multiple AI coding tools aligned.
 
 ## Directory Layout
 
