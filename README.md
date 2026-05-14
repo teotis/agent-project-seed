@@ -11,51 +11,7 @@ A copy-and-use multi-agent collaboration project scaffold. One command to initia
 - Multi-agent codebases
 - Lightweight projects that need structured tracking of requirements, decisions, and risks
 
-## 5-Minute Quick Start
-
-**Option 1: GitHub Template (Recommended)**
-
-1. Click "Use this template" on the repository page to create a new repo
-2. Clone the new repo locally
-3. Run initialization:
-
-```bash
-python3 tools/project.py init --name "your-project-name"
-python3 tools/project.py check
-```
-
-**Option 2: Local Copy**
-
-```bash
-cp -R agent_project_seed my_new_project
-cd my_new_project
-python3 tools/project.py init --name "your-project-name"
-```
-
-**Option 3: Direct Clone (Not Recommended)**
-
-```bash
-git clone <repo> my_new_project
-cd my_new_project
-rm -rf .git
-python3 tools/project.py init --name "your-project-name"
-```
-
-> Cloning without deleting `.git` means the remote still points to the seed repo.
-
-## What You Get After Initialization
-
-`init` automatically completes:
-
-| Step | Description |
-|------|-------------|
-| Text replacement | Project name, package name, slug replaced across all files |
-| Package rename | `src/base_scaffold/` → `src/your_package_name/` |
-| Update contract.md | Current Intent populated with project name and pending status |
-| Update state.md | Records project name, package name, initialization time |
-| Append ledger.md | Adds a `type: decision` initialization record |
-| Activate settings | Copies `.claude/settings.example.json` → `settings.json` |
-| Git init | Creates repo and initial commit (`--no-git` to skip) |
+> Clone the repo, open Claude Code / Codex / Gemini CLI — the panel will automatically prompt you to initialize. No extra steps needed.
 
 ## Panel
 
@@ -134,16 +90,6 @@ Claude Code's Stop hook automatically attempts a safe commit at the end of each 
 - **review** — Generate HTML review pages (image/link review)
 
 Test dependencies: `python3 -m pip install -e ".[test]"`
-
-## Required Steps After Initialization
-
-After running `init`, edit the `Current Intent` section in `control/contract.md` to specify:
-
-1. Project goals
-2. Non-goals
-3. Acceptance criteria
-
-Once complete, the panel status will change from "goals pending" to "ready".
 
 ## Troubleshooting
 
