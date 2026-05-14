@@ -15,6 +15,7 @@
     --accent-hover: #79c0ff;
     --green: #3fb950;
     --orange: #d29922;
+    --red: #f85149;
     --code-bg: #1c2128;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,11 +35,11 @@
     font-weight: 700;
     border-bottom: 1px solid var(--border);
     padding-bottom: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
   h1 .badge {
     display: inline-block;
-    font-size: 0.45em;
+    font-size: 0.4em;
     vertical-align: middle;
     background: var(--green);
     color: #000;
@@ -48,15 +49,18 @@
     font-weight: 600;
   }
   h2 {
-    font-size: 1.45em;
+    font-size: 1.4em;
     font-weight: 600;
-    margin-top: 40px;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
+    margin-top: 44px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
   }
   p { margin-bottom: 14px; }
-  ul { margin: 0 0 16px 24px; }
+  .lead { font-size: 1.08em; color: var(--text-muted); margin-bottom: 10px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-hover); text-decoration: underline; }
+  ul, ol { margin: 0 0 16px 24px; }
   li { margin-bottom: 6px; }
   li strong { color: var(--accent); }
   code {
@@ -86,12 +90,13 @@
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 18px;
-    font-size: 0.93em;
+    font-size: 0.92em;
   }
   th, td {
     text-align: left;
     padding: 10px 14px;
     border: 1px solid var(--border);
+    vertical-align: top;
   }
   th {
     background: var(--surface);
@@ -101,6 +106,36 @@
   }
   td { background: var(--bg); }
   tr:hover td { background: var(--surface); }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--surface);
+    padding: 14px 18px;
+    margin: 0 0 18px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 1.05em;
+    font-weight: 500;
+    color: var(--accent-hover);
+  }
+  .pain-list {
+    list-style: none;
+    margin-left: 0;
+    padding: 16px 20px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 18px;
+  }
+  .pain-list li {
+    padding: 4px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .pain-list li::before {
+    content: "\201C";
+    position: absolute;
+    left: 0;
+    color: var(--orange);
+    font-weight: 700;
+  }
   .tree {
     font-family: "SF Mono", "Fira Code", Consolas, monospace;
     font-size: 0.85em;
@@ -110,6 +145,55 @@
   .tree .dir { color: var(--accent); font-weight: 600; }
   .tree .file { color: var(--text); }
   .tree .comment { color: var(--text-muted); font-style: italic; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .card h3 {
+    font-size: 1em;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--green);
+  }
+  .card.bad h3 { color: var(--red); }
+  .card ul { margin: 0 0 0 18px; font-size: 0.92em; }
+  .card li { margin-bottom: 4px; }
+  .principles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .principle {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.92em;
+  }
+  .topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .topic {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+  }
   .footer {
     margin-top: 60px;
     padding-top: 20px;
@@ -124,60 +208,204 @@
 <div class="container">
 
 <h1>Agent Project Seed <span class="badge">v1.0</span></h1>
-<p>复制即用的多 Agent 协作项目底座。Clone 后打开 AI 编程工具，面板自动引导初始化——无需手动配置。</p>
+<p class="lead">把任意仓库变成 AI 编程 Agent 的纪律化工作空间。</p>
+<p>Agent Project Seed 是一个复制即用、零依赖的项目底座，面向在同一项目中使用 Codex、Claude Code、Gemini CLI 或多种 AI Agent 的团队和个人。它不是 Agent 框架，而是给你的仓库加上一层不可或缺的协调层：共享规则、当前状态、结构化账本、健康检查、安全提交，以及为不同 Agent 工具同步生成的入口文件。</p>
+<p>大多数 AI Agent 配置止步于一个指令文件。这个项目再深一层。</p>
 <ul>
-  <li>Python >= 3.9，零外部依赖</li>
-  <li>支持 Codex / Claude Code / Gemini CLI</li>
+  <li>所有 Agent 共享一份合约</li>
+  <li>一份当前状态快照用于交接</li>
+  <li>一份结构化账本记录决策、风险、问题、会话和产物</li>
+  <li>安全提交工具拒绝密钥、临时输出和意外路径</li>
+  <li>同步生成 <code>AGENTS.md</code>、<code>CLAUDE.md</code>、<code>GEMINI.md</code> 入口</li>
+  <li>Python >= 3.9，无运行时依赖</li>
 </ul>
 
-<h2>适合什么</h2>
-<ul>
-  <li>用 AI Agent 辅助开发，需要统一工程纪律</li>
-  <li>多 Agent 协作的代码库</li>
-  <li>需要结构化记录需求、决策、风险的轻量项目</li>
+<h2>为什么做这个</h2>
+<p>AI 编程工具在孤立任务上已经越来越好，但当每次会话从不同的记忆、提示词或工具专属惯例开始时，项目仍然会跑偏。</p>
+<p>Agent Project Seed 适用于你产生这些念头的时刻：</p>
+<ul class="pain-list">
+  <li>我反复向每个 Agent 解释同样的项目规则。</li>
+  <li>Claude、Codex 和 Gemini 应该读同一份真相源。</li>
+  <li>我想要轻量的项目记忆，不想引入重型工作流系统。</li>
+  <li>我需要 Agent 留下有用的记录，而不是聊天流水。</li>
+  <li>我想在 Agent 提交改动前有自动护栏。</li>
 </ul>
 
-<h2>已搭建的功能</h2>
+<h2>Quick Start</h2>
+<p>Clone 或复制本仓库，然后初始化：</p>
+<pre><code>python3 tools/project.py init --name "你的项目名"</code></pre>
+<p>填写项目意图：</p>
+<pre><code>$EDITOR control/contract.md</code></pre>
+<p>运行项目检查：</p>
+<pre><code>python3 tools/project.py check</code></pre>
+<p>如果修改了共享规则，重新生成 Agent 入口文件：</p>
+<pre><code>python3 tools/project.py sync-agents</code></pre>
+
+<h2>工作原理</h2>
+<p>脚手架将协调层与项目工作分离。</p>
 <table>
-  <thead><tr><th>功能</th><th>说明</th></tr></thead>
+  <thead><tr><th>层</th><th>文件</th><th>用途</th></tr></thead>
   <tbody>
-    <tr><td>状态面板</td><td>每次 Claude Code 对话自动注入。三档：Seed Template &rarr; Initialized, goals pending &rarr; Ready</td></tr>
-    <tr><td>安全提交</td><td>基于白名单的 commit 命令，自动拒绝 <code>.env</code>、<code>work/tmp/</code>、<code>work/out/</code> 及白名单外文件</td></tr>
-    <tr><td>统一账本</td><td>需求、决策、风险、产物统一以 <code>Record</code> 结构化记录到 <code>control/ledger.md</code></td></tr>
-    <tr><td>健康检查</td><td><code>project.py check</code> 验证文件、同步、面板、hook、gitkeep、平台垃圾文件</td></tr>
-    <tr><td>Agent 同步</td><td><code>project.py sync-agents</code> 从 <code>control/contract.md</code> 重新生成 <code>AGENTS.md</code>、<code>CLAUDE.md</code>、<code>GEMINI.md</code></td></tr>
-    <tr><td>Python 工具包</td><td><code>src/base_scaffold/</code> — 路径管理、原子写入、环境变量加载、API 门控、Record/Ledger/Manifest/QC、HTML Review</td></tr>
-    <tr><td>多 Agent 入口</td><td>平台专属入口文件（<code>AGENTS.md</code>、<code>CLAUDE.md</code>、<code>GEMINI.md</code>）均指向共享规则源</td></tr>
-    <tr><td>自动存档</td><td>Stop hook 在每次对话结束时自动执行安全提交</td></tr>
+    <tr><td>治理</td><td><code>control/contract.md</code></td><td>共享规则、项目目标、非目标、验收标准</td></tr>
+    <tr><td>交接</td><td><code>control/state.md</code></td><td>简短的当前状态快照，供下一个 Agent 或会话使用</td></tr>
+    <tr><td>记忆</td><td><code>control/ledger.md</code></td><td>请求、决策、会话、风险、问题、产物的结构化记录</td></tr>
+    <tr><td>工作区</td><td><code>work/in</code>、<code>work/out</code>、<code>work/tmp</code></td><td>输入材料、正式产物、临时文件</td></tr>
+    <tr><td>工具</td><td><code>tools/project.py</code>、<code>tools/panel.py</code></td><td>初始化、检查、同步、安全提交、状态面板生成</td></tr>
+    <tr><td>Agent 入口</td><td><code>AGENTS.md</code>、<code>CLAUDE.md</code>、<code>GEMINI.md</code></td><td>各工具专属文件，统一指向共享合约</td></tr>
   </tbody>
 </table>
 
-<h2>目录说明</h2>
+<h2>你会得到什么</h2>
+<table>
+  <thead><tr><th>功能</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>共享合约</td><td><code>control/contract.md</code> 是协作规则的唯一真相源。</td></tr>
+    <tr><td>统一账本</td><td>需求、决策、风险、问题、会话和产物使用相同的可读记录格式。</td></tr>
+    <tr><td>当前状态</td><td><code>control/state.md</code> 保持交接简短、具体、易于更新。</td></tr>
+    <tr><td>安全提交</td><td><code>project.py commit</code> 只暂存白名单路径，拒绝 <code>.env</code>、临时文件、生成产物、冲突和意外路径。</td></tr>
+    <tr><td>健康检查</td><td><code>project.py check</code> 验证必需文件、Agent 同步、包导入、Claude hook 文件、gitkeep 文件和平台垃圾文件。</td></tr>
+    <tr><td>Agent 同步</td><td><code>project.py sync-agents</code> 从共享合约重新生成 <code>AGENTS.md</code>、<code>CLAUDE.md</code>、<code>GEMINI.md</code>。</td></tr>
+    <tr><td>状态面板</td><td><code>tools/panel.py</code> 报告项目状态、账本数量、git 状态、包名、目标和下一步。</td></tr>
+    <tr><td>Claude Hooks</td><td>示例 Claude Code hook 可注入状态面板并运行安全存档。</td></tr>
+    <tr><td>工具包</td><td><code>src/base_scaffold/</code> 包含路径辅助、原子写入、环境变量加载、API 门控、Record/Ledger/Manifest/QC 和 Review 页面工具。</td></tr>
+  </tbody>
+</table>
+
+<h2>账本记录示例</h2>
+<pre><code>## 2026-05-14T14:00:39 - Competitive positioning research
+
+type: session
+tags: positioning, github, promotion
+
+summary:
+- Found adjacent projects, but no exact match for this
+  lightweight governance scaffold.
+
+details:
+- Position as a copy-ready project coordination layer,
+  not an agent framework.
+
+links:
+- README.md
+- control/contract.md</code></pre>
+
+<h2>有什么不同</h2>
+<p>Agent Project Seed 刻意保持小巧。它不试图编排 Agent、替代你的 Issue 跑后台群集、或发明新的项目管理宗教。</p>
+<table>
+  <thead><tr><th>如果你需要……</th><th>使用……</th></tr></thead>
+  <tbody>
+    <tr><td>标准的编程 Agent 指令文件</td><td><code>AGENTS.md</code></td></tr>
+    <tr><td>生成或 lint Agent 指令文件</td><td><code>agentkit-cli</code> 或类似工具</td></tr>
+    <tr><td>自动生成仓库上下文</td><td><code>agentseed</code> 或类似上下文生成器</td></tr>
+    <tr><td>重型多 Agent 项目管理</td><td>完整的 Agent 项目管理框架</td></tr>
+    <tr><td>复制即用的 AI 辅助仓库治理层</td><td><strong>Agent Project Seed</strong></td></tr>
+  </tbody>
+</table>
+<blockquote>一个仓库，多个 Agent，一份共享的运行记录。</blockquote>
+
+<h2>目录结构</h2>
 <div class="tree">
-<span class="dir">control/</span>                <span class="comment"># 治理层</span><br>
-├── <span class="file">contract.md</span>         <span class="comment"># 唯一共享规则源</span><br>
-├── <span class="file">ledger.md</span>           <span class="comment"># 统一记录账本</span><br>
-└── <span class="file">state.md</span>            <span class="comment"># 当前态快照</span><br>
-<span class="dir">work/</span>                   <span class="comment"># 工作层</span><br>
-├── <span class="dir">in/</span>                 <span class="comment"># 输入材料</span><br>
-├── <span class="dir">out/</span>                <span class="comment"># 正式产物（不提交）</span><br>
-└── <span class="dir">tmp/</span>                <span class="comment"># 临时文件（不提交）</span><br>
-<span class="dir">tools/</span><br>
-├── <span class="file">project.py</span>          <span class="comment"># 初始化、预检、同步、安全提交</span><br>
-└── <span class="file">panel.py</span>            <span class="comment"># 面板生成器</span><br>
-<span class="dir">src/</span><br>
-└── <span class="dir">base_scaffold/</span>      <span class="comment"># Python 工具包</span><br>
-<span class="dir">tests/</span>                  <span class="comment"># 测试</span><br>
-<span class="dir">.claude/</span><br>
-├── <span class="dir">hooks/</span><span class="file">panel_hook.py</span> <span class="comment"># 面板注入 hook</span><br>
-└── <span class="file">settings.example.json</span><br>
-<span class="file">AGENTS.md</span>               <span class="comment"># Codex 入口</span><br>
-<span class="file">CLAUDE.md</span>               <span class="comment"># Claude Code 入口</span><br>
-<span class="file">GEMINI.md</span>               <span class="comment"># Gemini CLI 入口</span>
+<span class="dir">.</span><br>
+├── <span class="dir">control/</span><br>
+│   ├── <span class="file">contract.md</span>         <span class="comment"># 共享规则和项目意图</span><br>
+│   ├── <span class="file">ledger.md</span>           <span class="comment"># 结构化长期记录</span><br>
+│   └── <span class="file">state.md</span>            <span class="comment"># 当前状态快照</span><br>
+├── <span class="dir">work/</span><br>
+│   ├── <span class="dir">in/</span>                 <span class="comment"># 输入材料</span><br>
+│   ├── <span class="dir">out/</span>                <span class="comment"># 正式产物，不提交</span><br>
+│   └── <span class="dir">tmp/</span>                <span class="comment"># 临时文件，不提交</span><br>
+├── <span class="dir">tools/</span><br>
+│   ├── <span class="file">project.py</span>          <span class="comment"># 初始化、检查、同步、安全提交</span><br>
+│   └── <span class="file">panel.py</span>            <span class="comment"># 状态面板生成器</span><br>
+├── <span class="dir">src/</span><br>
+│   └── <span class="dir">base_scaffold/</span>      <span class="comment"># 小巧可复用的 Python 工具</span><br>
+├── <span class="dir">tests/</span><br>
+├── <span class="dir">.claude/</span><br>
+│   ├── <span class="dir">hooks/</span><span class="file">panel_hook.py</span><br>
+│   └── <span class="file">settings.example.json</span><br>
+├── <span class="file">AGENTS.md</span><br>
+├── <span class="file">CLAUDE.md</span><br>
+└── <span class="file">GEMINI.md</span>
+</div>
+
+<h2>命令</h2>
+<pre><code># 验证脚手架
+python3 tools/project.py check
+
+# 复制后初始化
+python3 tools/project.py init --name "你的项目名"
+
+# 重新生成 AGENTS.md、CLAUDE.md、GEMINI.md
+python3 tools/project.py sync-agents
+
+# 只提交安全的白名单改动
+python3 tools/project.py commit --message "chore: checkpoint agent work"
+
+# 运行测试
+python3 -m pytest</code></pre>
+<p>同样可以通过 <code>make</code> 使用：</p>
+<pre><code>make preflight
+make test
+make sync-agents</code></pre>
+
+<h2>适合什么</h2>
+<div class="grid">
+  <div class="card">
+    <h3>适合</h3>
+    <ul>
+      <li>多个 AI 编程工具协作的仓库</li>
+      <li>长期运行的个人项目，Agent 记忆很重要</li>
+      <li>想要轻量规则再逐步引入更重流程的团队</li>
+      <li>内容、数据、研究、自动化和软件项目中可复用的交接</li>
+      <li>生成产物、临时文件和密钥必须远离提交的项目</li>
+    </ul>
+  </div>
+  <div class="card bad">
+    <h3>不适合</h3>
+    <ul>
+      <li>只需要一个静态提示词文件</li>
+      <li>想要托管仪表盘或 SaaS 工作流</li>
+      <li>需要自主 Agent 调度或任务执行</li>
+      <li>想完全替代 GitHub Issues、Linear、Jira 等 PM 工具</li>
+    </ul>
+  </div>
+</div>
+
+<h2>设计原则</h2>
+<div class="principles">
+  <div class="principle">真相源保持纯文本。</div>
+  <div class="principle">记录对未来的 Agent 有用，不为冗长而冗长。</div>
+  <div class="principle">偏好小巧可检查的脚本，不引入框架锁定。</div>
+  <div class="principle">默认守护提交安全。</div>
+  <div class="principle">项目结构只在工作真正需要时才生长。</div>
+</div>
+
+<h2>依赖</h2>
+<ul>
+  <li>Python >= 3.9</li>
+  <li>推荐 Git</li>
+  <li>无运行时依赖</li>
+</ul>
+<p>测试使用 <code>pytest</code>：</p>
+<pre><code>python3 -m pip install -e ".[test]"
+python3 -m pytest</code></pre>
+
+<h2>推荐 GitHub Topics</h2>
+<div class="topics">
+  <span class="topic">ai-agents</span>
+  <span class="topic">codex</span>
+  <span class="topic">claude-code</span>
+  <span class="topic">gemini-cli</span>
+  <span class="topic">agents-md</span>
+  <span class="topic">agentic-coding</span>
+  <span class="topic">project-template</span>
+  <span class="topic">developer-tools</span>
+  <span class="topic">multi-agent</span>
+  <span class="topic">python</span>
 </div>
 
 <div class="footer">
-  Agent Project Seed &mdash; Multi-agent collaboration scaffold
+  Agent Project Seed &mdash; 把任意仓库变成 AI 编程 Agent 的纪律化工作空间
 </div>
 
 </div>

@@ -16,3 +16,36 @@ details:
 
 links:
 - control/contract.md
+
+## 2026-05-14T14:00:39 - Competitive positioning research
+
+type: session
+tags: positioning, github, promotion
+
+summary:
+- GitHub and web research found adjacent projects, but no exact match for a zero-dependency, copy-ready multi-agent governance scaffold with contract/state/ledger, safe commit, health check, and Codex/Claude/Gemini entry-point sync.
+- Recommended positioning: lightweight project governance layer for AI coding agents, not a full agent framework or task orchestration system.
+
+details:
+- Adjacent projects include AGENTS.md instruction standard, agentkit-cli, agentseed, Microsoft Agentic Project Management, and general Claude/Gemini/Codex instruction-file practices.
+- Strongest differentiators: single source of shared rules, unified structured ledger, safety-first commit allowlist, zero runtime dependencies, and multi-tool entry file generation.
+- Promotion should avoid claiming no competitors; instead emphasize a narrow wedge: "turn any repo into a disciplined multi-agent workspace in minutes."
+
+links:
+- README.md
+- control/contract.md
+
+## 2026-05-14T14:03:35 - README repositioned for GitHub launch
+
+type: artifact
+tags: readme, promotion, positioning
+
+summary:
+- Reworked `README.md` into a GitHub-ready landing document focused on positioning, quick start, core workflow, differentiation, target users, and suggested topics.
+
+details:
+- Emphasized the project as a lightweight governance scaffold for AI-assisted repositories rather than an agent framework.
+- Added comparison guidance against adjacent tools such as AGENTS.md, agentkit-style tooling, context generators, and heavier project-management frameworks.
+
+links:
+- README.md
