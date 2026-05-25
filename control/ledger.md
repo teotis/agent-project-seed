@@ -15,7 +15,7 @@ details:
 - When a category of records naturally grows large, split into `control/ledger/YYYY-MM.md` or domain directories.
 
 links:
-- control/contract.md
+- AGENTS.md
 
 ## 2026-05-14T14:00:39 - Competitive positioning research
 
@@ -48,7 +48,7 @@ details:
 
 links:
 - README.md
-- control/contract.md
+- AGENTS.md
 
 ## 2026-05-14T14:41:23 - Codex hook support added
 

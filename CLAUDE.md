@@ -1,13 +1,13 @@
-# Claude Code Entry
+@AGENTS.md
 
-<!-- Generated from control/contract.md. Do not edit directly. -->
+# Claude Code adapter
 
-Shared engineering rules are in:
+This repository uses `AGENTS.md` as the shared source of truth for AI coding agents.
 
-@./control/contract.md
+Claude Code-specific notes:
 
-## Claude Code Notes
-
-- After modifying shared rules, run `python3 tools/project.py sync-agents`.
+- Follow `AGENTS.md` first.
+- Keep this file short and Claude-specific.
+- Do not duplicate shared project rules here.
+- When a repeated mistake is discovered, suggest whether it should become a hook, test, lint rule, or CI check instead of adding another reminder here.
 - You can configure `.claude/settings.json` Stop hook to call `tools/project.py commit`.
-- Do not copy shared rules into this file.

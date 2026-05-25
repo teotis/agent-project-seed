@@ -12,10 +12,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTICE = "<!-- Generated from control/contract.md. Do not edit directly. -->"
+NOTICE = "<!-- Generated from AGENTS.md. Do not edit directly. -->"
 
 REQUIRED_FILES = [
-    "control/contract.md",
     "control/ledger.md",
     "control/state.md",
     "AGENTS.md",
@@ -85,39 +84,20 @@ def package_name_from_project(name: str) -> str:
     return package
 
 
-def render_agents() -> str:
-    return f"""# Repository Instructions
-
-{NOTICE}
-
-Shared engineering rules are in:
-
-`control/contract.md`
-
-Codex should read this file before starting a task, then read `control/state.md`, `control/ledger.md`, and task-related files.
-
-## Codex Notes
-
-- After modifying shared rules, run `python3 tools/project.py sync-agents`.
-- `AGENTS.md` is the Codex entry point; do not copy shared rules into this file.
-- For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
-"""
-
-
 def render_claude() -> str:
-    return f"""# Claude Code Entry
+    return f"""@AGENTS.md
 
-{NOTICE}
+# Claude Code adapter
 
-Shared engineering rules are in:
+This repository uses `AGENTS.md` as the shared source of truth for AI coding agents.
 
-@./control/contract.md
+Claude Code-specific notes:
 
-## Claude Code Notes
-
-- After modifying shared rules, run `python3 tools/project.py sync-agents`.
+- Follow `AGENTS.md` first.
+- Keep this file short and Claude-specific.
+- Do not duplicate shared project rules here.
+- When a repeated mistake is discovered, suggest whether it should become a hook, test, lint rule, or CI check instead of adding another reminder here.
 - You can configure `.claude/settings.json` Stop hook to call `tools/project.py commit`.
-- Do not copy shared rules into this file.
 """
 
 
@@ -128,7 +108,7 @@ def render_gemini() -> str:
 
 Shared engineering rules are in:
 
-@./control/contract.md
+@./AGENTS.md
 
 ## Gemini CLI Notes
 
@@ -139,31 +119,30 @@ Shared engineering rules are in:
 
 def expected_agent_files() -> dict[Path, str]:
     return {
-        ROOT / "AGENTS.md": render_agents(),
         ROOT / "CLAUDE.md": render_claude(),
         ROOT / "GEMINI.md": render_gemini(),
     }
 
 
 def sync_agents() -> int:
-    if not (ROOT / "control" / "contract.md").exists():
-        print("missing control/contract.md", file=sys.stderr)
+    if not (ROOT / "AGENTS.md").exists():
+        print("missing AGENTS.md", file=sys.stderr)
         return 1
     for path, content in expected_agent_files().items():
         path.write_text(content, encoding="utf-8")
-    print("Synced AGENTS.md, CLAUDE.md, and GEMINI.md.")
+    print("Synced CLAUDE.md and GEMINI.md from AGENTS.md.")
     return 0
 
 
 def check_agent_sync(result: Result) -> None:
-    if not (ROOT / "control" / "contract.md").exists():
-        result.issues.append("missing control/contract.md")
+    if not (ROOT / "AGENTS.md").exists():
+        result.issues.append("missing AGENTS.md")
         return
     for path, expected in expected_agent_files().items():
         if not path.exists():
             result.issues.append(f"missing {path.relative_to(ROOT)}")
         elif path.read_text(encoding="utf-8") != expected:
-            result.issues.append(f"{path.relative_to(ROOT)} is not in sync with control/contract.md")
+            result.issues.append(f"{path.relative_to(ROOT)} is not in sync with AGENTS.md")
     if not any("sync" in issue for issue in result.issues):
         result.notices.append("agent entry files are synced")
 
@@ -223,22 +202,22 @@ def check_panel_runs(result: Result) -> None:
 
 
 def check_init_status_consistency(result: Result) -> None:
-    """Check that contract/state/ledger are consistent with each other."""
-    contract = ROOT / "control" / "contract.md"
+    """Check that AGENTS.md/state are consistent with each other."""
+    agents = ROOT / "AGENTS.md"
     state = ROOT / "control" / "state.md"
-    if not contract.exists() or not state.exists():
+    if not agents.exists() or not state.exists():
         return
-    contract_text = contract.read_text(encoding="utf-8")
+    agents_text = agents.read_text(encoding="utf-8")
     state_text = state.read_text(encoding="utf-8")
     seed_placeholder = "After copying this scaffold, update this section and"
-    contract_initialized = seed_placeholder not in contract_text
+    contract_initialized = seed_placeholder not in agents_text
     state_initialized = "Initialized at:" in state_text
     if contract_initialized != state_initialized:
         result.warnings.append(
-            "init status mismatch: contract.md and state.md disagree on initialization state"
+            "init status mismatch: AGENTS.md and state.md disagree on initialization state"
         )
     elif contract_initialized:
-        result.notices.append("init status is consistent across contract/state")
+        result.notices.append("init status is consistent across AGENTS.md/state")
 
 
 def check_claude_hook_files(result: Result) -> None:
@@ -423,14 +402,12 @@ def now_iso() -> str:
 
 
 def update_contract(project_name: str) -> None:
-    """Replace Current Intent section with initialized template."""
-    path = ROOT / "control" / "contract.md"
+    """Replace Current Intent section in AGENTS.md with initialized template."""
+    path = ROOT / "AGENTS.md"
     if not path.exists():
         return
     text = path.read_text(encoding="utf-8")
     new_intent = (
-        f"## Current Intent\n"
-        f"\n"
         f"**Project**: {project_name}\n"
         f"**Status**: Initialized, goals pending\n"
         f"\n"
@@ -439,7 +416,10 @@ def update_contract(project_name: str) -> None:
         f"- Non-goals\n"
         f"- Acceptance criteria\n"
     )
-    text = re.sub(r"## Current Intent\n\n.*?(?=\n## |\Z)", new_intent, text, flags=re.DOTALL)
+    text = re.sub(
+        r"\*\*Project\*\*:.*?\n\*\*Status\*\*:.*?\n\n.*?(?=\n## |\Z)",
+        new_intent, text, flags=re.DOTALL
+    )
     path.write_text(text, encoding="utf-8")
 
 
@@ -458,7 +438,7 @@ def update_state(project_name: str, package_name: str) -> None:
         f"\n"
         f"## Next Maintenance Action\n"
         f"\n"
-        f"- Edit Current Intent in `control/contract.md` to specify project goals, non-goals, and acceptance criteria.\n"
+        f"- Edit Current Intent in `AGENTS.md` to specify project goals, non-goals, and acceptance criteria.\n"
     )
     path.write_text(content, encoding="utf-8")
 
@@ -481,10 +461,10 @@ def append_init_ledger(project_name: str, package_name: str) -> None:
         f"\n"
         f"details:\n"
         f"- Completed: text replacement, package rename, settings activation, contract/state update\n"
-        f"- Todo: edit `control/contract.md` to specify project goals\n"
+        f"- Todo: edit `AGENTS.md` to specify project goals\n"
         f"\n"
         f"links:\n"
-        f"- control/contract.md\n"
+        f"- AGENTS.md\n"
         f"- control/state.md\n"
     )
     separator = "\n" if existing.endswith("\n\n") else "\n\n"

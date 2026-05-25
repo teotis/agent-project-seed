@@ -25,7 +25,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Safe Commit | Whitelist-based commit command for agent-made changes |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, Claude/Codex hook helpers, gitkeep files, imports, and platform junk |
-| Agent Sync | Regenerates `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` from `control/contract.md` |
+| Agent Sync | Regenerates `CLAUDE.md` and `GEMINI.md` from `AGENTS.md` |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
 
@@ -33,7 +33,6 @@ AI agents work better when they share the same operating context. This scaffold 
 
 ```text
 ├── control/
-│   ├── contract.md         # Shared rules and project intent
 │   ├── ledger.md           # Structured long-term records
 │   └── state.md            # Current state snapshot
 ├── work/
