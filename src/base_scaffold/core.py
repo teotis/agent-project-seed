@@ -99,6 +99,7 @@ def atomic_write_text(path: str | Path, text: str, encoding: str = "utf-8") -> N
         with os.fdopen(fd, "w", encoding=encoding) as handle:
             handle.write(text)
         os.replace(tmp_name, target)
+        os.chmod(target, 0o644)
     except Exception:
         try:
             os.unlink(tmp_name)

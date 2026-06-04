@@ -26,15 +26,16 @@ def test_atomic_json_roundtrip(tmp_path):
     path = tmp_path / "nested" / "data.json"
     atomic_write_json(path, {"ok": True})
     assert read_json(path) == {"ok": True}
+    assert (path.stat().st_mode & 0o777) == 0o644
 
 
 def test_env_gate(tmp_path):
     env_file = tmp_path / ".env"
-    env_file.write_text("DEMO_API_ENABLED=1\nDEMO_API_KEY=secret\n", encoding="utf-8")
+    env_file.write_text("DEMO_API_ENABLED=1\nDEMO_API_KEY=TEST_API_KEY_PLACEHOLDER\n", encoding="utf-8")
     environ = {}
     load_env(env_file, environ=environ)
 
-    assert assert_api_enabled("DEMO", allow_api=True, environ=environ) == "secret"
+    assert assert_api_enabled("DEMO", allow_api=True, environ=environ) == "TEST_API_KEY_PLACEHOLDER"
     try:
         assert_api_enabled("DEMO", allow_api=False, environ=environ)
     except ApiDisabledError:
