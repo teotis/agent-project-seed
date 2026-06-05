@@ -1,27 +1,19 @@
 {
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/panel_hook.py",
-            "timeout": 12,
-            "statusMessage": "Loading project status panel…"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 tools/project.py commit --message \"chore: checkpoint agent work\""
-          }
-        ]
-      }
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git stash *)",
+      "Bash(git worktree *)",
+      "Bash(git rm *)",
+      "Bash(git show *)",
+      "Bash(rtk git *)",
+      "Bash(rtk python3 *)",
+      "Bash(PYTHONPATH=src python3 -m pytest *)"
     ]
   }
 }

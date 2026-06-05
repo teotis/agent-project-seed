@@ -17,18 +17,24 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SEED_PLACEHOLDER = "After copying this scaffold, update this section and"
+SEED_PLACEHOLDER = "Seed Template — copy this scaffold to start a new project."
 PENDING_MARKER = "Initialized, goals pending"
 
 
+def read_agents_text() -> str:
+    """Read AGENTS.md content, returning empty string if missing."""
+    agents = ROOT / "AGENTS.md"
+    if not agents.exists():
+        return ""
+    return agents.read_text(encoding="utf-8")
+
+
 def read_project_name() -> str:
-    """Read project name from contract.md, falling back to pyproject.toml."""
-    contract = ROOT / "control" / "contract.md"
-    if contract.exists():
-        text = contract.read_text(encoding="utf-8")
-        match = re.search(r"\*\*Project\*\*:\s*(.+)", text)
-        if match:
-            return match.group(1).strip()
+    """Read project name from AGENTS.md Current Intent section."""
+    text = read_agents_text()
+    match = re.search(r"\*\*Project\*\*:\s*(.+)", text)
+    if match:
+        return match.group(1).strip()
     toml = ROOT / "pyproject.toml"
     if toml.exists():
         text = toml.read_text(encoding="utf-8")
@@ -49,10 +55,9 @@ def read_package_name() -> str:
 
 def detect_status() -> str:
     """Detect project status: seed / pending / ready."""
-    contract = ROOT / "control" / "contract.md"
-    if not contract.exists():
+    text = read_agents_text()
+    if not text:
         return "seed"
-    text = contract.read_text(encoding="utf-8")
     if SEED_PLACEHOLDER in text:
         return "seed"
     if PENDING_MARKER in text:
@@ -70,16 +75,12 @@ def count_ledger_records() -> int:
 
 
 def extract_intent_summary() -> str:
-    """Extract the project goal line from Current Intent in contract.md."""
-    contract = ROOT / "control" / "contract.md"
-    if not contract.exists():
-        return ""
-    text = contract.read_text(encoding="utf-8")
+    """Extract the project goal line from Current Intent in AGENTS.md."""
+    text = read_agents_text()
     match = re.search(r"## Current Intent\n\n(.+?)(?=\n## |\Z)", text, re.DOTALL)
     if not match:
         return ""
     body = match.group(1).strip()
-    # Skip metadata lines (**Project**: / **Status**:), extract first "- " line
     for line in body.splitlines():
         line = line.strip()
         if line.startswith("- "):

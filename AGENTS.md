@@ -2,6 +2,11 @@
 
 This file is the shared source of truth for AI coding agents working in this repository.
 
+## Current Intent
+
+**Project**: Agent Project Seed
+**Status**: Seed Template — copy this scaffold to start a new project.
+
 ## Project overview
 
 A copy-and-use lightweight project scaffold. Ships with minimal structure for multi-agent collaboration. Python 3.9+, toolchain via `tools/project.py`.

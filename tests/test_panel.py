@@ -52,11 +52,11 @@ def test_panel_distinguishes_seed_pending_ready(tmp_path):
         panel_mod.ROOT = target
         assert panel_mod.detect_status() == "pending"
 
-        # Manually edit contract.md with explicit goals -> ready
-        contract = target / "control" / "contract.md"
-        text = contract.read_text(encoding="utf-8")
+        # Manually edit AGENTS.md with explicit goals -> ready
+        agents = target / "AGENTS.md"
+        text = agents.read_text(encoding="utf-8")
         text = text.replace("Initialized, goals pending", "Goal: Build a demo application")
-        contract.write_text(text, encoding="utf-8")
+        agents.write_text(text, encoding="utf-8")
         assert panel_mod.detect_status() == "ready"
     finally:
         panel_mod.ROOT = original_root

@@ -19,11 +19,9 @@ REQUIRED_FILES = [
     "control/state.md",
     "AGENTS.md",
     "CLAUDE.md",
-    "GEMINI.md",
     ".codex/config.example.toml",
     "pyproject.toml",
     ".gitignore",
-    ".env.example",
 ]
 
 REQUIRED_DIRS = ["control", "work/in", "work/out", "work/tmp", "tools", "src"]
@@ -120,6 +118,11 @@ Shared engineering rules are in:
 def expected_agent_files() -> dict[Path, str]:
     return {
         ROOT / "CLAUDE.md": render_claude(),
+    }
+
+
+def optional_agent_files() -> dict[Path, str]:
+    return {
         ROOT / "GEMINI.md": render_gemini(),
     }
 
@@ -129,6 +132,8 @@ def sync_agents() -> int:
         print("missing AGENTS.md", file=sys.stderr)
         return 1
     for path, content in expected_agent_files().items():
+        path.write_text(content, encoding="utf-8")
+    for path, content in optional_agent_files().items():
         path.write_text(content, encoding="utf-8")
     print("Synced CLAUDE.md and GEMINI.md from AGENTS.md.")
     return 0
@@ -143,6 +148,9 @@ def check_agent_sync(result: Result) -> None:
             result.issues.append(f"missing {path.relative_to(ROOT)}")
         elif path.read_text(encoding="utf-8") != expected:
             result.issues.append(f"{path.relative_to(ROOT)} is not in sync with AGENTS.md")
+    for path, expected in optional_agent_files().items():
+        if path.exists() and path.read_text(encoding="utf-8") != expected:
+            result.warnings.append(f"{path.relative_to(ROOT)} is not in sync with AGENTS.md (optional)")
     if not any("sync" in issue for issue in result.issues):
         result.notices.append("agent entry files are synced")
 
@@ -209,14 +217,14 @@ def check_init_status_consistency(result: Result) -> None:
         return
     agents_text = agents.read_text(encoding="utf-8")
     state_text = state.read_text(encoding="utf-8")
-    seed_placeholder = "After copying this scaffold, update this section and"
-    contract_initialized = seed_placeholder not in agents_text
+    seed_status = "Seed Template — copy this scaffold to start a new project."
+    agents_is_seed = seed_status in agents_text
     state_initialized = "Initialized at:" in state_text
-    if contract_initialized != state_initialized:
+    if agents_is_seed == state_initialized:
         result.warnings.append(
             "init status mismatch: AGENTS.md and state.md disagree on initialization state"
         )
-    elif contract_initialized:
+    elif not agents_is_seed:
         result.notices.append("init status is consistent across AGENTS.md/state")
 
 
@@ -271,6 +279,42 @@ def check_no_platform_junk_tracked(result: Result) -> None:
         result.warnings.append(f"platform junk files tracked in git: {', '.join(junk)}")
 
 
+SECRET_PATTERNS = [
+    re.compile(r"PRIVATE KEY"),
+    re.compile(r"password\s*=\s*['\"]", re.IGNORECASE),
+    re.compile(r"secret\s*=\s*['\"]", re.IGNORECASE),
+    re.compile(r"api[_-]?key\s*=\s*['\"][A-Za-z0-9]", re.IGNORECASE),
+]
+
+
+def check_safety(result: Result) -> None:
+    """Check staged files for secrets and sensitive patterns."""
+    if not (ROOT / ".git").exists():
+        return
+    completed = run_git(["diff", "--cached", "--name-only"])
+    if completed.returncode != 0:
+        return
+    staged = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+    for path in staged:
+        if path == ".env" or path.endswith("/.env"):
+            result.issues.append(f"sensitive file staged for commit: {path}")
+            continue
+        target = ROOT / path
+        if not target.is_file() or target.stat().st_size > 100_000:
+            continue
+        suffix = target.suffix.lower()
+        if suffix not in TEXT_SUFFIXES:
+            continue
+        try:
+            text = target.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        for pattern in SECRET_PATTERNS:
+            if pattern.search(text):
+                result.warnings.append(f"possible secret in staged file: {path}")
+                break
+
+
 def print_result(result: Result, quiet: bool) -> None:
     if result.issues:
         print("[check] issues:")
@@ -301,6 +345,7 @@ def check(args: argparse.Namespace) -> int:
     if not args.skip_git:
         check_git(result)
         check_no_platform_junk_tracked(result)
+        check_safety(result)
     print_result(result, args.quiet)
     return 1 if result.issues else 0
 
@@ -402,7 +447,7 @@ def now_iso() -> str:
 
 
 def update_contract(project_name: str) -> None:
-    """Replace Current Intent section in AGENTS.md with initialized template."""
+    """Update Current Intent section in AGENTS.md with initialized template."""
     path = ROOT / "AGENTS.md"
     if not path.exists():
         return
@@ -416,10 +461,19 @@ def update_contract(project_name: str) -> None:
         f"- Non-goals\n"
         f"- Acceptance criteria\n"
     )
-    text = re.sub(
-        r"\*\*Project\*\*:.*?\n\*\*Status\*\*:.*?\n\n.*?(?=\n## |\Z)",
-        new_intent, text, flags=re.DOTALL
-    )
+    # Match existing **Project**/**Status** block and everything until next ## section
+    if "**Project**:" in text and "**Status**:" in text:
+        text = re.sub(
+            r"\*\*Project\*\*:.*?\n\*\*Status\*\*:.*?\n\n.*?(?=\n## |\Z)",
+            new_intent, text, flags=re.DOTALL
+        )
+    else:
+        # No Current Intent block exists; insert before first ## heading
+        text = re.sub(
+            r"(## )",
+            f"## Current Intent\n\n{new_intent}\n\\1",
+            text, count=1,
+        )
     path.write_text(text, encoding="utf-8")
 
 

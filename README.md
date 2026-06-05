@@ -1,9 +1,9 @@
 # Agent Project Seed
 
-A copy-and-use multi-agent collaboration scaffold. Clone it, initialize once, and give Codex, Claude Code, and Gemini CLI the same project rules, state, and record trail.
+A copy-and-use multi-agent collaboration scaffold. Clone it, initialize once, and give Codex and Claude Code the same project rules, state, and record trail.
 
 - Python >= 3.9, zero runtime dependencies
-- Supports Codex / Claude Code / Gemini CLI
+- Supports Codex / Claude Code
 - Plain-text governance: no database, no hosted service, no agent framework
 
 ## Why Use It
@@ -14,7 +14,7 @@ AI agents work better when they share the same operating context. This scaffold 
 - A current-state snapshot for handoff between sessions and agents
 - A structured ledger for requirements, decisions, risks, issues, and artifacts
 - Safe commit tooling that rejects secrets, temp files, generated outputs, and unexpected paths
-- Synced `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` entry points
+- Synced `AGENTS.md` and `CLAUDE.md` entry points (optional `GEMINI.md`)
 - A lightweight status panel for Claude Code hooks and Codex-friendly helper commands
 
 ## What's Included
@@ -24,10 +24,27 @@ AI agents work better when they share the same operating context. This scaffold 
 | Status Panel | Shows project status, git status, ledger count, goal, and next action |
 | Safe Commit | Whitelist-based commit command for agent-made changes |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
-| Health Check | Validates required files, entry-file sync, Claude/Codex hook helpers, gitkeep files, imports, and platform junk |
-| Agent Sync | Regenerates `CLAUDE.md` and `GEMINI.md` from `AGENTS.md` |
+| Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
+| Agent Sync | Regenerates `CLAUDE.md` (required) and `GEMINI.md` (optional) from `AGENTS.md` |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
+
+## Quick Start
+
+```bash
+# 1. Copy the scaffold
+cp -r project_seed my-new-project
+cd my-new-project
+
+# 2. Initialize
+python3 tools/project.py init --name "My Project"
+
+# 3. Verify
+make preflight
+make test
+```
+
+See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
 
 ## Directory Layout
 
@@ -41,18 +58,22 @@ AI agents work better when they share the same operating context. This scaffold 
 │   └── tmp/                # Temporary files, not committed
 ├── tools/
 │   ├── project.py          # Init, check, sync, safe commit
-│   └── panel.py            # Status panel generator
+│   ├── panel.py            # Status panel generator
+│   └── hooks/              # Codex hook helpers
 ├── src/
 │   └── base_scaffold/      # Small reusable Python utilities
 ├── tests/
+├── docs/                   # Project documentation
+├── .tmp/                   # Local scratch space, not committed
 ├── .codex/
 │   └── config.example.toml
 ├── .claude/
 │   ├── hooks/panel_hook.py
 │   └── settings.example.json
-├── AGENTS.md
-├── CLAUDE.md
-└── GEMINI.md
+├── AGENTS.md               # Shared source of truth
+├── CLAUDE.md               # Claude Code entry point
+├── GEMINI.md               # Optional Gemini CLI entry point
+└── SETUP_NEW_MACHINE.md    # First-time setup guide
 ```
 
 ## Codex Hooks

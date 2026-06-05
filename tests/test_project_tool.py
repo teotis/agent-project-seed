@@ -84,7 +84,8 @@ def test_init_project_copy_no_git(tmp_path):
     target = _copy_and_init(tmp_path)
     assert (target / "src" / "demo_project" / "__init__.py").exists()
     assert "demo-project" in (target / "pyproject.toml").read_text(encoding="utf-8")
-    assert (target / "control" / "contract.md").exists()
+    agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+    assert "Demo Project" in agents
     assert (target / ".codex" / "config.example.toml").exists()
     assert (target / "work" / "in" / ".gitkeep").exists()
 
@@ -103,10 +104,10 @@ def test_codex_notify_hook_finds_project_root():
 def test_init_updates_contract_state_and_ledger(tmp_path):
     target = _copy_and_init(tmp_path, name="My App", package="my_app")
 
-    contract = (target / "control" / "contract.md").read_text(encoding="utf-8")
-    assert "My App" in contract
-    assert "Initialized, goals pending" in contract
-    assert "After copying this scaffold" not in contract
+    agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+    assert "My App" in agents
+    assert "Initialized, goals pending" in agents
+    assert "Seed Template — copy this scaffold" not in agents
 
     state = (target / "control" / "state.md").read_text(encoding="utf-8")
     assert "My App" in state
@@ -120,17 +121,38 @@ def test_init_updates_contract_state_and_ledger(tmp_path):
 def test_no_legacy_directories_in_template():
     legacy_dirs = [
         "codex",
-        "docs",
         "revision",
         "journal",
         "reports",
         "data",
         "source_material",
         "optional_packs",
-        "scripts",
         "input",
         "output",
-        ".tmp",
     ]
     for relative in legacy_dirs:
         assert not (ROOT / relative).exists(), f"legacy directory remains: {relative}"
+
+
+def test_safety_check_detects_staged_env(tmp_path):
+    target = tmp_path / "safety_project"
+    ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
+    shutil.copytree(ROOT, target, ignore=ignore)
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+    subprocess.run(["git", "add", "-A"], cwd=target, check=True, capture_output=True)
+    subprocess.run(["git", "commit", "-m", "init"], cwd=target, check=True, capture_output=True)
+
+    env_file = target / ".env"
+    env_file.write_text("SECRET_KEY=abc123\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-f", ".env"], cwd=target, check=True, capture_output=True)
+
+    module = load_project_tool()
+    result = module.Result()
+    original_root = module.ROOT
+    try:
+        module.ROOT = target
+        module.check_safety(result)
+    finally:
+        module.ROOT = original_root
+
+    assert any("sensitive file" in issue for issue in result.issues)
