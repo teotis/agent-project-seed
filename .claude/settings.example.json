@@ -11,8 +11,7 @@
       "Bash(git worktree *)",
       "Bash(git rm *)",
       "Bash(git show *)",
-      "Bash(rtk git *)",
-      "Bash(rtk python3 *)",
+
       "Bash(PYTHONPATH=src python3 -m pytest *)"
     ]
   }
