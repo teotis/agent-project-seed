@@ -33,6 +33,22 @@ notify = [
 
 Replace the path with this repository's actual absolute path.
 
+For cross-project Codex App usage, also consider installing a user-level
+`clean-checkpoint-first` skill and Stop hook under `~/.codex`. That user-level
+layer should enforce the general checkpoint rule: if a session creates new
+tracked dirty changes, it must either commit a local checkpoint or clearly report
+why VCS closeout is blocked. Keep this separate from `AGENTS.md` so copied
+projects inherit a small shared contract while the repeatable workflow lives in
+skills and hooks.
+
+Suggested layering:
+
+- `AGENTS.md`: project invariants and short workflow pointer.
+- User or repo skill: repair/verification/local-commit workflow.
+- Stop hook: mechanical dirty-workspace and closeout checks.
+- Permissions/rules: push/reset/remove/staging risk boundaries.
+- Worktrees: isolated fixes for independent issues before final integration.
+
 ## Verify Setup
 
 ```bash

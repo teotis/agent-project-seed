@@ -31,6 +31,7 @@ ALLOWED_PREFIXES = (
     "CLAUDE.md",
     "GEMINI.md",
     "README.md",
+    "SETUP_NEW_MACHINE.md",
     "Makefile",
     "pyproject.toml",
     ".gitignore",

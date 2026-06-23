@@ -23,6 +23,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
     changes = [
         module.GitChange("??", "control/ledger.md"),
         module.GitChange("??", ".codex/config.example.toml"),
+        module.GitChange(" M", "SETUP_NEW_MACHINE.md"),
         module.GitChange("??", ".env"),
         module.GitChange("??", "work/tmp/scratch.txt"),
         module.GitChange("??", "work/out/result.png"),
@@ -33,6 +34,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
     assert [change.path for change in allowed] == [
         "control/ledger.md",
         ".codex/config.example.toml",
+        "SETUP_NEW_MACHINE.md",
     ]
     assert [change.path for change in rejected] == [".env", "work/tmp/scratch.txt", "work/out/result.png"]
 

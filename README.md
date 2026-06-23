@@ -29,6 +29,28 @@ AI agents work better when they share the same operating context. This scaffold 
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
 
+## Clean Checkpoint Design
+
+This seed treats agent work as a sequence of auditable checkpoints, not as an
+open-ended dirty working tree. A local checkpoint commit, even if it later needs
+amend/squash cleanup, is preferred to leaving mixed tracked changes behind.
+
+Recommended Codex App shape for copied projects:
+
+- Use a reusable skill for the repair/closeout workflow: inspect, implement,
+  verify, stage relevant files only, commit locally, and report branch status.
+- Use hooks for mechanical end-of-turn gates, especially detecting new tracked
+  dirty changes that were produced by the current session but not checkpointed.
+- Use rules or permissions for dangerous command boundaries such as push,
+  destructive reset, broad remove, or coarse staging.
+- Use Codex App worktrees for independent issue branches, then use one
+  integration/finalizer session to merge, verify, and explain the final state.
+- Keep `AGENTS.md` small. It should point to the workflow and invariants; bulky
+  procedure belongs in skills, scripts, and hook checks.
+
+The default policy is local-only: do not push unless the user explicitly asks
+for remote sync.
+
 ## Quick Start
 
 ```bash
@@ -81,3 +103,8 @@ See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
 Codex reads the shared entry point from `AGENTS.md`. For end-of-turn guarded commits, copy the `notify` example from `.codex/config.example.toml` into your user-level `~/.codex/config.toml` and replace the placeholder path with this repository's absolute path.
 
 The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Codex does not currently use the Claude-style prompt-injection hook in this scaffold; run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.
+
+For broader Codex App use across projects, prefer a user-level
+`clean-checkpoint-first` skill plus a user-level Stop hook. The skill teaches the
+workflow; the hook prevents silent dirty-workspace leakage. Repository-local
+hooks remain useful when a copied project needs stricter project-specific gates.
