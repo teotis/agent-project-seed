@@ -51,7 +51,23 @@
           "text": "Routes to agent-orchestration-planner."
         }
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "这个需求看起来可能没有可行方案：当前 repo 没有相关模块，外部 API 也访问不了。帮我判断怎么退出比较合适。",
+      "expected_output": "Uses an explicit exit path instead of inventing a fake task pack. Records evidence checked, why continuing would be unsafe or wasteful, and the smallest useful next action.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Chooses no-viable-plan, needs-user-decision, blocked-with-handoff, defer, or upgrade-required as appropriate."
+        },
+        {
+          "text": "Does not generate implementation packages when the plan is not credible."
+        },
+        {
+          "text": "Includes checked evidence and a concrete next action."
+        }
+      ]
     }
   ]
 }
-

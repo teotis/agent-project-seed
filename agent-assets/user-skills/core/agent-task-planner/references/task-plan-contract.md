@@ -24,6 +24,12 @@ The goal is enough structure to start safely, not a full scheduler.
 - Why not full orchestration:
 - Upgrade trigger if conditions change:
 
+## Exit Path
+- Exit outcome: `none | no-viable-plan | needs-user-decision | blocked-with-handoff | defer | upgrade-required`
+- Evidence checked:
+- Why continuing would be unsafe or wasteful:
+- Smallest useful next action:
+
 ## Fix-Worthiness
 - User impact:
 - Evidence strength:
@@ -127,4 +133,3 @@ Escalate to `agent-orchestration-planner` when any of these becomes necessary:
 - each package requires its own worktree plus final merge control;
 - multiple runner wrappers are part of the value;
 - one artifact claiming success must be cross-checked against scheduler state.
-

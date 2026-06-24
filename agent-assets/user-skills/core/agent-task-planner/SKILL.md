@@ -65,6 +65,29 @@ seed, prefer `docs/plans/<date>-<slug>/` for generated task packs and
 7. If implementation starts in the same session, follow `clean-checkpoint-first`
    before claiming closure.
 
+## Lightweight Engineering Method
+
+Use only the method needed to keep a weaker model on track:
+
+- **Simplicity first**: choose the smallest change that can satisfy the goal;
+  avoid speculative features, one-use abstractions, and generic configurability.
+- **Surgical changes**: touch only files that trace directly to the task; mention
+  unrelated cleanup opportunities instead of folding them into the plan.
+- **Root cause before repair**: for bugs or failing tests, require evidence of
+  the failing path before proposing implementation work.
+- **Test-shaped goals**: turn each package into success criteria plus the
+  smallest meaningful verification command.
+- **Isolation by risk**: use the current checkout for narrow safe work, but
+  recommend a branch or worktree when the repo is dirty, the change is broad, or
+  multiple agents may edit concurrently.
+- **Checkpoint early**: prefer a small local checkpoint with disclosed limits over
+  leaving new tracked work dirty.
+
+These principles are adapted from the bundled superpowers planning/debugging/
+worktree skills and from lightweight Claude-style guidance such as think first,
+simplicity first, surgical changes, and goal-driven verification. Keep them as
+guardrails, not a long process.
+
 ## Lane Rules
 
 - `direct`: one narrow change, clear verification, no agent handoff needed.
@@ -79,6 +102,26 @@ seed, prefer `docs/plans/<date>-<slug>/` for generated task packs and
 Do not choose `upgrade` merely because the task is important or has several
 items. Name the specific control-plane capability that is required.
 
+## Exit Paths
+
+Not every task deserves or permits an implementation plan. If the request cannot
+be turned into a credible task pack, return one of these outcomes instead of
+forcing fake work:
+
+- `no-viable-plan`: no implementable path is supported by current repo evidence.
+- `needs-user-decision`: product, design, scope, credential, cost, or policy
+  choice blocks responsible planning.
+- `blocked-with-handoff`: a real path exists, but the current agent environment
+  lacks required access, tools, device, network, dependency, or permission.
+- `defer`: the issue has weak evidence, low value, duplicated work, or a bad
+  timing fit for the current goal.
+- `upgrade-required`: the work is viable only with full orchestration control
+  plane capabilities.
+
+Each exit must include: evidence checked, why continuing would be unsafe or
+wasteful, the smallest useful next action, and any artifacts or commands already
+available.
+
 ## Output Shape
 
 After writing a task pack, report only:
@@ -88,6 +131,7 @@ After writing a task pack, report only:
 - package list with dependencies;
 - first command or prompt to run;
 - verification and checkpoint expectation;
+- exit path when no task pack should be generated;
 - any external gate or blocked decision.
 
 Keep recovery and alternative lanes brief unless they are immediately relevant.

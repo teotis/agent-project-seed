@@ -237,3 +237,23 @@ links:
 - agent-assets/user-skills/core/agent-task-planner/SKILL.md
 - agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
 - agent-assets/user-skills/manifest.json
+
+## 2026-06-25T05:13:40 - Refine agent task planner exits and method
+
+type: decision
+status: closed
+tags: skills, planning, exit-paths, engineering-method
+
+summary:
+- `agent-task-planner` should include explicit exit paths for tasks that are not currently implementable.
+- Its engineering method should stay lightweight: simplicity, surgical changes, root-cause evidence, test-shaped goals, risk-based isolation, and checkpoint closure.
+
+details:
+- Exit outcomes include `no-viable-plan`, `needs-user-decision`, `blocked-with-handoff`, `defer`, and `upgrade-required`.
+- The skill may borrow from superpowers planning/debugging/worktree guidance and lightweight Claude-style principles, but should keep those as guardrails rather than a heavy process.
+
+links:
+- agent-assets/user-skills/core/agent-task-planner/SKILL.md
+- agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
+- tests/test_project_tool.py
+- https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md
