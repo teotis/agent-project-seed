@@ -39,7 +39,7 @@ Every task completion must include:
 
 If there are no new risks, explicitly write "No new risks found." Next steps must be concrete, actionable items.
 
-If the task produced a patch that was committed or otherwise merged into git, start the completion reply with the compact handoff status panel from `python3 tools/panel.py --mode handoff`, then summarize the change.
+If the task produced a patch that was committed or otherwise merged into git, start the completion reply with the compact handoff status panel from `python3 tools/panel.py --mode handoff` on macOS/Linux or `py -3 tools/panel.py --mode handoff` on Windows, then summarize the change.
 
 ### Ledger rule
 
@@ -78,12 +78,19 @@ make preflight          # runs: python3 tools/project.py check
 make test               # runs: python3 -m pytest
 ```
 
+Windows PowerShell equivalents:
+
+```powershell
+py -3 tools/project.py check
+py -3 -m pytest
+```
+
 ## Coding conventions
 
 - Git is used by default. Before each logical task ends:
-  1. Run `python3 tools/project.py check` or equivalent verification.
+  1. Run `python3 tools/project.py check` (`py -3 tools/project.py check` on Windows) or equivalent verification.
   2. Review changes, commit only files relevant to this round.
-  3. Use `python3 tools/project.py commit --message "type: summary"` for assisted safe commits.
+  3. Use `python3 tools/project.py commit --message "type: summary"` (`py -3 tools/project.py commit --message "type: summary"` on Windows) for assisted safe commits.
   4. Do not commit `.env`, `work/tmp/`, formal outputs in `work/out/`, large caches, or secrets.
   5. Do not push unless the user explicitly requests it.
 - Initialized projects include a project-level Codex clean-checkpoint hook in
@@ -109,7 +116,7 @@ src/                — Minimal general-purpose utilities
 The following do not have pre-built directories; generate them when needed:
 
 - data lifecycle: CSV/JSONL state tables, schema, sync scripts
-- complex task live state: generate `control/tasks/<slug>/status.tsv` with `python3 tools/project.py task init` when work spans multiple packages, worktrees, agents, or handoff sessions
+- complex task live state: generate `control/tasks/<slug>/status.tsv` with `python3 tools/project.py task init` (`py -3 tools/project.py task init` on Windows) when work spans multiple packages, worktrees, agents, or handoff sessions
 - content pipeline: draft/approved layering, publish gating, conflict resolution
 - image generation: provider, queue, manifest, cost gating
 - html delivery: Markdown + self-contained HTML dual delivery
@@ -130,8 +137,8 @@ No auto-generated files in this scaffold project.
 
 - Claude Code should read `CLAUDE.md`, which points back to this file.
 - Codex app should use this `AGENTS.md` as the shared project instruction file.
-- After modifying shared rules, run `python3 tools/project.py sync-agents`.
-- Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check`.
+- After modifying shared rules, run `python3 tools/project.py sync-agents` (`py -3 tools/project.py sync-agents` on Windows).
+- Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check` (`py -3 tools/project.py check` on Windows).
 - Context7 is the standard documentation MCP to verify for new environments with `codex mcp get context7` and `claude mcp get context7`.
 - Project-level Codex hooks in `.codex/hooks.json` provide the status panel and clean-checkpoint Stop gate after initialization.
-- For optional guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
+- For optional guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into `~/.codex/config.toml` on macOS/Linux, or `.codex/config.windows.example.toml` into `%USERPROFILE%\.codex\config.toml` on Windows, and update the absolute path.

@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 .codex/hooks/panel_hook.py",
+            "timeout": 12,
+            "statusMessage": "加载项目状态面板..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 .codex/hooks/clean_checkpoint_first.py session-start",
+            "timeout": 10,
+            "statusMessage": "记录 clean-checkpoint baseline..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 .codex/hooks/clean_checkpoint_first.py post-tool-use",
+            "timeout": 10,
+            "statusMessage": "更新 clean-checkpoint 状态..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 .codex/hooks/clean_checkpoint_first.py stop",
+            "timeout": 20,
+            "statusMessage": "检查是否留下新脏代码..."
+          }
+        ]
+      }
+    ]
+  }
+}

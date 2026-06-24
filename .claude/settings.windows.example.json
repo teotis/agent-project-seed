@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git stash *)",
+      "Bash(git worktree *)",
+      "Bash(git rm *)",
+      "Bash(git show *)",
+
+      "Bash(py -3 -m pytest *)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py -3 .claude/hooks/panel_hook.py",
+            "timeout": 12,
+            "statusMessage": "加载项目状态面板..."
+          }
+        ]
+      }
+    ]
+  }
+}

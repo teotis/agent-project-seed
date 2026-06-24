@@ -91,9 +91,12 @@ def test_init_project_copy_no_git(tmp_path):
     agents = (target / "AGENTS.md").read_text(encoding="utf-8")
     assert "Demo Project" in agents
     assert (target / ".codex" / "config.example.toml").exists()
+    assert (target / ".codex" / "config.windows.example.toml").exists()
     assert (target / ".codex" / "hooks.json").exists()
+    assert (target / ".codex" / "hooks.windows.json").exists()
     assert (target / ".codex" / "hooks" / "panel_hook.py").exists()
     assert (target / ".codex" / "hooks" / "clean_checkpoint_first.py").exists()
+    assert (target / ".claude" / "settings.windows.example.json").exists()
     hooks = json.loads((target / ".codex" / "hooks.json").read_text(encoding="utf-8"))
     assert "SessionStart" in hooks["hooks"]
     assert "PostToolUse" in hooks["hooks"]
@@ -128,6 +131,35 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "AGENTS.md" in manifest
     assert "README.md" in manifest
     assert "control/ledger.md" in manifest
+    assert "Windows: `py -3 tools/project.py check`" in manifest
+    assert "Windows PowerShell" in readme
+    assert "py -3 tools/project.py check" in readme
+
+
+def test_seed_docs_include_windows_setup_commands():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    setup = (ROOT / "SETUP_NEW_MACHINE.md").read_text(encoding="utf-8")
+
+    for text in (readme, setup):
+        assert "Windows PowerShell" in text
+        assert "py -3 tools/project.py init" in text
+        assert "py -3 -m pytest" in text
+    assert "Copy-Item" in readme
+    assert "Copy-Item" in setup
+
+
+def test_windows_agent_config_examples_avoid_unix_python_launcher():
+    codex_hooks = (ROOT / ".codex" / "hooks.windows.json").read_text(encoding="utf-8")
+    codex_config = (ROOT / ".codex" / "config.windows.example.toml").read_text(encoding="utf-8")
+    claude_settings = (ROOT / ".claude" / "settings.windows.example.json").read_text(encoding="utf-8")
+
+    assert "py -3 .codex/hooks/panel_hook.py" in codex_hooks
+    assert '"py"' in codex_config
+    assert '"-3"' in codex_config
+    assert "py -3 .claude/hooks/panel_hook.py" in claude_settings
+    assert "python3" not in codex_hooks
+    assert "python3" not in codex_config
+    assert "python3" not in claude_settings
 
 
 def test_initialized_project_check_rejects_seed_residue(tmp_path):

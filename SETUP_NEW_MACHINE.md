@@ -2,8 +2,16 @@
 
 After cloning this repository, run the initialization command to set up project metadata:
 
+macOS/Linux:
+
 ```bash
 python3 tools/project.py init --name "Your Project Name"
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py init --name "Your Project Name"
 ```
 
 This turns the copied template into a project workspace. It renames the package,
@@ -23,22 +31,48 @@ user skill directory receives the copy.
 
 Inspect the bundle:
 
+macOS/Linux:
+
 ```bash
 python3 tools/project.py list-user-skills
 python3 tools/project.py list-user-skills --group superpowers
 ```
 
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py list-user-skills
+py -3 tools/project.py list-user-skills --group superpowers
+```
+
 Install the default core set:
+
+macOS/Linux:
 
 ```bash
 python3 tools/project.py install-user-skills --target codex --group core
 python3 tools/project.py install-user-skills --target claude --group core
 ```
 
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py install-user-skills --target codex --group core
+py -3 tools/project.py install-user-skills --target claude --group core
+```
+
 Install everything bundled by this seed:
+
+macOS/Linux:
 
 ```bash
 python3 tools/project.py install-user-skills --target all --group all --force
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py install-user-skills --target all --group all --force
 ```
 
 The installer intentionally does not migrate private user config such as API
@@ -69,9 +103,19 @@ and checkpoint commits for normal work.
 When a task grows into multiple dependent packages, branches, worktrees, agents,
 or handoff sessions, create a live state surface on demand:
 
+macOS/Linux:
+
 ```bash
 python3 tools/project.py task init --name "Complex Refactor" \
   --package 01-contract-characterization \
+  --package 02-implementation
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py task init --name "Complex Refactor" `
+  --package 01-contract-characterization `
   --package 02-implementation
 ```
 
@@ -81,8 +125,17 @@ not treated as authoritative when they disagree.
 
 ## Environment Variables
 
+macOS/Linux:
+
 ```bash
 cp .env.example .env
+# Edit .env and fill in your API keys
+```
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
 # Edit .env and fill in your API keys
 ```
 
@@ -107,7 +160,9 @@ tracked dirty files at the end of a session. It records the starting tracked
 dirty baseline, then blocks Stop only when the session leaves additional tracked
 dirt uncommitted. It does not auto-commit, push, delete, or rewrite files.
 
-For optional end-of-turn guarded commits in Codex, add the notify hook to your user config:
+For optional end-of-turn guarded commits in Codex, add the notify hook to your user config.
+
+macOS/Linux:
 
 ```bash
 # Edit ~/.codex/config.toml and add:
@@ -117,11 +172,25 @@ notify = [
 ]
 ```
 
-Replace the path with this repository's actual absolute path.
+Windows:
+
+```toml
+# Edit %USERPROFILE%\.codex\config.toml and add:
+notify = [
+  "py",
+  "-3",
+  "C:\\absolute\\path\\to\\this\\project\\tools\\hooks\\codex_notify.py"
+]
+```
+
+Replace the path with this repository's actual absolute path. The repository
+also includes `.codex/config.windows.example.toml` and
+`.codex/hooks.windows.json` for Windows-specific Codex setup, plus
+`.claude/settings.windows.example.json` for Claude Code.
 
 For cross-project Codex App usage outside repositories created from this seed,
 also consider installing a user-level `clean-checkpoint-first` skill and Stop
-hook under `~/.codex`.
+hook under `~/.codex` on macOS/Linux or `%USERPROFILE%\.codex` on Windows.
 
 Suggested layering:
 
@@ -133,11 +202,24 @@ Suggested layering:
 
 ## Verify Setup
 
+macOS/Linux:
+
 ```bash
 make preflight     # Run project health check
 make test          # Run tests
 python3 tools/panel.py  # Print status panel
 python3 tools/project.py list-user-skills
+codex mcp get context7
+claude mcp get context7
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py check
+py -3 -m pytest
+py -3 tools/panel.py
+py -3 tools/project.py list-user-skills
 codex mcp get context7
 claude mcp get context7
 ```

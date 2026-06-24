@@ -56,7 +56,7 @@ def run_panel(project_root: Path) -> tuple[int, str]:
         log("panel command timed out after 10s")
         return -1, ""
     except FileNotFoundError:
-        log("python3 not found")
+        log("Python executable not found")
         return -1, ""
     except Exception as exc:
         log(f"unexpected error: {exc}")

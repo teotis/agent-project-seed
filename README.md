@@ -89,9 +89,19 @@ single-session work.
 When work becomes complex enough to span multiple packages, branches, worktrees,
 agents, or handoff sessions, create an explicit live-state surface:
 
+macOS/Linux:
+
 ```bash
 python3 tools/project.py task init --name "Complex Refactor" \
   --package 01-contract-characterization \
+  --package 02-implementation
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py task init --name "Complex Refactor" `
+  --package 01-contract-characterization `
   --package 02-implementation
 ```
 
@@ -115,10 +125,20 @@ The bundle is organized by migration intent, not by agent vendor:
 The manifest at `agent-assets/user-skills/manifest.json` is the source of truth.
 Use the project tool to inspect or install the bundle:
 
+macOS/Linux:
+
 ```bash
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex --group core
 python3 tools/project.py install-user-skills --target all --group all --force
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py list-user-skills
+py -3 tools/project.py install-user-skills --target codex --group core
+py -3 tools/project.py install-user-skills --target all --group all --force
 ```
 
 The installer copies skills into the chosen user skill root. It does not copy
@@ -126,6 +146,8 @@ tokens, MCP secrets, model provider settings, conversation logs, hook state, or
 other machine-local private configuration.
 
 ## Quick Start
+
+macOS/Linux:
 
 ```bash
 # 1. Copy the scaffold
@@ -138,6 +160,21 @@ python3 tools/project.py init --name "My Project"
 # 3. Verify
 make preflight
 make test
+```
+
+Windows PowerShell:
+
+```powershell
+# 1. Copy the scaffold
+Copy-Item -Recurse project_seed my-new-project
+Set-Location my-new-project
+
+# 2. Initialize
+py -3 tools/project.py init --name "My Project"
+
+# 3. Verify
+py -3 tools/project.py check
+py -3 -m pytest
 ```
 
 See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
@@ -173,13 +210,16 @@ residue in project-facing files after initialization.
 ├── .tmp/                   # Local scratch space, not committed
 ├── .codex/
 │   ├── config.example.toml
+│   ├── config.windows.example.toml
 │   ├── hooks.json
+│   ├── hooks.windows.json
 │   └── hooks/
 │       ├── clean_checkpoint_first.py
 │       └── panel_hook.py
 ├── .claude/
 │   ├── hooks/panel_hook.py
-│   └── settings.example.json
+│   ├── settings.example.json
+│   └── settings.windows.example.json
 ├── AGENTS.md               # Shared source of truth
 ├── CLAUDE.md               # Claude Code entry point
 └── SETUP_NEW_MACHINE.md    # First-time setup guide
@@ -200,17 +240,33 @@ available, or `.tmp/` as a fallback. It never auto-commits, pushes, deletes, or
 rewrites files. A local checkpoint commit is still the expected closeout when a
 task produces tracked changes.
 
-For optional end-of-turn guarded commits, copy the `notify` example from
-`.codex/config.example.toml` into your user-level `~/.codex/config.toml` and
-replace the placeholder path with this repository's absolute path.
+For optional end-of-turn guarded commits, copy the `notify` example for your
+platform into the user-level Codex config and replace the placeholder with this
+repository's absolute path:
 
-The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.
+- macOS/Linux: copy from `.codex/config.example.toml` into `~/.codex/config.toml`.
+- Windows: copy from `.codex/config.windows.example.toml` into `%USERPROFILE%\.codex\config.toml`.
+
+The notify script calls `tools/project.py commit` through the configured Python
+launcher, so it keeps the same allowlist and secret/temp/output protections as
+the Claude Code Stop hook. Run `python3 tools/hooks/panel_print.py` on
+macOS/Linux or `py -3 tools/hooks/panel_print.py` on Windows whenever you want
+the same status panel printed in a terminal.
 
 The status panel can also be rendered manually with:
+
+macOS/Linux:
 
 ```bash
 python3 tools/panel.py --mode entry
 python3 tools/panel.py --mode handoff
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/panel.py --mode entry
+py -3 tools/panel.py --mode handoff
 ```
 
 The panel stays lightweight by reading only `AGENTS.md`, `control/state.md`,

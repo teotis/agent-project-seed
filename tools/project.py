@@ -20,8 +20,11 @@ REQUIRED_FILES = [
     "AGENTS.md",
     "CLAUDE.md",
     ".codex/config.example.toml",
+    ".codex/config.windows.example.toml",
     ".codex/hooks.json",
+    ".codex/hooks.windows.json",
     ".codex/hooks/clean_checkpoint_first.py",
+    ".claude/settings.windows.example.json",
     "agent-assets/user-skills/manifest.json",
     "pyproject.toml",
     ".gitignore",
@@ -266,15 +269,21 @@ def check_claude_hook_files(result: Result) -> None:
 def check_codex_hook_files(result: Result) -> None:
     """Check that Codex helper files exist."""
     example = ROOT / ".codex" / "config.example.toml"
+    windows_example = ROOT / ".codex" / "config.windows.example.toml"
     hooks = ROOT / ".codex" / "hooks.json"
+    windows_hooks = ROOT / ".codex" / "hooks.windows.json"
     panel_hook = ROOT / ".codex" / "hooks" / "panel_hook.py"
     checkpoint_hook = ROOT / ".codex" / "hooks" / "clean_checkpoint_first.py"
     notify = ROOT / "tools" / "hooks" / "codex_notify.py"
     panel = ROOT / "tools" / "hooks" / "panel_print.py"
     if not example.exists():
         result.warnings.append("missing .codex/config.example.toml")
+    elif not windows_example.exists():
+        result.warnings.append("missing .codex/config.windows.example.toml")
     elif not hooks.exists():
         result.warnings.append("missing .codex/hooks.json")
+    elif not windows_hooks.exists():
+        result.warnings.append("missing .codex/hooks.windows.json")
     elif not panel_hook.exists():
         result.warnings.append("missing .codex/hooks/panel_hook.py")
     elif not checkpoint_hook.exists():
@@ -624,11 +633,13 @@ A newly initialized agent-assisted project.
 
 1. Edit `AGENTS.md` to define the real project goals, non-goals, and acceptance criteria.
 2. Update this README with the product, library, or workflow this repository will actually provide.
-3. Run `python3 tools/project.py check`.
-4. Run `python3 -m pytest`.
+3. Run the health check for your platform.
+4. Run the tests for your platform.
 5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
 
 ## Useful Commands
+
+macOS/Linux:
 
 ```bash
 python3 tools/panel.py --mode entry
@@ -636,6 +647,16 @@ python3 tools/project.py check
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex --group core
 python3 -m pytest
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/panel.py --mode entry
+py -3 tools/project.py check
+py -3 tools/project.py list-user-skills
+py -3 tools/project.py install-user-skills --target codex --group core
+py -3 -m pytest
 ```
 """
     path.write_text(content, encoding="utf-8")
@@ -696,8 +717,10 @@ def write_init_manifest(project_name: str, package_name: str) -> None:
 - Replace placeholder goals in AGENTS.md.
 - Replace placeholder project description in README.md.
 - Add project-specific source code and tests.
-- Run `python3 tools/project.py check`.
-- Run `python3 -m pytest`.
+- macOS/Linux: `python3 tools/project.py check`
+- Windows: `py -3 tools/project.py check`
+- macOS/Linux: `python3 -m pytest`
+- Windows: `py -3 -m pytest`
 """
     path.write_text(content, encoding="utf-8")
 

@@ -194,3 +194,26 @@ links:
 - .codex/hooks.json
 - .codex/hooks/clean_checkpoint_first.py
 - tools/project.py
+
+## 2026-06-25T04:28:52 - Add Windows bootstrap path
+
+type: decision
+status: closed
+tags: windows, bootstrap, template
+
+summary:
+- The seed must support fresh Windows environments alongside macOS/Linux.
+- New-project setup docs and agent hook examples should not assume `python3`, `make`, `cp`, `~/.codex`, or Unix-style absolute paths are available.
+
+details:
+- Provide Windows PowerShell command equivalents using `py -3`, `Copy-Item`, and `%USERPROFILE%\.codex`.
+- Keep existing macOS/Linux examples, but add Windows-specific Codex and Claude example config files instead of forcing one mixed-platform command.
+- Preflight should require the Windows example files so future template edits do not silently regress new-machine setup.
+
+links:
+- README.md
+- SETUP_NEW_MACHINE.md
+- AGENTS.md
+- .codex/config.windows.example.toml
+- .codex/hooks.windows.json
+- .claude/settings.windows.example.json

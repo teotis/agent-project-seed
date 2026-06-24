@@ -1,5 +1,7 @@
 # Codex user config example.
 #
+# On Windows, use `.codex/config.windows.example.toml` instead.
+#
 # Codex configuration normally lives outside the repository in:
 #
 #   ~/.codex/config.toml
