@@ -265,7 +265,30 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
         / "references"
         / "task-plan-contract.md"
     ).read_text(encoding="utf-8")
+    examples = (
+        ROOT
+        / "agent-assets"
+        / "user-skills"
+        / "core"
+        / "agent-task-planner"
+        / "references"
+        / "examples.md"
+    ).read_text(encoding="utf-8")
+    evals = json.loads(
+        (
+            ROOT
+            / "agent-assets"
+            / "user-skills"
+            / "core"
+            / "agent-task-planner"
+            / "evals"
+            / "evals.json"
+        ).read_text(encoding="utf-8")
+    )
 
+    assert "## Intake Gate" in skill
+    assert "ask exactly one question" in skill
+    assert "references/examples.md" in skill
     assert "## Exit Paths" in skill
     assert "`no-viable-plan`" in skill
     assert "`blocked-with-handoff`" in skill
@@ -275,6 +298,10 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
     assert "Root cause before repair" in skill
     assert "## Exit Path" in contract
     assert "Exit outcome:" in contract
+    assert "Example 1: Direct Bugfix" in examples
+    assert "Example 2: Small Parallel Refactor" in examples
+    assert "Example 3: Intake Or Exit" in examples
+    assert any("onboarding" in item["prompt"] for item in evals["evals"])
 
 
 def test_list_and_install_user_skills(tmp_path):

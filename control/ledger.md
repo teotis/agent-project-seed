@@ -280,3 +280,24 @@ links:
 - tools/project.py
 - tests/test_project_tool.py
 - codex://threads/019efbab-6a0f-7941-a2dc-63e5f787e7fe
+
+## 2026-06-25T06:31:27 - Add planner intake and examples
+
+type: decision
+status: closed
+tags: skills, planning, intake, examples
+
+summary:
+- Strengthen `agent-task-planner` for software engineering requests by handling unclear user input before task decomposition.
+- Add concrete examples so weaker agents can distinguish plan, ask, exit, and upgrade paths.
+
+details:
+- The planner now has an intake gate: inspect repo evidence first, ask exactly one blocking question with a recommended answer when user intent is not plan-ready, then plan or exit.
+- Examples cover direct bugfix, small parallel refactor, and intake/exit behavior.
+- Evals now include a vague onboarding request that should trigger clarification instead of invented implementation packages.
+
+links:
+- agent-assets/user-skills/core/agent-task-planner/SKILL.md
+- agent-assets/user-skills/core/agent-task-planner/references/examples.md
+- agent-assets/user-skills/core/agent-task-planner/evals/evals.json
+- tests/test_project_tool.py

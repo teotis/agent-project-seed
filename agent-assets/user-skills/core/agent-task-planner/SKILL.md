@@ -4,9 +4,11 @@ description: >
   Use when a user has an engineering task to start soon, especially in a new
   or lower-capability agent environment, and needs a lightweight repo-backed
   task plan, agent-ready prompts, branch/worktree guidance, verification steps,
-  and clean checkpoint closure. Fits small to medium work; escalate to
-  agent-orchestration-planner only when durable DAG scheduling, custom runtime
-  state, retry/finalize automation, or multi-wave merge control is required.
+  clean checkpoint closure, or a quick intake check for unclear requirements.
+  Fits small to medium work; ask one clarifying question when user intent is not
+  plan-ready, and escalate to agent-orchestration-planner only when durable DAG
+  scheduling, custom runtime state, retry/finalize automation, or multi-wave
+  merge control is required.
 ---
 
 # Agent Task Planner
@@ -35,6 +37,8 @@ seed, prefer `docs/plans/<date>-<slug>/` for generated task packs and
 
 - A project was just cloned or initialized and the user wants to start work.
 - The request needs quick repo-backed analysis before implementation.
+- The user's request may be underspecified and needs one focused intake question
+  before a responsible plan can exist.
 - The work can likely be done directly, by one agent, or by 1-3 independent
   platform-native agents.
 - Branch/worktree isolation, verification, and checkpoint rules matter, but a
@@ -51,19 +55,47 @@ seed, prefer `docs/plans/<date>-<slug>/` for generated task packs and
 - The user only wants issue tracker slicing, PRD creation, or issue triage.
 - Blocking human/device/account approval is essential and not yet authorized.
 
+## Intake Gate
+
+Before writing a task pack, decide whether the request is plan-ready. If code,
+docs, git state, or existing project status can answer the missing detail, inspect
+those first. Ask the user only for product, scope, credential, cost, policy, or
+preference decisions that cannot be inferred responsibly.
+
+When asking, use the `grilling` pattern: ask exactly one question, explain why it
+blocks planning, and include your recommended answer. Do not ask a batch of
+questions. After the answer, either produce the task pack or choose an exit path.
+
+A request is plan-ready only when these are clear enough:
+
+- desired user-visible or engineering outcome;
+- relevant repo area or discovery path;
+- non-goals or constraints that would change the repair;
+- verification signal;
+- whether work should execute now, be handed to an agent, or remain a manual pack.
+
+If two or more of these are missing and the repo cannot answer them, return
+`needs-user-decision` with the first clarifying question instead of inventing
+packages.
+
 ## Workflow
 
 1. Read the repo instructions, current git state, relevant project status, and
    nearby code or docs.
-2. Classify the lane: direct main-thread work, one platform-native agent, small
+2. Run the intake gate: inspect before asking, then ask one question or exit if
+   the request is not plan-ready.
+3. Classify the lane: direct main-thread work, one platform-native agent, small
    parallel agents, manual task pack, or escalate to `agent-orchestration-planner`.
-3. Check fix-worthiness and evidence quality before committing work to a plan.
-4. Split by shared edit and verification boundaries, not by equal size.
-5. Write the lightweight task pack using `references/task-plan-contract.md`.
-6. Give each package an owner, allowed paths, forbidden paths, acceptance
+4. Check fix-worthiness and evidence quality before committing work to a plan.
+5. Split by shared edit and verification boundaries, not by equal size.
+6. Write the lightweight task pack using `references/task-plan-contract.md`.
+7. Give each package an owner, allowed paths, forbidden paths, acceptance
    criteria, verification command, expected evidence, and checkpoint rule.
-7. If implementation starts in the same session, follow `clean-checkpoint-first`
+8. If implementation starts in the same session, follow `clean-checkpoint-first`
    before claiming closure.
+
+For examples of `direct`, `small-parallel`, and `needs-user-decision` /
+`upgrade-required` behavior, read `references/examples.md`.
 
 ## Lightweight Engineering Method
 
@@ -146,3 +178,5 @@ Keep recovery and alternative lanes brief unless they are immediately relevant.
 - Do not generate custom scripts unless deterministic repetition already exists.
 - Do not present tests, commits, APKs, or reports as proof of the user goal when
   they are only proxy evidence.
+- Do not turn vague user input into fake precision. Ask one blocking question or
+  choose an exit path.

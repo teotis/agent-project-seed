@@ -68,6 +68,26 @@
           "text": "Includes checked evidence and a concrete next action."
         }
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "帮我把 onboarding 做好一点，拆给 agents 做。",
+      "expected_output": "Runs the intake gate before planning. If repo evidence cannot determine the intended onboarding outcome, asks one blocking clarification question with a recommended answer instead of inventing packages.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Inspects repo evidence before asking the user."
+        },
+        {
+          "text": "Chooses needs-user-decision when the outcome, scope, and verification signal are too vague."
+        },
+        {
+          "text": "Asks exactly one blocking question and includes the planner's recommended answer."
+        },
+        {
+          "text": "Does not create implementation packages from vague wording alone."
+        }
+      ]
     }
   ]
 }

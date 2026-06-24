@@ -1,8 +1,7 @@
 interface:
   display_name: "Agent Task Planner"
   short_description: "把工程需求快速转成轻量任务计划、agent prompts、验证和 checkpoint 路线"
-  default_prompt: "使用 $agent-task-planner 为这个工程需求做 repo-backed 轻量任务计划；先判断 direct/single-agent/small-parallel/manual-pack/upgrade 路线，再生成 TASK_PLAN、AGENT_PROMPTS、status.tsv 和 HANDOFF 的最小可执行任务包。"
+  default_prompt: "使用 $agent-task-planner 为这个工程需求做 repo-backed 轻量任务计划；先做 intake gate，必要时只问一个阻塞问题并给推荐答案，再判断 direct/single-agent/small-parallel/manual-pack/upgrade 路线，最后生成最小可执行任务包或明确退出路径。"
 
 policy:
   allow_implicit_invocation: true
-
