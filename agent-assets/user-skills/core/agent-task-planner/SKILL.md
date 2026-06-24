@@ -62,9 +62,13 @@ docs, git state, or existing project status can answer the missing detail, inspe
 those first. Ask the user only for product, scope, credential, cost, policy, or
 preference decisions that cannot be inferred responsibly.
 
-When asking, use the `grilling` pattern: ask exactly one question, explain why it
-blocks planning, and include your recommended answer. Do not ask a batch of
-questions. After the answer, either produce the task pack or choose an exit path.
+Default to moving forward with reasonable assumptions. Ask only when the missing
+answer would change package boundaries, acceptance criteria, execution
+permission, or risk level; when the next step is blocked; or when continuing
+would likely waste work. When asking, use the `grilling` pattern: ask exactly one
+question, explain why it blocks planning, and include your recommended answer.
+Do not ask a batch of questions. After the answer, either produce the task pack
+or choose an exit path.
 
 A request is plan-ready only when these are clear enough:
 
@@ -74,9 +78,10 @@ A request is plan-ready only when these are clear enough:
 - verification signal;
 - whether work should execute now, be handed to an agent, or remain a manual pack.
 
-If two or more of these are missing and the repo cannot answer them, return
-`needs-user-decision` with the first clarifying question instead of inventing
-packages.
+If missing information would not change the decomposition, verification, or
+permissions, state your assumption and continue. If it would change one of those
+things and the repo cannot answer it, return `needs-user-decision` with the first
+clarifying question instead of inventing packages.
 
 ## Workflow
 

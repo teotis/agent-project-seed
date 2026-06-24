@@ -301,3 +301,23 @@ links:
 - agent-assets/user-skills/core/agent-task-planner/references/examples.md
 - agent-assets/user-skills/core/agent-task-planner/evals/evals.json
 - tests/test_project_tool.py
+
+## 2026-06-25T06:48:31 - Narrow planner clarification trigger
+
+type: decision
+status: closed
+tags: skills, planning, intake, engineering-hygiene
+
+summary:
+- Keep `agent-task-planner` lightweight by defaulting to reasonable assumptions instead of frequent clarification.
+- Ask only when missing information changes decomposition, acceptance, execution permission, or risk.
+
+details:
+- Replaced the count-based plan-ready rule with an impact-based interrupt rule.
+- Added a lightweight `Complexity / boundary risk` field to task plans so packages surface architecture and complexity risk without adding a heavy process.
+- Kept adapter prompts in Chinese by using `需求入口判断` instead of the English `intake gate` phrase.
+
+links:
+- agent-assets/user-skills/core/agent-task-planner/SKILL.md
+- agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
+- tests/test_project_tool.py

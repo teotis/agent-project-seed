@@ -35,6 +35,7 @@ The goal is enough structure to start safely, not a full scheduler.
 - Evidence strength:
 - Repair value: `fix-now | worth-fixing-needs-evidence | needs-user-decision | defer | no-fix`
 - Main uncertainty:
+- Complexity / boundary risk:
 
 ## Packages
 | ID | Title | Owner | Depends On | Allowed Paths | Verification | State |

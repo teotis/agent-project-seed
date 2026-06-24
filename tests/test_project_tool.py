@@ -287,7 +287,10 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
     )
 
     assert "## Intake Gate" in skill
-    assert "ask exactly one question" in skill
+    assert "ask exactly one" in skill
+    assert "question" in skill
+    assert "Default to moving forward with reasonable assumptions" in skill
+    assert "would change package boundaries, acceptance criteria, execution" in skill
     assert "references/examples.md" in skill
     assert "## Exit Paths" in skill
     assert "`no-viable-plan`" in skill
@@ -298,6 +301,7 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
     assert "Root cause before repair" in skill
     assert "## Exit Path" in contract
     assert "Exit outcome:" in contract
+    assert "Complexity / boundary risk:" in contract
     assert "Example 1: Direct Bugfix" in examples
     assert "Example 2: Small Parallel Refactor" in examples
     assert "Example 3: Intake Or Exit" in examples
