@@ -1,0 +1,57 @@
+{
+  "skill_name": "agent-task-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我刚 clone 一个项目，想马上修一个登录超时问题。模型比较弱，先帮我拆一下怎么做。",
+      "expected_output": "Uses agent-task-planner to inspect repo context, choose a direct or single-agent lane, and produce a lightweight task pack rather than a full orchestration kit.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Chooses direct or single-agent unless durable scheduling is specifically needed."
+        },
+        {
+          "text": "Includes goal, current truth, fix-worthiness, allowed paths, verification, and checkpoint rule."
+        },
+        {
+          "text": "Does not generate orchestrate.sh, 99-finalize, or signed scheduler state."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "有三个互不相关的小修复，可以让 Claude Code agents 分别做，但不用搞完整编排。",
+      "expected_output": "Uses the small-parallel lane, writes compact per-package prompts and a tiny status.tsv, and keeps execution on platform-native agents.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Splits work by edit and verification boundary."
+        },
+        {
+          "text": "Creates AGENT_PROMPTS.md with short package prompts."
+        },
+        {
+          "text": "Keeps status.tsv as coordination memory, not scheduler truth."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我要多 agent 自动调度，worktree 每包一个，状态账本实时推进，失败后 retry，最后自动合并 main。",
+      "expected_output": "Escalates to agent-orchestration-planner because the user needs a durable control plane, not a lightweight task pack.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names the needed control-plane capabilities: DAG, scheduler state, retry/finalize, worktree merge control."
+        },
+        {
+          "text": "Does not pretend the lightweight task pack can provide automatic scheduling."
+        },
+        {
+          "text": "Routes to agent-orchestration-planner."
+        }
+      ]
+    }
+  ]
+}
+

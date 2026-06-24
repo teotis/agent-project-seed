@@ -237,15 +237,16 @@ def test_user_skill_manifest_assets_are_valid():
     module = load_project_tool()
     entries = module.user_skill_entries(["all"])
 
-    assert len(entries) == 43
+    assert len(entries) == 44
     assert ("core", "clean-checkpoint-first", ROOT / "agent-assets" / "user-skills" / "core" / "clean-checkpoint-first") in entries
+    assert ("core", "agent-task-planner", ROOT / "agent-assets" / "user-skills" / "core" / "agent-task-planner") in entries
     assert ("optional", "abstraction-architect", ROOT / "agent-assets" / "user-skills" / "optional" / "abstraction-architect") in entries
     assert ("superpowers", "brainstorming", ROOT / "agent-assets" / "user-skills" / "superpowers" / "brainstorming") in entries
 
     result = module.Result()
     module.check_user_skill_assets(result)
     assert result.issues == []
-    assert any("43 skills" in notice for notice in result.notices)
+    assert any("44 skills" in notice for notice in result.notices)
 
 
 def test_list_and_install_user_skills(tmp_path):

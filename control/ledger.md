@@ -217,3 +217,23 @@ links:
 - .codex/config.windows.example.toml
 - .codex/hooks.windows.json
 - .claude/settings.windows.example.json
+
+## 2026-06-25T04:51:39 - Add lightweight agent task planner skill
+
+type: decision
+status: closed
+tags: skills, planning, orchestration, bootstrap
+
+summary:
+- Add `agent-task-planner` as a core portable user skill for lightweight repo-backed task planning.
+- Position it before `agent-orchestration-planner`: default to direct, single-agent, small-parallel, or manual task packs; upgrade only when a durable orchestration control plane is required.
+
+details:
+- The skill generates a lightweight task pack with `TASK_PLAN.md`, `AGENT_PROMPTS.md`, `status.tsv`, and `HANDOFF.md`.
+- It keeps runtime scheduling, signed state, retry/finalize, launcher wrappers, and automatic cleanup out of scope.
+- The seed carries the skill under `agent-assets/user-skills/core/` so fresh Codex or Claude environments can install it during bootstrap.
+
+links:
+- agent-assets/user-skills/core/agent-task-planner/SKILL.md
+- agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
+- agent-assets/user-skills/manifest.json
