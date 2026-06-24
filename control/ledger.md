@@ -257,3 +257,26 @@ links:
 - agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
 - tests/test_project_tool.py
 - https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md
+
+## 2026-06-25T06:17:01 - Add opt-in governance lifecycle
+
+type: decision
+status: closed
+tags: governance, lifecycle, template, agent-workflow
+
+summary:
+- Add the Evolution GC idea as an optional governance lifecycle, not a default hard process.
+- Keep one-off and lightweight projects free from standing lifecycle control surfaces.
+
+details:
+- `tools/project.py governance init` creates `control/governance.md` only when a project needs explicit keep/defer/retire review for durable rules, verification scripts, reports, or agent workflows.
+- The generated lifecycle file is advisory; it does not install hooks, delete files, schedule reviews, or make `tools/project.py check` stricter.
+- Project scale drives usage: one-off projects skip it, lightweight projects can use `control/ledger.md`, and sustained projects can classify governance items as `Protect`, `Pilot`, `Defer`, or `Retire`.
+
+links:
+- README.md
+- SETUP_NEW_MACHINE.md
+- AGENTS.md
+- tools/project.py
+- tests/test_project_tool.py
+- codex://threads/019efbab-6a0f-7941-a2dc-63e5f787e7fe

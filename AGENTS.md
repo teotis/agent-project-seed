@@ -120,6 +120,7 @@ The following do not have pre-built directories; generate them when needed:
 - content pipeline: draft/approved layering, publish gating, conflict resolution
 - image generation: provider, queue, manifest, cost gating
 - html delivery: Markdown + self-contained HTML dual delivery
+- governance lifecycle: generate `control/governance.md` with `python3 tools/project.py governance init` (`py -3 tools/project.py governance init` on Windows) when rules, verification scripts, reports, or agent workflows need explicit keep/defer/retire decisions
 
 ## Generated files
 

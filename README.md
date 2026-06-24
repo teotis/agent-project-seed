@@ -30,6 +30,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Portable User Skills | Bundles selected user-installed skills and superpowers skills for fast Codex/Claude setup |
 | Standard MCP Checks | Records Context7 as the default documentation MCP to verify on new machines |
 | Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
+| Governance Lifecycle | Optional `tools/project.py governance init` command for long-lived projects that need rule/script/report lifecycle tracking |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
 
@@ -110,6 +111,39 @@ This creates `control/tasks/<slug>/` with an `INDEX.md`, `status.tsv`,
 the live source of truth for package execution state; chat transcripts, status
 panels, and final reports are secondary and should be refreshed from the live
 state before deciding whether a complex task is complete.
+
+## Governance Lifecycle
+
+Most copied projects should not start with a governance control surface. The
+default rule is lighter: when a durable project rule, verification script,
+report flow, or agent workflow is added, record why it exists and what would let
+the project downgrade or remove it later.
+
+Use the optional lifecycle file only when project assets are likely to outlive a
+single task:
+
+- `one-off`: skip `control/governance.md`; clean temporary rules and reports at
+  handoff.
+- `lightweight`: use `control/ledger.md` for the few rules or scripts that need
+  future recall.
+- `sustained`: generate `control/governance.md` and classify important
+  governance items as `Protect`, `Pilot`, `Defer`, or `Retire`.
+
+macOS/Linux:
+
+```bash
+python3 tools/project.py governance init --profile sustained
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py governance init --profile sustained
+```
+
+The generated file is deliberately small. It is a review surface for the rules,
+scripts, reports, and workflows around a project; it does not enable a hook,
+delete files, create recurring process, or make preflight stricter.
 
 ## Portable User Skills
 

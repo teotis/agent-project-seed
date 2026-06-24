@@ -134,6 +134,7 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "Windows: `py -3 tools/project.py check`" in manifest
     assert "Windows PowerShell" in readme
     assert "py -3 tools/project.py check" in readme
+    assert "governance init --profile sustained" in readme
 
 
 def test_seed_docs_include_windows_setup_commands():
@@ -144,6 +145,8 @@ def test_seed_docs_include_windows_setup_commands():
         assert "Windows PowerShell" in text
         assert "py -3 tools/project.py init" in text
         assert "py -3 -m pytest" in text
+        assert "governance init --profile sustained" in text
+        assert "Governance Lifecycle" in text
     assert "Copy-Item" in readme
     assert "Copy-Item" in setup
 
@@ -383,6 +386,62 @@ def test_task_init_refuses_to_overwrite_existing_task(tmp_path):
         "init",
         "--name",
         "Shared Migration",
+    ]
+    first = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)
+    second = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)
+
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert second.returncode == 2
+    assert "already exists" in second.stderr
+
+
+def test_governance_init_creates_optional_lifecycle_doc(tmp_path):
+    target = _copy_and_init(tmp_path, name="Long App", package="long_app")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "governance",
+            "init",
+            "--profile",
+            "sustained",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "control/governance.md" in completed.stdout
+    assert "no hooks or stricter checks" in completed.stdout
+
+    doc = (target / "control" / "governance.md").read_text(encoding="utf-8")
+    assert "Project profile: `sustained`" in doc
+    assert "`Protect`" in doc
+    assert "`Pilot`" in doc
+    assert "`Defer`" in doc
+    assert "`Retire`" in doc
+    assert "This file is advisory" in doc
+
+    check = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert check.returncode == 0, check.stdout + check.stderr
+
+
+def test_governance_init_refuses_to_overwrite_existing_doc(tmp_path):
+    target = _copy_and_init(tmp_path)
+    command = [
+        sys.executable,
+        "tools/project.py",
+        "governance",
+        "init",
     ]
     first = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)
     second = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)

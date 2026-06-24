@@ -123,6 +123,37 @@ The generated `control/tasks/<slug>/status.tsv` is the live source of truth for
 package execution state. Reports and chat summaries should be refreshed from it,
 not treated as authoritative when they disagree.
 
+## Governance Lifecycle (Optional)
+
+Do not enable lifecycle tracking by default for every copied project. One-off
+projects can finish with normal checkpoint commits and a clean handoff; they do
+not need a standing governance file.
+
+Use project scale as the trigger:
+
+- `one-off`: skip `control/governance.md`; delete or archive temporary rules,
+  scripts, and reports at handoff.
+- `lightweight`: keep important keep/defer/retire decisions in
+  `control/ledger.md`.
+- `sustained`: generate `control/governance.md` and classify durable rules,
+  verification scripts, reports, and agent workflows as `Protect`, `Pilot`,
+  `Defer`, or `Retire`.
+
+macOS/Linux:
+
+```bash
+python3 tools/project.py governance init --profile sustained
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py governance init --profile sustained
+```
+
+This command only creates `control/governance.md`. It does not add hooks,
+delete files, schedule reviews, or make `tools/project.py check` stricter.
+
 ## Environment Variables
 
 macOS/Linux:
@@ -209,6 +240,7 @@ make preflight     # Run project health check
 make test          # Run tests
 python3 tools/panel.py  # Print status panel
 python3 tools/project.py list-user-skills
+python3 tools/project.py governance init --profile sustained
 codex mcp get context7
 claude mcp get context7
 ```
@@ -220,6 +252,7 @@ py -3 tools/project.py check
 py -3 -m pytest
 py -3 tools/panel.py
 py -3 tools/project.py list-user-skills
+py -3 tools/project.py governance init --profile sustained
 codex mcp get context7
 claude mcp get context7
 ```

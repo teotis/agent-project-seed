@@ -74,6 +74,7 @@ REJECT_PREFIXES = (".env", "work/tmp/", ".pytest_cache/", "__pycache__/")
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".json", ".example", ".gitignore", ".yml", ".yaml"}
 USER_SKILLS_ROOT = ROOT / "agent-assets" / "user-skills"
 USER_SKILL_GROUPS = ("core", "optional", "superpowers")
+GOVERNANCE_PROFILES = ("one-off", "lightweight", "sustained")
 
 
 @dataclass
@@ -636,6 +637,7 @@ A newly initialized agent-assisted project.
 3. Run the health check for your platform.
 4. Run the tests for your platform.
 5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
+6. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
 
 ## Useful Commands
 
@@ -646,6 +648,7 @@ python3 tools/panel.py --mode entry
 python3 tools/project.py check
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex --group core
+python3 tools/project.py governance init --profile sustained
 python3 -m pytest
 ```
 
@@ -656,6 +659,7 @@ py -3 tools/panel.py --mode entry
 py -3 tools/project.py check
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex --group core
+py -3 tools/project.py governance init --profile sustained
 py -3 -m pytest
 ```
 """
@@ -951,6 +955,82 @@ def task_init(args: argparse.Namespace) -> int:
     return 0
 
 
+def render_governance_doc(profile: str) -> str:
+    profile_notes = {
+        "one-off": (
+            "Use this file sparingly. For a one-off project, prefer deleting or "
+            "archiving temporary rules, scripts, and reports during handoff."
+        ),
+        "lightweight": (
+            "Track only the few rules, scripts, reports, or workflows that need "
+            "future recall. Most decisions should still live in `control/ledger.md`."
+        ),
+        "sustained": (
+            "Use this as a small review surface for durable project governance. "
+            "Review items when they become noisy, obsolete, duplicated, or replaced."
+        ),
+    }
+    return f"""# Governance Lifecycle
+
+Project profile: `{profile}`
+
+{profile_notes[profile]}
+
+## Purpose
+
+Use this optional file when project rules, verification scripts, reports, or
+agent workflows are likely to live beyond one task. It exists to prevent
+governance from only accumulating. Every durable item should have a reason to
+exist and a way to be downgraded, merged, or retired.
+
+One-off projects usually do not need this file. Small projects can keep these
+decisions in `control/ledger.md`. Long-lived projects can use the table below as
+a compact lifecycle review surface.
+
+## State Vocabulary
+
+- `Protect`: keep; it protects a current invariant or user-visible promise.
+- `Pilot`: try in a limited scope; promote or retire after evidence.
+- `Defer`: valid concern, but not worth adding to the active workflow yet.
+- `Retire`: remove, archive, or downgrade because the cost now exceeds value.
+
+## Review Table
+
+| Item | Type | State | Protects / value | Trigger | Cost | Owner | Review when | Retire or downgrade when | Replacement |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `AGENTS.md` | rule | Protect | Shared project invariants for agents | Every agent session | Rule churn if overused | project owner | A rule is added or contradicted | A rule is better enforced by a test, hook, or script | n/a |
+
+## Review Prompts
+
+- Which rules or scripts are protecting a live invariant?
+- Which reports or issue packages are stale enough to archive?
+- Which checks are duplicating each other?
+- Which agent instructions should become a test, hook, script, or skill?
+- Which pilots have enough evidence to promote or retire?
+
+## Operating Rule
+
+This file is advisory. It should not block normal work by itself. If an item
+needs enforcement, add the narrowest matching mechanism: a test, a lint rule, a
+hook, a safe-commit guard, or a project-specific verification script.
+"""
+
+
+def governance_init(args: argparse.Namespace) -> int:
+    profile = args.profile
+    if profile not in GOVERNANCE_PROFILES:
+        print(f"invalid governance profile: {profile}", file=sys.stderr)
+        return 2
+    path = ROOT / "control" / "governance.md"
+    if path.exists() and not args.force:
+        print(f"governance lifecycle already exists: {path.relative_to(ROOT)}", file=sys.stderr)
+        return 2
+    path.write_text(render_governance_doc(profile), encoding="utf-8")
+    print(f"Created governance lifecycle: {path.relative_to(ROOT)}")
+    print("This is opt-in documentation only; no hooks or stricter checks were enabled.")
+    return 0
+
+
 def user_skill_target_root(target: str) -> Path:
     home = Path.home()
     if target == "codex":
@@ -1053,6 +1133,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="package id to seed in status.tsv; repeatable. Defaults to 01-main plus 99-finalize.",
     )
 
+    governance = sub.add_parser("governance", help="manage optional governance lifecycle controls")
+    governance_sub = governance.add_subparsers(dest="governance_command", required=True)
+    governance_init_cmd = governance_sub.add_parser(
+        "init",
+        help="create a small optional lifecycle review surface for rules, scripts, reports, and workflows",
+    )
+    governance_init_cmd.add_argument(
+        "--profile",
+        choices=GOVERNANCE_PROFILES,
+        default="lightweight",
+        help="project profile to describe in control/governance.md",
+    )
+    governance_init_cmd.add_argument("--force", action="store_true", help="overwrite an existing lifecycle file")
+
     commit_cmd = sub.add_parser("commit", help="safely commit allowed changes")
     commit_cmd.add_argument("--message", default="chore: checkpoint agent work")
     commit_cmd.add_argument("--dry-run", action="store_true")
@@ -1077,6 +1171,10 @@ def main() -> int:
         if args.task_command == "init":
             return task_init(args)
         parser.error(f"unknown task command {args.task_command}")
+    if args.command == "governance":
+        if args.governance_command == "init":
+            return governance_init(args)
+        parser.error(f"unknown governance command {args.governance_command}")
     if args.command == "commit":
         return commit(args)
     parser.error(f"unknown command {args.command}")
