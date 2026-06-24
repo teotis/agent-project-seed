@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import shutil
 import subprocess
 import sys
@@ -92,6 +93,11 @@ def test_init_project_copy_no_git(tmp_path):
     assert (target / ".codex" / "config.example.toml").exists()
     assert (target / ".codex" / "hooks.json").exists()
     assert (target / ".codex" / "hooks" / "panel_hook.py").exists()
+    assert (target / ".codex" / "hooks" / "clean_checkpoint_first.py").exists()
+    hooks = json.loads((target / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+    assert "SessionStart" in hooks["hooks"]
+    assert "PostToolUse" in hooks["hooks"]
+    assert "Stop" in hooks["hooks"]
     assert (target / "work" / "in" / ".gitkeep").exists()
 
 
@@ -326,6 +332,64 @@ def test_task_init_refuses_to_overwrite_existing_task(tmp_path):
     assert first.returncode == 0, first.stdout + first.stderr
     assert second.returncode == 2
     assert "already exists" in second.stderr
+
+
+def _git_commit_all(target: Path, message: str) -> None:
+    subprocess.run(["git", "add", "-A"], cwd=target, check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=agent@example.invalid",
+            "-c",
+            "user.name=Agent",
+            "commit",
+            "-m",
+            message,
+        ],
+        cwd=target,
+        check=True,
+        capture_output=True,
+    )
+
+
+def test_clean_checkpoint_hook_blocks_new_tracked_dirty(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+    _git_commit_all(target, "init")
+
+    hook = [sys.executable, ".codex/hooks/clean_checkpoint_first.py"]
+    start = subprocess.run([*hook, "session-start"], cwd=target, text=True, capture_output=True, check=False)
+    assert start.returncode == 0, start.stdout + start.stderr
+
+    readme = target / "README.md"
+    readme.write_text(readme.read_text(encoding="utf-8") + "\nnew tracked dirt\n", encoding="utf-8")
+
+    stop = subprocess.run([*hook, "stop"], cwd=target, text=True, capture_output=True, check=False)
+    assert stop.returncode == 1
+    assert "Stop blocked" in stop.stderr
+    assert "README.md" in stop.stderr
+
+
+def test_clean_checkpoint_hook_allows_existing_dirty_baseline(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+    _git_commit_all(target, "init")
+
+    readme = target / "README.md"
+    readme.write_text(readme.read_text(encoding="utf-8") + "\npre-existing tracked dirt\n", encoding="utf-8")
+
+    hook = [sys.executable, ".codex/hooks/clean_checkpoint_first.py"]
+    start = subprocess.run([*hook, "session-start"], cwd=target, text=True, capture_output=True, check=False)
+    assert start.returncode == 0, start.stdout + start.stderr
+
+    stop = subprocess.run([*hook, "stop"], cwd=target, text=True, capture_output=True, check=False)
+    assert stop.returncode == 0, stop.stdout + stop.stderr
+
+    readme.write_text(readme.read_text(encoding="utf-8") + "\nadditional session dirt\n", encoding="utf-8")
+    stop_after_new_edit = subprocess.run([*hook, "stop"], cwd=target, text=True, capture_output=True, check=False)
+    assert stop_after_new_edit.returncode == 1
+    assert "README.md" in stop_after_new_edit.stderr
 
 
 def test_safety_check_detects_staged_env(tmp_path):

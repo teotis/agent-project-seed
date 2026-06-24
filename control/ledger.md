@@ -174,3 +174,23 @@ links:
 - tools/project.py
 - README.md
 - SETUP_NEW_MACHINE.md
+
+## 2026-06-25T04:14:56 - Enable project-level clean checkpoint hook by default
+
+type: decision
+status: closed
+tags: checkpoint, codex, hooks, init
+
+summary:
+- Initialized projects should automatically carry the clean-checkpoint Stop gate.
+- The seed should preserve the OpenCamera lesson that new tracked dirty code must not quietly remain after agent work.
+
+details:
+- `.codex/hooks.json` should include SessionStart, PostToolUse, and Stop commands for `.codex/hooks/clean_checkpoint_first.py`.
+- The hook records the tracked dirty baseline at session start and blocks Stop only for new tracked dirty paths beyond that baseline.
+- The default hook must not auto-commit, push, delete, or rewrite files; optional notify-based assisted commits remain user-level configuration.
+
+links:
+- .codex/hooks.json
+- .codex/hooks/clean_checkpoint_first.py
+- tools/project.py

@@ -23,6 +23,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | --- | --- |
 | Status Panel | Shows a compact Chinese entry/handoff snapshot: git state, recent worktrees/branches, open ledger items, risks, and next action |
 | Safe Commit | Whitelist-based commit command for agent-made changes |
+| Clean Checkpoint Gate | Project-level Codex hook blocks session stop when new tracked dirty changes are left uncheckpointed |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
@@ -54,7 +55,7 @@ Recommended Codex App shape for copied projects:
 The default policy is local-only: do not push unless the user explicitly asks
 for remote sync.
 
-In plain terms, the `clean-checkpoint-first` user-level gate protects the user
+In plain terms, the project-level `clean-checkpoint-first` gate protects the user
 from a common agent failure mode: an agent edits tracked files, does not commit
 or clearly hand off the changes, then ends the session. The hook records the
 starting tracked dirty state at session start. At stop time, it compares the
@@ -171,7 +172,11 @@ residue in project-facing files after initialization.
 ├── docs/                   # Project documentation
 ├── .tmp/                   # Local scratch space, not committed
 ├── .codex/
-│   └── config.example.toml
+│   ├── config.example.toml
+│   ├── hooks.json
+│   └── hooks/
+│       ├── clean_checkpoint_first.py
+│       └── panel_hook.py
 ├── .claude/
 │   ├── hooks/panel_hook.py
 │   └── settings.example.json
@@ -182,13 +187,26 @@ residue in project-facing files after initialization.
 
 ## Codex Hooks
 
-Codex reads the shared entry point from `AGENTS.md`. For end-of-turn guarded commits, copy the `notify` example from `.codex/config.example.toml` into your user-level `~/.codex/config.toml` and replace the placeholder path with this repository's absolute path.
+Codex reads the shared entry point from `AGENTS.md`. Initialized projects carry
+`.codex/hooks.json` by default with:
+
+- `SessionStart`: record the starting tracked dirty baseline.
+- `PostToolUse`: keep the latest tracked dirty snapshot available for debugging.
+- `Stop`: block session stop if this session leaves new tracked dirty changes.
+- `UserPromptSubmit`: inject the lightweight Chinese status panel.
+
+The clean-checkpoint hook stores its state in Git-private storage when
+available, or `.tmp/` as a fallback. It never auto-commits, pushes, deletes, or
+rewrites files. A local checkpoint commit is still the expected closeout when a
+task produces tracked changes.
+
+For optional end-of-turn guarded commits, copy the `notify` example from
+`.codex/config.example.toml` into your user-level `~/.codex/config.toml` and
+replace the placeholder path with this repository's absolute path.
 
 The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.
 
-For new-session context, `.codex/hooks.json` provides a `UserPromptSubmit`
-example that injects the Chinese status panel on the first prompt in a session.
-The panel can also be rendered manually with:
+The status panel can also be rendered manually with:
 
 ```bash
 python3 tools/panel.py --mode entry
@@ -199,7 +217,6 @@ The panel stays lightweight by reading only `AGENTS.md`, `control/state.md`,
 `control/ledger.md`, `src/`, and bounded git metadata commands. It does not scan
 the full source tree, inspect large diffs, call networks, or invoke an LLM.
 
-For broader Codex App use across projects, prefer a user-level
-`clean-checkpoint-first` skill plus a user-level Stop hook. The skill teaches the
-workflow; the hook prevents silent dirty-workspace leakage. Repository-local
-hooks remain useful when a copied project needs stricter project-specific gates.
+For broader Codex App use across unrelated projects, a user-level
+`clean-checkpoint-first` skill and Stop hook can provide the same default outside
+repositories created from this seed.

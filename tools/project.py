@@ -21,6 +21,7 @@ REQUIRED_FILES = [
     "CLAUDE.md",
     ".codex/config.example.toml",
     ".codex/hooks.json",
+    ".codex/hooks/clean_checkpoint_first.py",
     "agent-assets/user-skills/manifest.json",
     "pyproject.toml",
     ".gitignore",
@@ -267,6 +268,7 @@ def check_codex_hook_files(result: Result) -> None:
     example = ROOT / ".codex" / "config.example.toml"
     hooks = ROOT / ".codex" / "hooks.json"
     panel_hook = ROOT / ".codex" / "hooks" / "panel_hook.py"
+    checkpoint_hook = ROOT / ".codex" / "hooks" / "clean_checkpoint_first.py"
     notify = ROOT / "tools" / "hooks" / "codex_notify.py"
     panel = ROOT / "tools" / "hooks" / "panel_print.py"
     if not example.exists():
@@ -275,6 +277,8 @@ def check_codex_hook_files(result: Result) -> None:
         result.warnings.append("missing .codex/hooks.json")
     elif not panel_hook.exists():
         result.warnings.append("missing .codex/hooks/panel_hook.py")
+    elif not checkpoint_hook.exists():
+        result.warnings.append("missing .codex/hooks/clean_checkpoint_first.py")
     elif not notify.exists():
         result.warnings.append("missing tools/hooks/codex_notify.py (referenced by Codex config example)")
     elif not panel.exists():

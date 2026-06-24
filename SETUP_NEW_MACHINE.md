@@ -9,7 +9,8 @@ python3 tools/project.py init --name "Your Project Name"
 This turns the copied template into a project workspace. It renames the package,
 rewrites the project-facing README, updates `AGENTS.md` and `control/state.md`,
 resets `control/ledger.md` to the new project's first record, writes
-`control/init_manifest.md`, and activates the Claude Code settings.
+`control/init_manifest.md`, activates the Claude Code settings, and keeps the
+project-level Codex hooks ready for the status panel and clean-checkpoint gate.
 
 After initialization, review `control/init_manifest.md` first. It lists the
 files updated automatically and the remaining project-specific edits to make.
@@ -93,9 +94,20 @@ The example settings include a `UserPromptSubmit` status-panel hook. It injects
 a short Chinese project snapshot only on the first prompt of a session, unless a
 handoff flow explicitly requests `panel_mode=handoff`.
 
-## Codex Hooks (Optional)
+## Codex Hooks
 
-For end-of-turn guarded commits in Codex, add the notify hook to your user config:
+Initialized projects include `.codex/hooks.json` by default. It records a
+tracked-dirty baseline at session start, updates the latest tracked-dirty state
+after tool use, and blocks Stop if the session leaves new tracked dirty changes
+without a local checkpoint. It also loads the same Chinese status panel from
+`tools/panel.py`.
+
+The value of the clean-checkpoint hook is simple: it catches newly created
+tracked dirty files at the end of a session. It records the starting tracked
+dirty baseline, then blocks Stop only when the session leaves additional tracked
+dirt uncommitted. It does not auto-commit, push, delete, or rewrite files.
+
+For optional end-of-turn guarded commits in Codex, add the notify hook to your user config:
 
 ```bash
 # Edit ~/.codex/config.toml and add:
@@ -107,21 +119,9 @@ notify = [
 
 Replace the path with this repository's actual absolute path.
 
-For cross-project Codex App usage, also consider installing a user-level
-`clean-checkpoint-first` skill and Stop hook under `~/.codex`. That user-level
-layer should enforce the general checkpoint rule: if a session creates new
-tracked dirty changes, it must either commit a local checkpoint or clearly report
-why VCS closeout is blocked. Keep this separate from `AGENTS.md` so copied
-projects inherit a small shared contract while the repeatable workflow lives in
-skills and hooks.
-
-The value of that hook is simple: it catches newly created tracked dirty files
-at the end of a session. It records the starting tracked dirty baseline, then
-blocks Stop only when the session leaves additional tracked dirt uncommitted. It
-does not auto-commit, push, delete, or rewrite files.
-
-For new-session context in Codex, use `.codex/hooks.json` as the project-level
-hook example. It loads the same Chinese status panel from `tools/panel.py`.
+For cross-project Codex App usage outside repositories created from this seed,
+also consider installing a user-level `clean-checkpoint-first` skill and Stop
+hook under `~/.codex`.
 
 Suggested layering:
 

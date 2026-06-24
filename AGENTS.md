@@ -86,6 +86,10 @@ make test               # runs: python3 -m pytest
   3. Use `python3 tools/project.py commit --message "type: summary"` for assisted safe commits.
   4. Do not commit `.env`, `work/tmp/`, formal outputs in `work/out/`, large caches, or secrets.
   5. Do not push unless the user explicitly requests it.
+- Initialized projects include a project-level Codex clean-checkpoint hook in
+  `.codex/hooks.json`. It blocks Stop if the current session leaves new tracked
+  dirty changes beyond the session-start baseline; close out with a local
+  checkpoint commit or an explicit blocked handoff.
 
 ## Architecture notes
 
@@ -129,5 +133,5 @@ No auto-generated files in this scaffold project.
 - After modifying shared rules, run `python3 tools/project.py sync-agents`.
 - Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check`.
 - Context7 is the standard documentation MCP to verify for new environments with `codex mcp get context7` and `claude mcp get context7`.
-- For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
-- For lightweight new-session context, enable the project status panel hook from `.claude/settings.example.json` or `.codex/hooks.json`.
+- Project-level Codex hooks in `.codex/hooks.json` provide the status panel and clean-checkpoint Stop gate after initialization.
+- For optional guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
