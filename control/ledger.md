@@ -91,3 +91,25 @@ links:
 - tools/project.py
 - README.md
 - SETUP_NEW_MACHINE.md
+
+## 2026-06-25T03:32:29 - Record project positioning
+
+type: decision
+status: closed
+tags: positioning, init, template
+
+summary:
+- This repository is positioned as a GitHub-cloned project starter that helps a user create a clean new project workspace on a fresh machine.
+- Its core promise is not only to provide agent collaboration tooling, but to initialize, rename, scrub template residue, and point the user to remaining project-specific edits.
+
+details:
+- A fresh clone should first guide the user to run initialization.
+- Initialization should update names, project-facing docs, state, ledger, and package paths; it should record what changed and what still needs review.
+- Project-facing checks should prevent stale seed names, seed development history, private thread links, or template-only instructions from leaking into the initialized project.
+- Future changes should be judged against this positioning: make the template easier to convert into a clean user project, not merely easier to develop as the seed repo itself.
+
+links:
+- AGENTS.md
+- README.md
+- SETUP_NEW_MACHINE.md
+- tools/project.py
