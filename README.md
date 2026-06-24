@@ -27,6 +27,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
 | Portable User Skills | Bundles selected user-installed skills and superpowers skills for fast Codex/Claude setup |
+| Standard MCP Checks | Records Context7 as the default documentation MCP to verify on new machines |
 | Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
@@ -52,6 +53,30 @@ Recommended Codex App shape for copied projects:
 
 The default policy is local-only: do not push unless the user explicitly asks
 for remote sync.
+
+In plain terms, the `clean-checkpoint-first` user-level gate protects the user
+from a common agent failure mode: an agent edits tracked files, does not commit
+or clearly hand off the changes, then ends the session. The hook records the
+starting tracked dirty state at session start. At stop time, it compares the
+current tracked dirty state against that baseline. If the session created new
+tracked dirt and no checkpoint commit removed it, Stop is blocked until the
+agent either creates a local checkpoint or explicitly reports why closeout is
+blocked. It does not auto-commit, push, delete, or rewrite files.
+
+## Standard MCP Checks
+
+Context7 is the standard documentation MCP to verify when setting up a new
+machine or copied project environment. It gives agents current library and
+framework documentation without putting project-specific secrets in this repo.
+
+```bash
+codex mcp get context7
+claude mcp get context7
+```
+
+If either command fails, fix the user-level MCP configuration outside this
+repository. Do not copy API keys, MCP tokens, or provider credentials into the
+project.
 
 ## Complex Task Live State
 

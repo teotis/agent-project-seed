@@ -44,6 +44,22 @@ The installer intentionally does not migrate private user config such as API
 keys, MCP tokens, model provider credentials, conversation logs, hook state, or
 database files.
 
+## Standard MCP Checks
+
+Context7 is the standard documentation MCP for this seed. It should be present
+in both Codex and Claude user-level configuration when the new environment is
+intended to support library/framework documentation lookup.
+
+Check it after installing or copying user-level agent configuration:
+
+```bash
+codex mcp get context7
+claude mcp get context7
+```
+
+If either check fails, configure MCP in the user's home directory. Do not put
+API keys, MCP tokens, or model provider credentials in this repository.
+
 ## Complex Tasks (Optional)
 
 Fresh projects should stay light. Use `control/state.md`, `control/ledger.md`,
@@ -99,6 +115,11 @@ why VCS closeout is blocked. Keep this separate from `AGENTS.md` so copied
 projects inherit a small shared contract while the repeatable workflow lives in
 skills and hooks.
 
+The value of that hook is simple: it catches newly created tracked dirty files
+at the end of a session. It records the starting tracked dirty baseline, then
+blocks Stop only when the session leaves additional tracked dirt uncommitted. It
+does not auto-commit, push, delete, or rewrite files.
+
 For new-session context in Codex, use `.codex/hooks.json` as the project-level
 hook example. It loads the same Chinese status panel from `tools/panel.py`.
 
@@ -117,4 +138,6 @@ make preflight     # Run project health check
 make test          # Run tests
 python3 tools/panel.py  # Print status panel
 python3 tools/project.py list-user-skills
+codex mcp get context7
+claude mcp get context7
 ```

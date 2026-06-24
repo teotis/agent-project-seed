@@ -113,6 +113,26 @@ links:
 - tools/project.py
 - SETUP_NEW_MACHINE.md
 
+## 2026-06-25T04:08:29 - Record Context7 MCP and checkpoint gate purpose
+
+type: decision
+status: closed
+tags: mcp, context7, hooks, checkpoint
+
+summary:
+- Treat Context7 as the standard documentation MCP to verify when bootstrapping Codex and Claude environments.
+- Explain the `clean-checkpoint-first` hook as a dirty-workspace closeout guard, not an auto-commit mechanism.
+
+details:
+- New-machine setup should verify Context7 with `codex mcp get context7` and `claude mcp get context7`.
+- Context7 configuration, API keys, MCP tokens, and provider credentials remain user-level machine configuration, not project files.
+- The checkpoint hook records a tracked dirty baseline and blocks Stop only when a session leaves additional tracked dirty files without a local checkpoint or explicit blocked handoff.
+
+links:
+- README.md
+- SETUP_NEW_MACHINE.md
+- AGENTS.md
+
 ## 2026-06-25T03:32:29 - Record project positioning
 
 type: decision

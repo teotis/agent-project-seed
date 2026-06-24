@@ -128,5 +128,6 @@ No auto-generated files in this scaffold project.
 - Codex app should use this `AGENTS.md` as the shared project instruction file.
 - After modifying shared rules, run `python3 tools/project.py sync-agents`.
 - Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check`.
+- Context7 is the standard documentation MCP to verify for new environments with `codex mcp get context7` and `claude mcp get context7`.
 - For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
 - For lightweight new-session context, enable the project status panel hook from `.claude/settings.example.json` or `.codex/hooks.json`.
