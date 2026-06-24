@@ -47,13 +47,28 @@ def test_env_gate(tmp_path):
 def test_ledger_appends_unified_record(tmp_path):
     ledger_path = tmp_path / "ledger.md"
     ledger = Ledger(ledger_path)
-    ledger.append(Record(type="request", title="Capture habit", summary=("record durable requirements",)))
+    ledger.append(Record(
+        type="request",
+        status="open",
+        title="Capture habit",
+        summary=("record durable requirements",),
+    ))
     ledger.append(Record(type="risk", title="Check output noise", details=("do not commit work/out files",)))
 
     text = ledger_path.read_text(encoding="utf-8")
     assert "type: request" in text
+    assert "status: open" in text
     assert "record durable requirements" in text
     assert "type: risk" in text
+
+
+def test_record_status_preserves_positional_summary_compatibility():
+    record = Record("request", "Legacy call", ("old positional summary",))
+
+    text = record.render_markdown()
+
+    assert "status:" not in text
+    assert "- old positional summary" in text
 
 
 def test_manifest_roundtrip(tmp_path):

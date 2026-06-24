@@ -52,3 +52,23 @@ details:
 links:
 - README.md
 - tools/project.py
+
+## 2026-06-25T03:20:19 - Define lightweight status panel contract
+
+type: decision
+status: closed
+tags: panel, hooks, ledger
+
+summary:
+- Status panels should be Chinese, compact, and triggered only for new-session entry or post-checkpoint handoff.
+- Open requests, risks, and issues should use `status: open`; completed items should use `status: closed`.
+
+details:
+- The panel should read only stable project files and bounded git metadata, not scan the whole source tree or inspect large diffs.
+- Each open group should show at most five deduplicated items.
+- Git, worktree, branch, next-action, and risk lines should avoid repeating the same item in multiple places.
+
+links:
+- tools/panel.py
+- .claude/hooks/panel_hook.py
+- .codex/hooks.json

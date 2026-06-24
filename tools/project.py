@@ -18,6 +18,7 @@ REQUIRED_FILES = [
     "AGENTS.md",
     "CLAUDE.md",
     ".codex/config.example.toml",
+    ".codex/hooks.json",
     "pyproject.toml",
     ".gitignore",
 ]
@@ -214,10 +215,16 @@ def check_claude_hook_files(result: Result) -> None:
 def check_codex_hook_files(result: Result) -> None:
     """Check that Codex helper files exist."""
     example = ROOT / ".codex" / "config.example.toml"
+    hooks = ROOT / ".codex" / "hooks.json"
+    panel_hook = ROOT / ".codex" / "hooks" / "panel_hook.py"
     notify = ROOT / "tools" / "hooks" / "codex_notify.py"
     panel = ROOT / "tools" / "hooks" / "panel_print.py"
     if not example.exists():
         result.warnings.append("missing .codex/config.example.toml")
+    elif not hooks.exists():
+        result.warnings.append("missing .codex/hooks.json")
+    elif not panel_hook.exists():
+        result.warnings.append("missing .codex/hooks/panel_hook.py")
     elif not notify.exists():
         result.warnings.append("missing tools/hooks/codex_notify.py (referenced by Codex config example)")
     elif not panel.exists():

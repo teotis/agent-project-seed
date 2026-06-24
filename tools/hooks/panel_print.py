@@ -32,7 +32,7 @@ def main() -> int:
         print("[panel] project root not found", file=sys.stderr)
         return 1
     result = subprocess.run(
-        [sys.executable or "python3", str(project_root / "tools" / "panel.py")],
+        [sys.executable or "python3", str(project_root / "tools" / "panel.py"), *sys.argv[1:]],
         cwd=project_root,
         text=True,
         check=False,

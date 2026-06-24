@@ -90,6 +90,8 @@ def test_init_project_copy_no_git(tmp_path):
     agents = (target / "AGENTS.md").read_text(encoding="utf-8")
     assert "Demo Project" in agents
     assert (target / ".codex" / "config.example.toml").exists()
+    assert (target / ".codex" / "hooks.json").exists()
+    assert (target / ".codex" / "hooks" / "panel_hook.py").exists()
     assert (target / "work" / "in" / ".gitkeep").exists()
 
 

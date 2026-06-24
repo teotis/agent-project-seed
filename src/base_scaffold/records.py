@@ -21,6 +21,7 @@ class Record:
     details: tuple[str, ...] = ()
     links: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
+    status: str | None = None
     created_at: str = field(default_factory=now_iso)
 
     def render_markdown(self) -> str:
@@ -34,9 +35,10 @@ class Record:
             f"## {self.created_at} - {self.title}",
             "",
             f"type: {self.type}",
-            f"tags: {tags}",
-            "",
         ]
+        if self.status:
+            lines.append(f"status: {self.status}")
+        lines += [f"tags: {tags}", ""]
         lines += block("summary", self.summary)
         lines += block("details", self.details)
         lines += block("links", self.links)

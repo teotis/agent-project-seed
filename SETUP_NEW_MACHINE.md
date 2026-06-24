@@ -19,6 +19,10 @@ cp .env.example .env
 
 The init command copies `.claude/settings.example.json` to `.claude/settings.json` automatically. To customize permissions or hooks, edit `.claude/settings.json` (not the example file).
 
+The example settings include a `UserPromptSubmit` status-panel hook. It injects
+a short Chinese project snapshot only on the first prompt of a session, unless a
+handoff flow explicitly requests `panel_mode=handoff`.
+
 ## Codex Hooks (Optional)
 
 For end-of-turn guarded commits in Codex, add the notify hook to your user config:
@@ -40,6 +44,9 @@ tracked dirty changes, it must either commit a local checkpoint or clearly repor
 why VCS closeout is blocked. Keep this separate from `AGENTS.md` so copied
 projects inherit a small shared contract while the repeatable workflow lives in
 skills and hooks.
+
+For new-session context in Codex, use `.codex/hooks.json` as the project-level
+hook example. It loads the same Chinese status panel from `tools/panel.py`.
 
 Suggested layering:
 

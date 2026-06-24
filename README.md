@@ -21,7 +21,7 @@ AI agents work better when they share the same operating context. This scaffold 
 
 | Feature | Description |
 | --- | --- |
-| Status Panel | Shows project status, git status, ledger count, goal, and next action |
+| Status Panel | Shows a compact Chinese entry/handoff snapshot: git state, recent worktrees/branches, open ledger items, risks, and next action |
 | Safe Commit | Whitelist-based commit command for agent-made changes |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
@@ -101,7 +101,20 @@ See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
 
 Codex reads the shared entry point from `AGENTS.md`. For end-of-turn guarded commits, copy the `notify` example from `.codex/config.example.toml` into your user-level `~/.codex/config.toml` and replace the placeholder path with this repository's absolute path.
 
-The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Codex does not currently use the Claude-style prompt-injection hook in this scaffold; run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.
+The notify script calls `python3 tools/project.py commit`, so it keeps the same allowlist and secret/temp/output protections as the Claude Code Stop hook. Run `python3 tools/hooks/panel_print.py` whenever you want the same status panel printed in a terminal.
+
+For new-session context, `.codex/hooks.json` provides a `UserPromptSubmit`
+example that injects the Chinese status panel on the first prompt in a session.
+The panel can also be rendered manually with:
+
+```bash
+python3 tools/panel.py --mode entry
+python3 tools/panel.py --mode handoff
+```
+
+The panel stays lightweight by reading only `AGENTS.md`, `control/state.md`,
+`control/ledger.md`, `src/`, and bounded git metadata commands. It does not scan
+the full source tree, inspect large diffs, call networks, or invoke an LLM.
 
 For broader Codex App use across projects, prefer a user-level
 `clean-checkpoint-first` skill plus a user-level Stop hook. The skill teaches the

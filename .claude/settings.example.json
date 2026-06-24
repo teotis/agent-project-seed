@@ -14,5 +14,19 @@
 
       "Bash(PYTHONPATH=src python3 -m pytest *)"
     ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/panel_hook.py",
+            "timeout": 12,
+            "statusMessage": "加载项目状态面板..."
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import shutil
 import subprocess
 import sys
@@ -72,8 +73,8 @@ def test_panel_after_init_shows_project_name(tmp_path):
     )
     assert result.returncode == 0
     assert "My App" in result.stdout
-    assert "Seed Template" not in result.stdout
-    assert "Initialized" in result.stdout
+    assert "种子模板" not in result.stdout
+    assert "目标待定" in result.stdout
 
 
 def test_panel_shows_package_and_records(tmp_path):
@@ -86,4 +87,130 @@ def test_panel_shows_package_and_records(tmp_path):
     )
     assert result.returncode == 0
     assert "demo_project" in result.stdout
-    assert "Ledger:" in result.stdout
+    assert "记录:" in result.stdout
+
+
+def test_panel_lists_open_records_in_chinese_and_limits_each_group(tmp_path):
+    target = _copy_and_init(tmp_path, name="Demo Project", package="demo_project")
+    ledger = target / "control" / "ledger.md"
+    records = []
+    for index in range(1, 7):
+        records.append(f"""
+## 2026-06-25T10:0{index}:00 - Open request {index}
+
+type: request
+status: open
+tags: panel
+
+summary:
+- 未完成需求 {index}
+""")
+    records.append("""
+## 2026-06-25T10:07:00 - Closed request
+
+type: request
+status: closed
+tags: panel
+
+summary:
+- 已完成需求不显示
+""")
+    for index in range(1, 7):
+        records.append(f"""
+## 2026-06-25T11:0{index}:00 - Open risk {index}
+
+type: risk
+status: open
+tags: panel
+
+summary:
+- 未收口风险 {index}
+""")
+    ledger.write_text(ledger.read_text(encoding="utf-8") + "\n".join(records), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, "tools/panel.py", "--mode", "handoff"],
+        cwd=target, text=True, capture_output=True,
+    )
+
+    assert result.returncode == 0
+    assert "未完成:" in result.stdout
+    assert "风险:" in result.stdout
+    assert "未完成需求 1" in result.stdout
+    assert "未完成需求 5" in result.stdout
+    assert "未完成需求 6" not in result.stdout
+    assert "已完成需求不显示" not in result.stdout
+    assert "未收口风险 1" in result.stdout
+    assert "未收口风险 5" in result.stdout
+    assert "未收口风险 6" not in result.stdout
+
+
+def test_claude_panel_hook_runs_only_for_first_prompt_or_handoff(tmp_path):
+    target = _copy_and_init(tmp_path)
+    hook = target / ".claude" / "hooks" / "panel_hook.py"
+
+    second_prompt = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "prompt_index": 2}),
+        text=True,
+        capture_output=True,
+    )
+    assert second_prompt.returncode == 0
+    assert second_prompt.stdout == ""
+
+    first_prompt = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "prompt_index": 1}),
+        text=True,
+        capture_output=True,
+    )
+    assert first_prompt.returncode == 0
+    assert "状态面板" in first_prompt.stdout
+
+    handoff = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "panel_mode": "handoff", "prompt_index": 9}),
+        text=True,
+        capture_output=True,
+    )
+    assert handoff.returncode == 0
+    assert "--mode" not in handoff.stdout
+    assert "状态面板" in handoff.stdout
+
+
+def test_codex_panel_hook_runs_only_for_first_prompt_or_handoff(tmp_path):
+    target = _copy_and_init(tmp_path)
+    hook = target / ".codex" / "hooks" / "panel_hook.py"
+
+    second_prompt = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "prompt_index": 2}),
+        text=True,
+        capture_output=True,
+    )
+    assert second_prompt.returncode == 0
+    assert second_prompt.stdout == ""
+
+    first_prompt = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "prompt_index": 1}),
+        text=True,
+        capture_output=True,
+    )
+    assert first_prompt.returncode == 0
+    assert "状态面板" in first_prompt.stdout
+
+    handoff = subprocess.run(
+        [sys.executable, str(hook)],
+        cwd=target,
+        input=json.dumps({"cwd": str(target), "panel_mode": "handoff", "prompt_index": 9}),
+        text=True,
+        capture_output=True,
+    )
+    assert handoff.returncode == 0
+    assert "状态面板" in handoff.stdout

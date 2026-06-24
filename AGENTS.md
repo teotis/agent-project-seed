@@ -39,6 +39,8 @@ Every task completion must include:
 
 If there are no new risks, explicitly write "No new risks found." Next steps must be concrete, actionable items.
 
+If the task produced a patch that was committed or otherwise merged into git, start the completion reply with the compact handoff status panel from `python3 tools/panel.py --mode handoff`, then summarize the change.
+
 ### Ledger rule
 
 Requirements, decisions, risks, sessions, conflicts, and artifacts are appended to `control/ledger.md` as `Record` entries. Unified format:
@@ -47,6 +49,7 @@ Requirements, decisions, risks, sessions, conflicts, and artifacts are appended 
 ## YYYY-MM-DDTHH:MM:SS - short title
 
 type: request | decision | session | risk | issue | artifact
+status: open | closed  # optional; use for active requests, risks, and issues
 tags: tag-a, tag-b
 
 summary:
@@ -59,7 +62,7 @@ links:
 - path/or/url
 ```
 
-Only record facts useful for the project's future. Do not save complete chat logs, keys, or raw private data.
+Only record facts useful for the project's future. Do not save complete chat logs, keys, or raw private data. Use `status: open` for unfinished requests, risks, and issues that should appear in the status panel; switch to `status: closed` when they are done or no longer relevant.
 
 ### Conflict rule
 
@@ -124,3 +127,4 @@ No auto-generated files in this scaffold project.
 - Codex app should use this `AGENTS.md` as the shared project instruction file.
 - After modifying shared rules, run `python3 tools/project.py sync-agents`.
 - For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
+- For lightweight new-session context, enable the project status panel hook from `.claude/settings.example.json` or `.codex/hooks.json`.

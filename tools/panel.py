@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-Project status panel generator — injected at the start of every conversation.
+Lightweight Chinese project status panel.
 
-Three status levels:
-  - Seed Template: not yet initialized
-  - Initialized, goals pending: init has run, but Current Intent not edited
-  - Ready: Current Intent has been customized
+The panel is intentionally cheap: it reads a few stable project files and runs
+a handful of bounded git commands. It does not scan the source tree, inspect
+large diffs, call networks, or invoke an LLM.
 """
 from __future__ import annotations
 
+import argparse
 import re
 import subprocess
 import sys
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
@@ -19,10 +20,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 SEED_PLACEHOLDER = "Seed Template — copy this scaffold to start a new project."
 PENDING_MARKER = "Initialized, goals pending"
+MAX_ITEMS_PER_GROUP = 5
+
+
+@dataclass(frozen=True)
+class LedgerRecord:
+    title: str
+    type: str = ""
+    status: str = ""
+    summary: tuple[str, ...] = field(default_factory=tuple)
 
 
 def read_agents_text() -> str:
-    """Read AGENTS.md content, returning empty string if missing."""
     agents = ROOT / "AGENTS.md"
     if not agents.exists():
         return ""
@@ -30,7 +39,6 @@ def read_agents_text() -> str:
 
 
 def read_project_name() -> str:
-    """Read project name from AGENTS.md Current Intent section."""
     text = read_agents_text()
     match = re.search(r"\*\*Project\*\*:\s*(.+)", text)
     if match:
@@ -45,7 +53,6 @@ def read_project_name() -> str:
 
 
 def read_package_name() -> str:
-    """Infer package name from the directory under src/."""
     src = ROOT / "src"
     if not src.exists():
         return ""
@@ -54,7 +61,6 @@ def read_package_name() -> str:
 
 
 def detect_status() -> str:
-    """Detect project status: seed / pending / ready."""
     text = read_agents_text()
     if not text:
         return "seed"
@@ -66,7 +72,6 @@ def detect_status() -> str:
 
 
 def count_ledger_records() -> int:
-    """Count the number of records in ledger.md."""
     ledger = ROOT / "control" / "ledger.md"
     if not ledger.exists():
         return 0
@@ -74,92 +79,190 @@ def count_ledger_records() -> int:
     return len(re.findall(r"^## \d{4}-\d{2}-\d{2}T", text, re.MULTILINE))
 
 
-def extract_intent_summary() -> str:
-    """Extract the project goal line from Current Intent in AGENTS.md."""
-    text = read_agents_text()
-    match = re.search(r"## Current Intent\n\n(.+?)(?=\n## |\Z)", text, re.DOTALL)
-    if not match:
-        return ""
-    body = match.group(1).strip()
-    for line in body.splitlines():
-        line = line.strip()
-        if line.startswith("- "):
-            return line[2:]
-    return ""
+def read_ledger_records() -> list[LedgerRecord]:
+    ledger = ROOT / "control" / "ledger.md"
+    if not ledger.exists():
+        return []
+    text = ledger.read_text(encoding="utf-8")
+    chunks = re.split(r"(?=^## \d{4}-\d{2}-\d{2}T)", text, flags=re.MULTILINE)
+    records: list[LedgerRecord] = []
+    for chunk in chunks:
+        lines = chunk.strip().splitlines()
+        if not lines or not lines[0].startswith("## "):
+            continue
+        title = lines[0].split(" - ", 1)[1].strip() if " - " in lines[0] else lines[0][3:].strip()
+        record_type = ""
+        status = ""
+        summary: list[str] = []
+        in_summary = False
+        for raw_line in lines[1:]:
+            line = raw_line.strip()
+            if line.startswith("type:"):
+                record_type = line.split(":", 1)[1].strip()
+                in_summary = False
+            elif line.startswith("status:"):
+                status = line.split(":", 1)[1].strip()
+                in_summary = False
+            elif line == "summary:":
+                in_summary = True
+            elif re.match(r"^[a-zA-Z_-]+:", line):
+                in_summary = False
+            elif in_summary and line.startswith("- "):
+                summary.append(line[2:].strip())
+        records.append(LedgerRecord(title=title, type=record_type, status=status, summary=tuple(summary)))
+    return records
 
 
-def extract_next_action() -> str:
-    """Extract next action from state.md."""
+def item_text(record: LedgerRecord) -> str:
+    return record.summary[0] if record.summary else record.title
+
+
+def dedupe_limited(values: list[str], *, seen: set[str] | None = None, limit: int = MAX_ITEMS_PER_GROUP) -> list[str]:
+    seen_values = seen if seen is not None else set()
+    result: list[str] = []
+    for value in values:
+        text = value.strip()
+        key = re.sub(r"\s+", " ", text).lower()
+        if not text or key in seen_values:
+            continue
+        result.append(text)
+        seen_values.add(key)
+        if len(result) >= limit:
+            break
+    return result
+
+
+def open_items_by_type(*record_types: str, seen: set[str] | None = None) -> list[str]:
+    records = [
+        record for record in read_ledger_records()
+        if record.status == "open" and record.type in record_types
+    ]
+    return dedupe_limited([item_text(record) for record in records], seen=seen)
+
+
+def extract_next_actions(limit: int = 3, *, seen: set[str] | None = None) -> list[str]:
     state = ROOT / "control" / "state.md"
     if not state.exists():
-        return ""
+        return []
     text = state.read_text(encoding="utf-8")
     match = re.search(r"## Next Maintenance Action\n\n(.+?)(?=\n## |\Z)", text, re.DOTALL)
     if not match:
-        return ""
-    for line in match.group(1).strip().splitlines():
-        line = line.strip()
-        if line.startswith("- "):
-            return line[2:]
-    return ""
+        return []
+    values = [
+        line.strip()[2:].strip()
+        for line in match.group(1).strip().splitlines()
+        if line.strip().startswith("- ")
+    ]
+    return dedupe_limited(values, seen=seen, limit=limit)
+
+
+def run_git(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[str] | None:
+    try:
+        return subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except Exception:
+        return None
 
 
 def git_status_summary() -> str:
-    """Get git status summary."""
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=ROOT, capture_output=True, text=True, timeout=5,
-        )
-        if result.returncode != 0:
-            return "unknown"
-        changed = len(result.stdout.strip().splitlines()) if result.stdout.strip() else 0
-        return f"{changed} file{'s' if changed != 1 else ''}" if changed else "clean"
-    except Exception:
-        return "unknown"
+    result = run_git(["status", "--porcelain"])
+    if result is None or result.returncode != 0:
+        return "工作区未知"
+    changed = len(result.stdout.strip().splitlines()) if result.stdout.strip() else 0
+    return "工作区干净" if changed == 0 else f"工作区 {changed} 个改动"
+
+
+def current_branch() -> str:
+    result = run_git(["branch", "--show-current"])
+    if result is None or result.returncode != 0:
+        return "分支未知"
+    return result.stdout.strip() or "detached"
+
+
+def last_commit() -> str:
+    result = run_git(["log", "-1", "--oneline"])
+    if result is None or result.returncode != 0:
+        return "无提交信息"
+    text = result.stdout.strip()
+    return text if text else "无提交信息"
+
+
+def worktree_summary() -> str:
+    result = run_git(["worktree", "list", "--porcelain"])
+    if result is None or result.returncode != 0:
+        return "worktree 未知"
+    total = sum(1 for line in result.stdout.splitlines() if line.startswith("worktree "))
+    extras = max(total - 1, 0)
+    return "worktree 无额外项" if extras == 0 else f"worktree 另有 {extras} 个"
+
+
+def branch_summary() -> str:
+    result = run_git(["branch", "--format=%(refname:short)", "--sort=-committerdate"])
+    if result is None or result.returncode != 0:
+        return "分支未知"
+    current = current_branch()
+    branches = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    others = [branch for branch in branches if branch != current]
+    if not others:
+        return f"当前 {current}"
+    recent = ", ".join(others[:3])
+    return f"当前 {current}; 另有 {len(others)} 个，最近: {recent}"
 
 
 STATUS_LABELS = {
-    "seed": "Seed Template",
-    "pending": "Initialized, goals pending",
-    "ready": "Ready",
+    "seed": "种子模板",
+    "pending": "目标待定",
+    "ready": "就绪",
 }
 
 
-def generate_panel() -> str:
+def generate_panel(mode: str = "entry") -> str:
     today = date.today()
-    weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][today.weekday()]
+    weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][today.weekday()]
     status = detect_status()
     project_name = read_project_name() or "Agent Project Seed"
+    mode_label = "交接" if mode == "handoff" else "进入"
 
     if status == "seed":
         return "\n".join([
-            f"[{project_name}] {today.isoformat()} ({weekday})",
-            f"Status: {STATUS_LABELS[status]}",
-            "-> Run `python3 tools/project.py init --name \"your-project-name\"` to start",
+            f"[{project_name}] {mode_label} | {current_branch()} | {git_status_summary()}",
+            f"状态: {STATUS_LABELS[status]} | 记录: {count_ledger_records()} | {today.isoformat()} ({weekday})",
+            f"Git: {worktree_summary()} | {branch_summary()} | 最近: {last_commit()}",
+            "未完成: 无标记 open 需求",
+            "风险: 无标记 open 风险",
+            "下一步: 运行 `python3 tools/project.py init --name \"your-project-name\"` 初始化项目",
         ])
 
     package = read_package_name()
     records = count_ledger_records()
-    git = git_status_summary()
-    intent = extract_intent_summary()
-    next_action = extract_next_action()
+    seen: set[str] = set()
+    requests = open_items_by_type("request", seen=seen)
+    risks = open_items_by_type("risk", "issue", seen=seen)
+    next_actions = extract_next_actions(seen=seen)
 
     lines = [
-        f"[{project_name}] {today.isoformat()} ({weekday})",
-        f"Status: {STATUS_LABELS[status]}",
-        f"Git: {git} | Ledger: {records} records | Package: {package}",
+        f"[{project_name}] {mode_label} | {current_branch()} | {git_status_summary()}",
+        f"状态: {STATUS_LABELS[status]} | 记录: {records} | 包: {package}",
+        f"Git: {worktree_summary()} | {branch_summary()} | 最近: {last_commit()}",
+        "未完成: " + ("；".join(requests) if requests else "无标记 open 需求"),
+        "风险: " + ("；".join(risks) if risks else "无标记 open 风险"),
     ]
-    if intent:
-        lines.append(f"Goal: {intent}")
-    if next_action:
-        lines.append(f"Next: {next_action}")
+    if next_actions:
+        lines.append("下一步: " + "；".join(next_actions))
     return "\n".join(lines)
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Print a lightweight project status panel.")
+    parser.add_argument("--mode", choices=["entry", "handoff"], default="entry")
+    args = parser.parse_args()
     try:
-        print(generate_panel())
+        print(generate_panel(args.mode))
     except Exception as exc:
         print(f"[panel] error: {exc}", file=sys.stderr)
         return 1
