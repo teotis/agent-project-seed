@@ -12,8 +12,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTICE = "<!-- Generated from AGENTS.md. Do not edit directly. -->"
-
 REQUIRED_FILES = [
     "control/ledger.md",
     "control/state.md",
@@ -29,7 +27,6 @@ REQUIRED_DIRS = ["control", "work/in", "work/out", "work/tmp", "tools", "src"]
 ALLOWED_PREFIXES = (
     "AGENTS.md",
     "CLAUDE.md",
-    "GEMINI.md",
     "README.md",
     "SETUP_NEW_MACHINE.md",
     "Makefile",
@@ -100,31 +97,9 @@ Claude Code-specific notes:
 """
 
 
-def render_gemini() -> str:
-    return f"""# Gemini CLI Entry
-
-{NOTICE}
-
-Shared engineering rules are in:
-
-@./AGENTS.md
-
-## Gemini CLI Notes
-
-- After modifying shared rules, run `python3 tools/project.py sync-agents` and reload context in Gemini CLI.
-- Do not copy shared rules into this file.
-"""
-
-
 def expected_agent_files() -> dict[Path, str]:
     return {
         ROOT / "CLAUDE.md": render_claude(),
-    }
-
-
-def optional_agent_files() -> dict[Path, str]:
-    return {
-        ROOT / "GEMINI.md": render_gemini(),
     }
 
 
@@ -134,9 +109,7 @@ def sync_agents() -> int:
         return 1
     for path, content in expected_agent_files().items():
         path.write_text(content, encoding="utf-8")
-    for path, content in optional_agent_files().items():
-        path.write_text(content, encoding="utf-8")
-    print("Synced CLAUDE.md and GEMINI.md from AGENTS.md.")
+    print("Synced CLAUDE.md from AGENTS.md.")
     return 0
 
 
@@ -149,9 +122,6 @@ def check_agent_sync(result: Result) -> None:
             result.issues.append(f"missing {path.relative_to(ROOT)}")
         elif path.read_text(encoding="utf-8") != expected:
             result.issues.append(f"{path.relative_to(ROOT)} is not in sync with AGENTS.md")
-    for path, expected in optional_agent_files().items():
-        if path.exists() and path.read_text(encoding="utf-8") != expected:
-            result.warnings.append(f"{path.relative_to(ROOT)} is not in sync with AGENTS.md (optional)")
     if not any("sync" in issue for issue in result.issues):
         result.notices.append("agent entry files are synced")
 

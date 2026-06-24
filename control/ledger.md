@@ -35,3 +35,20 @@ links:
 - README.md
 - SETUP_NEW_MACHINE.md
 - codex://threads/019ef228-c9a3-7e12-975b-9d7644f5782d
+
+## 2026-06-25T02:59:30 - Remove Gemini adapter from seed
+
+type: decision
+tags: agents, scaffold, gemini
+
+summary:
+- Keep the copied-project agent surface focused on Codex and Claude Code.
+- Remove Gemini CLI entry-file generation and documentation from the seed.
+
+details:
+- `tools/project.py sync-agents` should regenerate only `CLAUDE.md` from `AGENTS.md`.
+- Future project positioning should describe Codex and Claude Code support, not Gemini support.
+
+links:
+- README.md
+- tools/project.py

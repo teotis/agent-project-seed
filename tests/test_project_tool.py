@@ -57,6 +57,7 @@ def test_check_and_sync_agents_are_healthy():
         check=False,
     )
     assert sync.returncode == 0, sync.stdout + sync.stderr
+    assert "GEMINI" not in sync.stdout
 
 
 def _copy_and_init(tmp_path, name="Demo Project", package="demo_project"):
@@ -134,6 +135,14 @@ def test_no_legacy_directories_in_template():
     ]
     for relative in legacy_dirs:
         assert not (ROOT / relative).exists(), f"legacy directory remains: {relative}"
+
+
+def test_gemini_adapter_is_not_part_of_template():
+    module = load_project_tool()
+
+    assert not (ROOT / "GEMINI.md").exists()
+    assert all("GEMINI" not in str(path) for path in module.expected_agent_files())
+    assert "GEMINI.md" not in module.ALLOWED_PREFIXES
 
 
 def test_safety_check_detects_staged_env(tmp_path):

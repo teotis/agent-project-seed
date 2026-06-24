@@ -14,7 +14,7 @@ AI agents work better when they share the same operating context. This scaffold 
 - A current-state snapshot for handoff between sessions and agents
 - A structured ledger for requirements, decisions, risks, issues, and artifacts
 - Safe commit tooling that rejects secrets, temp files, generated outputs, and unexpected paths
-- Synced `AGENTS.md` and `CLAUDE.md` entry points (optional `GEMINI.md`)
+- Synced `AGENTS.md` and `CLAUDE.md` entry points
 - A lightweight status panel for Claude Code hooks and Codex-friendly helper commands
 
 ## What's Included
@@ -25,7 +25,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Safe Commit | Whitelist-based commit command for agent-made changes |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
-| Agent Sync | Regenerates `CLAUDE.md` (required) and `GEMINI.md` (optional) from `AGENTS.md` |
+| Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
 
@@ -94,7 +94,6 @@ See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
 │   └── settings.example.json
 ├── AGENTS.md               # Shared source of truth
 ├── CLAUDE.md               # Claude Code entry point
-├── GEMINI.md               # Optional Gemini CLI entry point
 └── SETUP_NEW_MACHINE.md    # First-time setup guide
 ```
 
