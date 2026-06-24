@@ -1,0 +1,24 @@
+interface:
+  display_name: "Done Claim Gate"
+  short_description: "在目标和方案已定时，用证据矩阵防止把局部实现误报成交付完成"
+  default_prompt: "使用 $done-claim-gate 用中文做低预算完成声明门槛判断：先提取用户目标、已定方案、实现映射和验收证据，再判断当前只能宣称 complete、engineering-complete、partial、blocked 还是 not-complete；不得自动扩展为重型分析或重新设计方案。"
+compatibility:
+  canonical_format: "agent-skills"
+  adapter_targets:
+    - "openai"
+    - "claude"
+    - "generic"
+  activation:
+    mode: "manual-or-implicit"
+    paths: []
+  execution:
+    context: "inline"
+    shell: "bash"
+  trust:
+    source_tier: "local"
+    remote_inline_execution: "forbid"
+    remote_metadata_policy: "allow-metadata-only"
+  degradation:
+    openai: "metadata-adapter"
+    claude: "neutral-source-plus-adapter"
+    generic: "neutral-source"

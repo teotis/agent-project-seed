@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>{{DOCUMENT_TITLE}}</title>
+<style>
+:root{--bg:#f4f1ea;--paper:#fffdf8;--ink:#17202a;--muted:#66717e;--line:#d7d1c5;--accent:#145da0;--accent-soft:#e6f0f8;--warm:#a64b2a;--positive:#176b4d;--shadow:0 14px 40px rgba(31,36,42,.08);--radius:18px;--measure:70ch;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#11151a;--paper:#181e25;--ink:#edf2f7;--muted:#a7b1bc;--line:#34404c;--accent:#79b8f3;--accent-soft:#1d3347;--warm:#f09a78;--positive:#6bd6aa;--shadow:none}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.62}.skip-link{position:absolute;left:-999px;top:.5rem}.skip-link:focus{left:.5rem;z-index:30;background:var(--paper);padding:.55rem .8rem;border:2px solid var(--accent)}.page{width:min(1240px,calc(100% - 2rem));margin:auto}.masthead{padding:3.5rem 0 1.5rem}.eyebrow{color:var(--accent);font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}.masthead h1{font-size:clamp(2rem,5vw,4.4rem);line-height:1.02;letter-spacing:-.045em;margin:.35rem 0 1rem;max-width:18ch}.thesis{font-size:clamp(1.05rem,2vw,1.4rem);max-width:62ch;margin:0;color:var(--muted)}.lens-nav{display:flex;gap:.5rem;flex-wrap:wrap;padding:.8rem 0 1.6rem;position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px)}.lens-nav a{color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:.48rem .8rem;background:var(--paper);font-weight:650;font-size:.9rem}.lens-nav a:focus-visible,.lens-nav a:hover{outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent);border-color:var(--accent)}main{display:grid;gap:1.2rem;padding-bottom:4rem}.surface{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(1rem,2.4vw,2rem)}.orientation{display:grid;gap:1rem}.takeaways{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.7rem}.takeaway{border-top:3px solid var(--accent);padding:.75rem 0}.takeaway strong{display:block;font-size:1.05rem}.takeaway span{color:var(--muted);font-size:.92rem}.section-head{display:flex;justify-content:space-between;align-items:end;gap:1rem;margin-bottom:1rem}.section-head h2{font-size:clamp(1.35rem,2.6vw,2rem);letter-spacing:-.02em;margin:0}.section-head p{color:var(--muted);max-width:52ch;margin:0}.visual-stage{overflow:auto;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,var(--paper),var(--accent-soft));padding:1rem}.visual-stage svg{display:block;min-width:760px;width:100%;height:auto}.legend{display:flex;gap:1rem;flex-wrap:wrap;color:var(--muted);font-size:.84rem;margin-top:.75rem}.legend span{display:inline-flex;align-items:center;gap:.35rem}.swatch{width:.8rem;height:.8rem;border-radius:3px;background:var(--accent);border:1px solid var(--ink)}.insight{border-left:4px solid var(--warm);padding:.8rem 1rem;background:color-mix(in srgb,var(--warm) 8%,var(--paper));margin-top:1rem}.flow-grid{display:grid;grid-template-columns:repeat(var(--lanes,5),minmax(135px,1fr));gap:.45rem;min-width:760px}.lane-head{font-weight:750;text-align:center;padding:.6rem;border-bottom:2px solid var(--ink)}.flow-step{border:1px solid var(--line);border-radius:10px;padding:.65rem;background:var(--paper);font-size:.88rem}.flow-step strong{color:var(--accent)}.matrix-wrap{overflow:auto}.matrix{width:100%;min-width:780px;border-collapse:separate;border-spacing:0}.matrix th,.matrix td{padding:.7rem;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top;text-align:left}.matrix th{position:sticky;top:0;background:var(--paper);font-size:.84rem}.matrix th:first-child,.matrix td:first-child{position:sticky;left:0;background:var(--paper);font-weight:750}.matrix .active{background:var(--accent-soft)}.matrix .delegated{outline:2px dashed var(--warm);outline-offset:-4px}.matrix .none{color:var(--muted);text-align:center}.evidence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.7rem}.evidence-card{border:1px solid var(--line);border-radius:12px;padding:.85rem}.evidence-card code{font-size:.83rem}.evidence-card p{color:var(--muted);margin:.35rem 0 0}.review-drawer{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:1rem}.review-drawer summary{cursor:pointer;font-weight:750}.review-drawer[open] summary{margin-bottom:1rem}details[data-comprehension-role="evidence-appendix"] summary{cursor:pointer;font-weight:750;font-size:1.05rem}.source-ref{font-size:.78rem;color:var(--muted)}@media(max-width:720px){.page{width:min(100% - 1rem,1240px)}.masthead{padding-top:2rem}.lens-nav{position:static}.section-head{display:block}.section-head p{margin-top:.35rem}.surface{border-radius:14px}.takeaways{grid-template-columns:1fr 1fr}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}@media print{body{background:#fff;color:#111}.lens-nav,.review-drawer,button{display:none!important}.page{width:100%}.surface{box-shadow:none;break-inside:avoid}.visual-stage{overflow:visible}details>*{display:block}}
+.static-fallback{margin-top:.75rem;border:1px dashed var(--line);border-radius:10px;padding:.75rem;color:var(--muted);background:color-mix(in srgb,var(--paper) 86%,var(--accent-soft))}
+@media print{.static-fallback{border:1px solid #bbb;color:#333}}
+</style>
+</head>
+<body data-document-id="{{DOCUMENT_ID}}">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="page">
+  <header class="masthead" data-comprehension-role="thesis" data-source-ref="{{THESIS_SOURCE_REFS}}">
+    <div class="eyebrow">{{MODE_LABEL}}</div>
+    <h1>{{DOCUMENT_TITLE}}</h1>
+    <p class="thesis">{{THESIS}}</p>
+  </header>
+  <nav class="lens-nav toc" data-comprehension-role="section-index" aria-label="{{LENS_NAV_LABEL}}">
+    <a href="#overview">{{OVERVIEW_LABEL}}</a>
+    <a href="#runtime">{{RUNTIME_LABEL}}</a>
+    <a href="#comparison">{{COMPARISON_LABEL}}</a>
+    <a href="#evidence">{{EVIDENCE_LABEL}}</a>
+  </nav>
+  <main id="main">
+    <section class="surface orientation" id="overview">
+      <div class="takeaways">{{TAKEAWAYS}}</div>
+      <figure data-visual-purpose="system-map" data-source-ref="{{OVERVIEW_SOURCE_REFS}}" data-visual-question="{{OVERVIEW_QUESTION}}" data-visual-relationships="{{OVERVIEW_RELATIONSHIPS}}">
+        <div class="section-head"><div><h2>{{OVERVIEW_TITLE}}</h2><p>{{OVERVIEW_QUESTION}}</p></div></div>
+        <div class="visual-stage">{{OVERVIEW_VISUAL}}</div>
+        <div class="static-fallback" data-static-fallback="overview">{{OVERVIEW_STATIC_FALLBACK}}</div>
+        <figcaption class="insight">{{OVERVIEW_TAKEAWAY}}</figcaption>
+      </figure>
+    </section>
+    <section class="surface" id="runtime" data-visual-purpose="dynamic-flow" data-source-ref="{{RUNTIME_SOURCE_REFS}}" data-visual-question="{{RUNTIME_QUESTION}}">
+      <div class="section-head"><div><h2>{{RUNTIME_TITLE}}</h2><p>{{RUNTIME_QUESTION}}</p></div></div>
+      {{RUNTIME_VISUAL}}
+      <div class="static-fallback" data-static-fallback="runtime">{{RUNTIME_STATIC_FALLBACK}}</div>
+      <p class="insight">{{RUNTIME_TAKEAWAY}}</p>
+    </section>
+    <section class="surface" id="comparison" data-visual-purpose="comparison-matrix" data-source-ref="{{COMPARISON_SOURCE_REFS}}" data-visual-question="{{COMPARISON_QUESTION}}">
+      <div class="section-head"><div><h2>{{COMPARISON_TITLE}}</h2><p>{{COMPARISON_QUESTION}}</p></div></div>
+      <div class="matrix-wrap">{{COMPARISON_MATRIX}}</div>
+      <div class="static-fallback" data-static-fallback="comparison">{{COMPARISON_STATIC_FALLBACK}}</div>
+      <p class="insight">{{COMPARISON_TAKEAWAY}}</p>
+    </section>
+    <section class="surface" id="evidence">
+      <div class="section-head"><div><h2>{{EVIDENCE_TITLE}}</h2><p>{{EVIDENCE_PURPOSE}}</p></div></div>
+      <div class="evidence-grid">{{EVIDENCE_INDEX}}</div>
+      <details data-comprehension-role="evidence-appendix">
+        <summary>{{APPENDIX_LABEL}}</summary>
+        {{APPENDIX_CONTENT}}
+      </details>
+    </section>
+    <details class="review-drawer">
+      <summary>{{REVIEW_LABEL}}</summary>
+      {{OPTIONAL_REVIEW_CONTROLS}}
+    </details>
+  </main>
+</div>
+<script type="application/json" id="coverage-ledger">{{COVERAGE_LEDGER_JSON}}</script>
+<script>
+(() => {
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', () => {
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.setAttribute('tabindex', '-1');
+    });
+  });
+})();
+</script>
+</body>
+</html>

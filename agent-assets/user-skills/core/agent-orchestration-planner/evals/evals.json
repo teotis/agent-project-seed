@@ -1,0 +1,690 @@
+{
+  "skill_name": "agent-orchestration-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我要并行重构三个独立模块：日志系统、认证中间件、数据导出管道。帮我做一个多 agent 编排方案，用 Claude Code 的 Agents View 来调度。",
+      "expected_output": "Generates a complete orchestration kit with INDEX.md, package docs, package-graph.tsv, state.tsv, agent-prompts.md, launchers/orchestrate.sh, start-codex-app.sh, start-claude-code.sh, and 99-finalize. Uses tail-driven execution with orchestrate.sh advance as the only dispatch mechanism, and presents start-claude-code.sh as the selected Claude Code entrypoint.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Creates the full kit structure: INDEX.md, packages/, launchers/, status/, including orchestrate.sh plus both platform wrappers."
+        },
+        {
+          "text": "INDEX.md includes Dependency Graph, Merge Strategy, Authorization, and Stop Conditions."
+        },
+        {
+          "text": "Package prompts end with orchestrate.sh advance --from <package-id>, not inline scheduling."
+        },
+        {
+          "text": "orchestrate.sh implements start/advance/status/retry/finalize subcommands; start-claude-code.sh is the selected user-facing launcher."
+        },
+        {
+          "text": "99-finalize is a finalize package that verifies, merges, and reports, not a passive audit."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "帮我用 dispatch-claude-agents.sh 来跑几个任务。",
+      "expected_output": "Does not present dispatch-claude-agents.sh as a primary entrypoint. Redirects to the selected platform wrapper, start-claude-code.sh for Claude Code or start-codex-app.sh for Codex App, or to agent-prompts.md as the manual entry. If dispatch-claude-agents.sh exists, it should be a thin wrapper calling orchestrate.sh.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not present dispatch-claude-agents.sh as a primary user entrypoint."
+        },
+        {
+          "text": "Presents the selected platform wrapper or agent-prompts.md as the entry paths."
+        },
+        {
+          "text": "If dispatch-claude-agents.sh is mentioned, it is described as a thin compatibility wrapper around orchestrate.sh, not the primary user entrypoint."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "帮我优化一下当前代码，不需要编排，直接改就行。",
+      "expected_output": "Does not trigger the orchestration skill. Explains that this skill is only for explicit multi-agent orchestration requests, and offers to do the work directly or use another appropriate skill.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate orchestration kit materials for a simple direct-work request."
+        },
+        {
+          "text": "Correctly identifies that the user did not ask for multi-agent orchestration."
+        },
+        {
+          "text": "Offers to perform the work directly or suggest an alternative skill."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "我需要一个完整编排方案：把 docs/ 目录的 Markdown 翻译成中英双语，同时把 API 文档从 OpenAPI 生成，还要跑一次全量 lint 检查。三个任务互不依赖。",
+      "expected_output": "Creates three independent packages with no inter-dependencies (status dependency only), generates the orchestration kit with proper graph showing all three in wave 1, and ensures package branches own disjoint paths to avoid merge conflicts.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "All three packages have dependency type 'status' with no code dependencies between them."
+        },
+        {
+          "text": "Package-graph.tsv shows all three functional packages in wave 1."
+        },
+        {
+          "text": "Each package's allowed paths are disjoint to avoid merge conflicts."
+        },
+        {
+          "text": "orchestrate.sh launch logic can run all three in parallel up to ORCHESTRATION_MAX_PARALLEL."
+        },
+        {
+          "text": "State ledger initializes all three as ready/pending for first wave."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "帮我做多 agent 调度，状态账本要实时更新，worktree 每个包一个，最终自动收口合并到 main。",
+      "expected_output": "Generates the orchestration kit with per-package worktrees, coordinator state.tsv as the scheduler source of truth, tail-driven advance calls, and 99-finalize authorized to merge integration branch back to mainline after verification.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Each functional package has its own worktree path in the graph."
+        },
+        {
+          "text": "state.tsv is the machine-readable source of truth, not worktree-local status."
+        },
+        {
+          "text": "Package prompts write coordinator status to the absolute status path, not inside the worktree."
+        },
+        {
+          "text": "99-finalize is authorized to create integration branch, merge packages, verify, and merge to mainline."
+        },
+        {
+          "text": "Cleanup only happens after every finalize step succeeds."
+        },
+        {
+          "text": "orchestrate.sh exposes cleanup --mainline <branch> and 99-finalize uses it instead of manual git worktree deletion."
+        },
+        {
+          "text": "99-finalize cannot be marked finalized while cleanup is deferred or incomplete."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "生成一个可用脚本触发的多 agent orchestration kit。要求脚本在 Claude Code 后台 session 启动失败或瞬退时能可靠降级，不要误以为任务还在跑。",
+      "expected_output": "Generates an orchestration kit whose orchestrate.sh comes from the shared runtime template. It records launch logs, captures background session ids, checks claude logs after launch, marks missing session ids invalid, marks unreadable or exited sessions stale, and never unlocks downstream work from launched alone.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "orchestrate.sh is copied from skills/agent-orchestration-planner/scripts/orchestrate-template.sh."
+        },
+        {
+          "text": "Launch writes status/launch-<package-id>.log."
+        },
+        {
+          "text": "The background session id is recorded in the agent column of state.tsv."
+        },
+        {
+          "text": "A missing background session id marks the package invalid."
+        },
+        {
+          "text": "Unreadable claude logs or immediate session disappearance marks the package stale."
+        },
+        {
+          "text": "Downstream packages unlock only from completed/finalized, not launched."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "帮我做多 agent 编排，但之前 state.tsv 经常被 agent 写坏。请让状态账本更稳。",
+      "expected_output": "Uses script-owned state mutation. Package prompts instruct agents to update state through orchestrate.sh mark-state, not manual TSV editing. The generated runtime validates graph/state headers and row widths, supports repair-state and doctor, and reports status/ledger mismatches as invalid.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Package prompts explicitly say not to edit state.tsv manually."
+        },
+        {
+          "text": "Package prompts use orchestrate.sh mark-state for completed, blocked, and finalized states."
+        },
+        {
+          "text": "orchestrate.sh validates exact state.tsv header and 17-field rows, including failure recovery context columns."
+        },
+        {
+          "text": "orchestrate.sh validates exact package-graph.tsv header and 10-field rows."
+        },
+        {
+          "text": "orchestrate.sh includes repair-state and doctor commands."
+        },
+        {
+          "text": "Markdown status and state.tsv mismatch blocks downstream dispatch."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "外部 agent 说包完成了，但我怀疑 worktree 里有脏改动和越界文件。请让 99-finalize 更可靠。",
+      "expected_output": "Generates a finalize package that treats agent reports as claims, verifies package branches, commit hashes, allowed paths, clean worktrees, recorded evidence, and integration merge order before merging. It blocks dirty/unrecorded state and verifies recorded package commits in a clean detached worktree when status and workspace disagree.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "99-finalize verifies branch existence and recorded commit existence for each package."
+        },
+        {
+          "text": "99-finalize checks changed files against allowed paths."
+        },
+        {
+          "text": "99-finalize blocks dirty package worktrees unless explicitly recorded as a blocker."
+        },
+        {
+          "text": "99-finalize verifies recorded commits in a clean detached worktree when status and workspace disagree."
+        },
+        {
+          "text": "99-finalize does not mix coordinator ledger commits with unrelated orchestration docs or concurrent mainline edits."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "我用脚本启动后只看到 `backgrounded · 2072b1cc`，之前账本把 `·` 当成 session id，还误判为失败。请生成不会再犯这个错误的 orchestration kit。",
+      "expected_output": "Generates an orchestration kit whose shared orchestrate.sh parses Claude Code background session ids from both `backgrounded <id>` and `backgrounded · <id>`, stores the real id, writes launch logs, checks logs using the parsed id, and includes permission-mode guards for auto and bypassPermissions.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The generated runtime parses `backgrounded · <id>` and stores `<id>`, not `·`, in state.tsv."
+        },
+        {
+          "text": "The launcher defaults to no explicit --permission-mode."
+        },
+        {
+          "text": "CLAUDE_PERMISSION_MODE=auto requires CLAUDE_AUTO_MODE_OPTED_IN=1 after interactive opt-in."
+        },
+        {
+          "text": "CLAUDE_PERMISSION_MODE=bypassPermissions requires CLAUDE_BYPASS_PERMISSIONS_APPROVED=1."
+        },
+        {
+          "text": "The kit exposes `doctor --environment` for Claude CLI path/version and agents availability diagnostics."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "这个编排里有些包必须人工处理，比如 public 发布、force-push 或安全审核；同时 99-finalize 不能只信 FINAL_REPORT。请让脚本和包设计支持这种情况。",
+      "expected_output": "Generates package-graph rows that can use manual=1, never auto-launches manual packages, marks them manual_required when dependencies are satisfied, and requires 99-finalize to run verify-finalize before merging or claiming completion.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "manual=1 packages are not launched by start/advance/retry automatically."
+        },
+        {
+          "text": "When a manual package's dependencies are satisfied, state.tsv records manual_required."
+        },
+        {
+          "text": "status output and final chat response identify concrete manual package ids."
+        },
+        {
+          "text": "orchestrate.sh includes verify-package and verify-finalize commands."
+        },
+        {
+          "text": "99-finalize runs verify-finalize and blocks missing branch, missing commit_hash, nonexistent commit, or dirty worktree evidence."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "一个包反复因为同一个 Claude 启动错误失败，agent 一直 retry 导致空转。请让 orchestration kit 自动阻断这种重复失败。",
+      "expected_output": "Generates an orchestration kit whose orchestrate.sh records terminal failures with normalized fingerprints and blocks retry after the same package hits the same fingerprint three times.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "status/events.jsonl records terminal_failure events with package id, state, error, and fingerprint."
+        },
+        {
+          "text": "retry checks previous terminal_failure events before resetting state."
+        },
+        {
+          "text": "After three matching failures for the same package and fingerprint, retry stops before relaunching."
+        },
+        {
+          "text": "The retry blocker prints the package id, failure count, and failure fingerprint for human diagnosis."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "多 agent 跑完以后我需要知道到底发生过什么，不想只看最终 state.tsv。请让 orchestration kit 保留可审计事件流。",
+      "expected_output": "Generates an orchestration kit with append-only status/events.jsonl covering launch requests, launch success, state changes, terminal failures, retry requests, and retry blocks.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The generated kit includes status/events.jsonl in its status directory design."
+        },
+        {
+          "text": "orchestrate.sh appends launch_requested and launch_succeeded events with package id and session id."
+        },
+        {
+          "text": "orchestrate.sh appends state_changed events for mark-state and internal state updates."
+        },
+        {
+          "text": "orchestrate.sh appends retry_requested and retry_blocked events."
+        },
+        {
+          "text": "99-finalize or failure reporting uses events.jsonl when explaining repeated failures."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "多 agent 之间需要临时共享调查笔记、命令输出和中间清单，但这些东西不能污染状态账本，也不能被当作完成证据。请让 orchestration kit 支持这种临时共享材料区。",
+      "expected_output": "Generates an orchestration kit with a plan-local gitignored scratch area and a scratch-path command that creates package-local scratch directories without changing scheduler truth.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The generated kit includes scratch/.gitignore in its directory structure."
+        },
+        {
+          "text": "orchestrate.sh exposes scratch-path <package-id> and prints the absolute package scratch path."
+        },
+        {
+          "text": "scratch-path creates the package scratch directory and records scratch_path_requested in events.jsonl."
+        },
+        {
+          "text": "Package prompts say scratch is for temporary non-sensitive notes, inventories, logs, draft diffs, or intermediate artifacts only."
+        },
+        {
+          "text": "Scratch contents do not unlock dependencies, satisfy acceptance criteria by themselves, or replace state.tsv/status evidence."
+        },
+        {
+          "text": "Package prompts forbid credentials, tokens, private keys, .env files, hidden prompts, and proprietary raw data in scratch."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "多 agent finalize 时 merge/test 失败以后不要盲目 retry。请把冲突文件、失败命令和日志摘要写进状态账本，让后续 agent 带着上下文修。",
+      "expected_output": "Generates an orchestration kit whose state.tsv includes structured failure recovery context, whose mark-state command can record failed command, conflict files, log summary, and recovery hint, and whose retry path reports prior context before relaunching.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "state.tsv includes last_error, failed_command, conflict_files, log_summary, and recovery_hint columns."
+        },
+        {
+          "text": "mark-state supports --failed-command, --conflict-files, --log-summary, and --recovery-hint."
+        },
+        {
+          "text": "blocked/stale/invalid package failures are recorded as terminal_failure events with recovery context."
+        },
+        {
+          "text": "retry reports prior recovery context before resetting or relaunching a package."
+        },
+        {
+          "text": "99-finalize records merge or test failures in the coordinator ledger, not only in prose."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "我要多 agent 做 Android 相机修复，最后需要真机验收。Claude Code 没有我的手机，不能自己点真机 UI。请生成不会在真机验收环节卡死的 orchestration kit。",
+      "expected_output": "Performs a capability preflight, keeps real-device validation out of autonomous Claude Code functional packages, uses agent-verifiable substitutes where possible, and avoids making non-autonomous validation a surprise dependency that blocks implementation waves. If real-device validation is essential and blocking but not already approved with owner/evidence/scope, it asks the user for a decision before generating the orchestration kit.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "The INDEX includes a Capability Preflight or External Assistance section that identifies real-device QA as non-autonomous for Claude Code."
+        },
+        {
+          "text": "No auto-launched functional package is assigned to perform real-device tapping, visual inspection, external approvals, credentials entry, or other unavailable capabilities."
+        },
+        {
+          "text": "Implementation packages use agent-verifiable checks such as unit tests, build commands, APK generation, logs, or emulator checks where appropriate."
+        },
+        {
+          "text": "Real-device validation is represented as a predeclared external-assist checklist or manual release gate with owner, commands, expected evidence, and how results should be reported back."
+        },
+        {
+          "text": "The graph does not make downstream implementation waves depend on non-autonomous validation unless the user explicitly marks it as a mandatory release gate."
+        },
+        {
+          "text": "If real-device validation is judged indispensable and blocking, the skill pauses before outputting the kit unless the user has already approved the manual gate, owner, evidence, and blocking scope."
+        },
+        {
+          "text": "The final report is allowed to say ready for external QA rather than claiming PASS for unperformed real-device validation."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "我担心多 agent 方案深入执行后主方案完全落不了地。请生成 orchestration kit 时预设次要方案，并且在 99-finalize 里处理任务失败、失败原因发散、是否允许部分无关修复合入，不能把失败藏在单个 package blocker 里。",
+      "expected_output": "Generates an orchestration kit with an explicit Landing Strategy, preapproved fallback paths, abort conditions, task-level failure outcomes, and conservative finalize behavior for independent fixes. If the primary plan is non-landable, 99-finalize records failure analysis and defaults to no merge unless predeclared independent candidates pass standalone verification.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "INDEX.md includes a Landing Strategy section with primary landing path, preapproved fallback paths, unacceptable degradation, abort conditions, and independent merge candidates."
+        },
+        {
+          "text": "Package prompts instruct agents to classify blockers and state whether to retry, investigate, ask the user, switch to a named fallback, or abort."
+        },
+        {
+          "text": "99-finalize chooses a task-level outcome such as landed, landed-with-approved-fallback, ready-for-external-gate, failed-no-merge, or failed-with-candidate-independent-fixes."
+        },
+        {
+          "text": "A non-landable primary plan requires failure analysis covering observed facts, failed assumptions, failure category, fallback paths, user decision needs, and recommended next action."
+        },
+        {
+          "text": "When the main plan fails, the default is no merge."
+        },
+        {
+          "text": "Independent fixes may only be listed or merged if they were predeclared, are independent from the failed path, and have standalone verification."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "我们又想记录重试原因、人工审核备注、外部 QA 截图链接和最终发布票据。之前大家总想继续给 state.tsv 加列，请让 orchestration kit 判断这些信息该放在哪里，别让状态账本越来越宽。",
+      "expected_output": "Uses the orchestration projection model to assign each information type to the correct artifact: state.tsv keeps the current scheduler snapshot, events.jsonl keeps append-only history and retry accounting, package status keeps human-readable evidence and risks, INDEX keeps static policy, and scratch remains non-authoritative. It avoids widening state.tsv unless the field is required for scheduling readiness.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Explicitly states that state.tsv should contain only current scheduler state and fields needed for readiness, verification, integration, cleanup, or blocking decisions."
+        },
+        {
+          "text": "Routes retry history and failure fingerprints to events.jsonl rather than new state.tsv columns."
+        },
+        {
+          "text": "Routes human review notes, QA screenshots, release tickets, and narrative risks to package status or FINAL_REPORT as evidence, not scheduler truth."
+        },
+        {
+          "text": "Keeps scratch non-authoritative and says scratch contents cannot satisfy acceptance criteria or unlock dependencies."
+        },
+        {
+          "text": "Rejects adding a new column or artifact unless it has a named ownership role that existing projections cannot satisfy."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "我们除了 Claude Code background agents，还想支持手动执行、GitHub Actions runner 和另一个 agent 平台。请升级 orchestration 方案，但不要复制四套生命周期状态和 finalize 逻辑。",
+      "expected_output": "Models runner differences as capability/base variation over the same orchestration contract. The kit keeps one package lifecycle, one graph, one scheduler state model, and one finalize rule set, while runner-specific differences are expressed as launch capability, verification ability, permission mode, evidence channel, and manual/external-assist gates.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Keeps a single lifecycle/status vocabulary across Claude, manual, GitHub Actions, and other agent platforms."
+        },
+        {
+          "text": "Represents runner-specific differences as capability, permission, launch, evidence, or verification variations rather than duplicated workflow logic."
+        },
+        {
+          "text": "Preserves the rule that only orchestrate.sh advance computes readiness and downstream dispatch."
+        },
+        {
+          "text": "Keeps 99-finalize as the single local-to-global gluing step for completed package evidence."
+        },
+        {
+          "text": "States when a runner must be manual=1 or external-assist instead of being auto-launched."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "一次编排中 INDEX 说 03 包依赖 01/02，package-graph.tsv 里只依赖 01，state.tsv 显示 03 completed，但 status/03.md 还是 blocked。请让生成的 kit 或文档能判断谁是权威，谁是过期投影。",
+      "expected_output": "Explains artifact ownership and drift handling: INDEX owns static intent and policy, package-graph.tsv owns machine-readable dependency topology, state.tsv owns scheduler snapshot, package status owns human evidence, and mismatches must be reported invalid rather than reconciled silently. The kit should tell the user which projection to repair and which command or review path to use.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "States that package-graph.tsv is authoritative for machine dispatch topology, while INDEX is the human contract that should match it."
+        },
+        {
+          "text": "States that state.tsv is authoritative for scheduler readiness but Markdown status must agree before unlocking downstream packages."
+        },
+        {
+          "text": "Treats INDEX/graph/state/status disagreement as invalid or blocked until repaired, not as a reason to infer success."
+        },
+        {
+          "text": "Directs repair through orchestrate.sh repair-state, doctor, mark-state, or explicit graph/INDEX review rather than manual silent edits."
+        },
+        {
+          "text": "Does not let a completed state row alone override blocked human evidence when status/state mismatch exists."
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "我用 Codex runner 做多 agent 编排，其中一个子任务状态显示 interrupted。请让编排方案判断它是否能解锁下游，不要为了 Codex 单独加一堆状态列。",
+      "expected_output": "Maps Codex/runtime statuses onto the existing package lifecycle. interrupted is treated as retryable stale unless evidence proves a deliberate blocker; it does not unlock downstream work. The design does not add a Codex-specific state column.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not add a runner_status or Codex-only lifecycle column to state.tsv."
+        },
+        {
+          "text": "Maps interrupted to stale/retryable or blocked only with evidence."
+        },
+        {
+          "text": "States that only completed or finalized can satisfy dependency checks."
+        },
+        {
+          "text": "States that launched, in_progress, and finalizing cannot unlock downstream packages."
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "prompt": "一个上游包已经 launched，Claude Agents View 里看起来还在跑，但它还没有写 completed。请让 orchestration kit 不要启动依赖它的下游包，也不要启动 99-finalize。",
+      "expected_output": "Keeps launched as an active non-terminal state. advance reports no ready downstream work or active packages, and downstream packages plus 99-finalize remain pending until the upstream package records completed/finalized evidence through mark-state.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "launched is treated as active, not terminal success."
+        },
+        {
+          "text": "advance does not launch downstream packages whose dependencies are only launched."
+        },
+        {
+          "text": "99-finalize is not launched until all functional packages are completed."
+        },
+        {
+          "text": "The package must call mark-state completed with evidence before dependencies unlock."
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "prompt": "我想优化这个 orchestration skill，但不想让主 SKILL.md 继续膨胀。请说明哪些失败恢复、retry、doctor、日志和模板细节应该放进 references，且不要影响技能独立性。",
+      "expected_output": "Keeps SKILL.md as the minimal operating kernel and moves long runtime/failure/template details into local references. The skill remains self-contained because references live inside the skill directory and SKILL.md names when to read each one.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Keeps trigger conditions, core contract, state semantics, workflow, and guardrails in SKILL.md."
+        },
+        {
+          "text": "Moves detailed retry, doctor, stale/invalid handling, logs, scratch, and long templates into references."
+        },
+        {
+          "text": "References are local bundled resources under the skill directory, not external dependencies."
+        },
+        {
+          "text": "Multi-runner platform support remains one lifecycle with runner-specific capability variation."
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "prompt": "我用后台 agent 跑任务包时，因为权限/订阅/approval policy 卡住了，包没有正常 mark blocked。请让 orchestration kit 的任务包 prompt 自己处理执行授权和授权阻塞，不要只把授权藏在 INDEX。",
+      "expected_output": "Each generated package prompt includes explicit package execution authorization for routine in-scope work, names forbidden operations that still require explicit approval, and instructs background agents to mark blocked with failed_command/log_summary/recovery_hint when runner approval, sandbox, subscription, credential, or external-capability limits prevent execution.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "agent-prompts.md includes a Package Execution Authorization section inside each package prompt, not only in INDEX.md."
+        },
+        {
+          "text": "Package prompts say routine in-scope actions such as reading the package-local docs, editing allowed paths, running verification, committing local package changes, mark-state, and advance are authorized without extra confirmation."
+        },
+        {
+          "text": "Package prompts list forbidden operations that still require explicit approval, including force-push, hard reset, deleting unassigned worktrees/branches, secrets, external accounts, and editing outside allowed paths."
+        },
+        {
+          "text": "Package prompts instruct agents not to hang waiting for interactive approval in background execution."
+        },
+        {
+          "text": "Permission, sandbox, subscription, credential, network, or external-capability refusal must be recorded as blocked with failed_command, log_summary, and recovery_hint."
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "prompt": "把 sweep 输出的 9 个 Task Package Contract 包转成完整多 agent orchestration kit。要求不要丢失反证、能力边界和后续执行结果回放。",
+      "expected_output": "Normalizes imported packages through the Task Package Contract before graph generation, preserves Falsification Ledger and capability/manual/external-assist gates, validates structured package inputs with task_package_validator.py, maps dependencies and parallel_safety into package-graph.tsv, and requires 99-finalize to update Outcome Replay for landed, blocked, partial, false-positive, or external-gate outcomes.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Consumes Task Package Contract packages before generating graph and package prompts."
+        },
+        {
+          "text": "Preserves Falsification Ledger evidence and does not schedule weak or dropped packages."
+        },
+        {
+          "text": "Runs or requires task_package_validator.py for structured imported packages."
+        },
+        {
+          "text": "Carries Outcome Replay into 99-finalize and FINAL_REPORT."
+        },
+        {
+          "text": "Maps handoff_mode, agent_capability, dependencies, and parallel_safety into orchestration gates."
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "prompt": "我有 12 个完全独立的调研 prompt，只需要并发启动、查看状态和日志，不需要 DAG、分支、worktree 策略或最终合并。请用 agent-orchestration-planner。",
+      "expected_output": "Declines to generate a custom orchestration kit for independent dispatch-only work. Routes the request to native parallel-agent controls such as Claude Code Agent View, Claude Dynamic Workflows, or Codex App/CLI subagent workflows, and explains that agent-orchestration-planner is reserved for project-owned DAG, durable coordinator state, recovery, branch/worktree policy, and final integration.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate package-graph.tsv, state.tsv, or orchestrate.sh for independent dispatch-only work."
+        },
+        {
+          "text": "Recommends native platform controls such as Claude Code Agent View, Dynamic Workflows, or Codex App/CLI subagent workflows for dispatch-only work."
+        },
+        {
+          "text": "Explains that agent-orchestration-planner is for durable DAG, coordinator state, recovery, branch/worktree policy, or final integration."
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "category": "prompt-efficiency",
+      "archetype": "simple-independent",
+      "prompt": "生成一个 3 包独立并行的 orchestration kit，我在 Codex App 里执行；要求默认输出不要把所有恢复命令都展示给用户，package prompt 也不要复制完整 INDEX。",
+      "expected_output": "Generates compact functional package prompts that load package-local context first, keep required safety and tail-call invariants, and record measured or estimated input and output token usage for the generated prompt set. Because the selected runner is Codex, the final chat shows only the Codex primary surface: doctor --environment, start, status, JSONL/thread-id inspection, and explains that Codex App native subagents remain a manual/app-native path; retry, collect-logs, advance, verify-finalize, and scratch-path appear only when state-specific recovery requires them.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Records input and output token usage, or explicitly marks token telemetry as missing evidence with a reproducible measurement plan."
+        },
+        {
+          "text": "Preserves required safety and tail-call invariants: package heading shape, mark-state, no manual state edit, advance --from, and immediate termination after the tail call."
+        },
+        {
+          "text": "Selected-runner output includes Codex doctor --environment, start, status, and JSONL/thread-id inspection, but does not dump retry, collect-logs, verify-finalize, or scratch-path."
+        },
+        {
+          "text": "Functional package prompts load package doc, package status, graph/state rows, and code first; INDEX and events are conditional."
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "category": "prompt-efficiency",
+      "archetype": "code-dependent",
+      "prompt": "生成一个有上游代码依赖的 orchestration kit。要求下游不要从 launched 解锁，同时压缩 package prompt，不把全局 merge/fallback/finalize 逻辑复制到每个包。",
+      "expected_output": "Keeps dependency unlock safety while using compact package prompts. Functional package prompts preserve no-launched-unlock, mark-state, evidence, and tail-call behavior, but defer global merge, fallback selection, cleanup, and task-level outcome decisions to 99-finalize. The evaluation records input and output token usage alongside behavior assertions.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Records input and output token usage, or explicitly marks token telemetry as missing evidence with a reproducible measurement plan."
+        },
+        {
+          "text": "Preserves required safety and tail-call invariants, including no downstream unlock from launched or in_progress."
+        },
+        {
+          "text": "Global merge, fallback selection, cleanup, and task-level outcome decisions stay in 99-finalize rather than every functional prompt."
+        },
+        {
+          "text": "Generated prompts still require package evidence: worktree, branch, commit, changed files, verification, risks, and blocker diagnosis when applicable."
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "category": "prompt-efficiency",
+      "archetype": "manual-external-gate",
+      "prompt": "生成一个包含真机验收或账号审批的 orchestration kit。要求外部 gate 明确，但不要让自动 package prompt 因为完整恢复命令和外部流程而膨胀。",
+      "expected_output": "Models the approved external gate in INDEX, package docs, status, and final chat while keeping autonomous functional prompts compact. If the gate is blocking and was not already approved, it pauses before generating the kit to ask for user decision. Automatic packages mark undeclared physical-device, credential, account, approval, or human-judgment needs as blocked. The output records input and output token usage and verifies the compact prompt still preserves safety and tail-call invariants.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Records input and output token usage, or explicitly marks token telemetry as missing evidence with a reproducible measurement plan."
+        },
+        {
+          "text": "Preserves required safety and tail-call invariants while keeping external-assist details out of unrelated functional prompts."
+        },
+        {
+          "text": "External-assist gates name owner, blocking status, exact evidence expected, and where evidence should be reported."
+        },
+        {
+          "text": "Blocking external-assist gates are generated only after explicit user approval; otherwise the skill asks before producing the kit."
+        },
+        {
+          "text": "Automatic packages block rather than attempting physical-device, user-owned account, credential, paid service, external approval, or human-only judgment work."
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "category": "ux-delta-discretion",
+      "archetype": "ui-regression-boundary",
+      "prompt": "把最近几天针对相机主界面、底部栏、预览窗、风格面板和水印预览的一批问题拆成 orchestration kit。要求避免把小修复变成主界面重做，但也不要一发现邻近 UI 变化就卡死 agent。",
+      "expected_output": "Generates packages with a User-Visible Delta Ledger for user-facing work, grants bounded discretion for necessary small adjacent changes, records visible drift outside the target surface, and classifies UX deltas as expected, acceptable-adjacent, or decision-required. 99-finalize performs UX Delta Review: expected and justified acceptable-adjacent deltas may land with evidence; unresolved decision-required deltas require user/product decision, split package, downgrade, or preapproved fallback before mainline merge.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "User-facing packages include target surface, expected delta, preserved surfaces, adjacent discretion, protected workflows, decision_required_if, and ux_delta_class."
+        },
+        {
+          "text": "Package prompts grant bounded discretion for small adjacent changes instead of requiring agents to stop for every visible UI drift."
+        },
+        {
+          "text": "Package prompts require visible drift outside the target surface to be recorded as expected, acceptable-adjacent, or decision-required."
+        },
+        {
+          "text": "99-finalize accepts expected and evidence-backed acceptable-adjacent UX deltas."
+        },
+        {
+          "text": "Unresolved decision-required deltas are treated as user/product decisions, split-package candidates, downgrades, or approved fallback paths before mainline merge."
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "category": "anti-overconstraint",
+      "archetype": "orchestration-value-test",
+      "prompt": "我说“多 agent”，但其实只是三个互不依赖的一次性文档更新，Claude Agents View 或 Codex App subagents 都能看状态，不需要 durable DAG。请不要为了 skill 生成重型 kit。",
+      "expected_output": "Runs the orchestration value test before generating artifacts. It avoids a full orchestration kit when the task can be handled by official Agent View, Dynamic Workflows, a lightweight Task Package Contract, or direct execution. If any kit is still proposed, it explains the durable-state reason and preserves tail-driven advancement, script-owned state, projection consistency, capability preflight, cleanup evidence, and no-launched-unlock invariants.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate a heavy orchestration kit solely because the user mentioned multiple agents."
+        },
+        {
+          "text": "Considers lighter official or native options such as Claude Agent View, Dynamic Workflows, Codex subagents, Task Package Contract, or direct execution."
+        },
+        {
+          "text": "Requires a durable-state, dependency, recovery, or audit reason before recommending a full kit."
+        },
+        {
+          "text": "If a kit remains justified, preserves the hard orchestration invariants."
+        }
+      ]
+    }
+  ]
+}

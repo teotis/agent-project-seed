@@ -26,6 +26,8 @@ AI agents work better when they share the same operating context. This scaffold 
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
+| Portable User Skills | Bundles selected user-installed skills and superpowers skills for fast Codex/Claude setup |
+| Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
 
@@ -50,6 +52,52 @@ Recommended Codex App shape for copied projects:
 
 The default policy is local-only: do not push unless the user explicitly asks
 for remote sync.
+
+## Complex Task Live State
+
+Most projects should start with the lightweight default: `control/state.md` for
+current state, `control/ledger.md` for durable records, and local checkpoint
+commits for auditability. Do not create a full task control surface for routine
+single-session work.
+
+When work becomes complex enough to span multiple packages, branches, worktrees,
+agents, or handoff sessions, create an explicit live-state surface:
+
+```bash
+python3 tools/project.py task init --name "Complex Refactor" \
+  --package 01-contract-characterization \
+  --package 02-implementation
+```
+
+This creates `control/tasks/<slug>/` with an `INDEX.md`, `status.tsv`,
+`events.jsonl`, and per-package evidence notes. In that folder, `status.tsv` is
+the live source of truth for package execution state; chat transcripts, status
+panels, and final reports are secondary and should be refreshed from the live
+state before deciding whether a complex task is complete.
+
+## Portable User Skills
+
+This seed carries a portable skill bundle under `agent-assets/user-skills/`.
+The bundle is organized by migration intent, not by agent vendor:
+
+- `core`: default workflow and engineering skills for a fresh environment.
+- `optional`: generally useful analysis and interview/refinement skills selected
+  for this workspace family.
+- `superpowers`: the complete local superpowers skill set, copied as ordinary
+  portable skills.
+
+The manifest at `agent-assets/user-skills/manifest.json` is the source of truth.
+Use the project tool to inspect or install the bundle:
+
+```bash
+python3 tools/project.py list-user-skills
+python3 tools/project.py install-user-skills --target codex --group core
+python3 tools/project.py install-user-skills --target all --group all --force
+```
+
+The installer copies skills into the chosen user skill root. It does not copy
+tokens, MCP secrets, model provider settings, conversation logs, hook state, or
+other machine-local private configuration.
 
 ## Quick Start
 
@@ -93,6 +141,8 @@ residue in project-facing files after initialization.
 ├── src/
 │   └── base_scaffold/      # Small reusable Python utilities
 ├── tests/
+├── agent-assets/
+│   └── user-skills/        # Portable user-installed skill bundle
 ├── docs/                   # Project documentation
 ├── .tmp/                   # Local scratch space, not committed
 ├── .codex/

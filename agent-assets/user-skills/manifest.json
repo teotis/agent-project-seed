@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "description": "Portable user-installed skill set for bootstrapping Codex and Claude environments.",
+  "groups": {
+    "core": [
+      "clean-checkpoint-first",
+      "done-claim-gate",
+      "diagnosing-bugs",
+      "codebase-design",
+      "domain-modeling",
+      "engineering-memory",
+      "writing-great-skills",
+      "yao-meta-skill",
+      "agent-orchestration-planner",
+      "package-issue",
+      "bulk-issue-triage",
+      "triage",
+      "to-prd",
+      "to-issues",
+      "prototype",
+      "playwright",
+      "html-response",
+      "reviewable-html-report",
+      "improve-codebase-architecture"
+    ],
+    "optional": [
+      "abstraction-architect",
+      "renewal-architect",
+      "user-value-architect",
+      "product-sense-refiner",
+      "complexity-sweep",
+      "deep-flow-sweep",
+      "grill-me",
+      "grill-with-docs",
+      "grilling",
+      "ingest-dialogue"
+    ],
+    "superpowers": [
+      "brainstorming",
+      "dispatching-parallel-agents",
+      "executing-plans",
+      "finishing-a-development-branch",
+      "receiving-code-review",
+      "requesting-code-review",
+      "subagent-driven-development",
+      "systematic-debugging",
+      "test-driven-development",
+      "using-git-worktrees",
+      "using-superpowers",
+      "verification-before-completion",
+      "writing-plans",
+      "writing-skills"
+    ]
+  },
+  "notes": [
+    "Skills are universal portable packages; target only selects the user skill directory to install into.",
+    "Heavy local preview, report, evidence, fixture, and cache artifacts are intentionally excluded from this seed package."
+  ]
+}

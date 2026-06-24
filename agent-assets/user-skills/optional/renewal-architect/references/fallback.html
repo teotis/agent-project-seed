@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{REPORT_TITLE}}</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.55; }
+    body { margin: 0 auto; max-width: 980px; padding: 24px; }
+    header, nav, section { margin-bottom: 24px; }
+    nav { display: flex; flex-wrap: wrap; gap: 12px; border-block: 1px solid #8886; padding: 12px 0; }
+    a { color: #1769aa; } table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #8886; padding: 8px; text-align: left; vertical-align: top; }
+    pre, textarea { box-sizing: border-box; width: 100%; padding: 12px; overflow: auto; }
+    article { border-left: 4px solid #1769aa; padding-left: 16px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <header id="top"><h1>{{REPORT_TITLE}}</h1><p>{{REPORT_SUMMARY}}</p></header>
+  <nav aria-label="{{NAV_LABEL}}">
+    <a href="#decision">{{DECISION_LABEL}}</a><a href="#findings">{{FINDINGS_LABEL}}</a>
+    <a href="#evidence">{{EVIDENCE_LABEL}}</a><a href="#diagram">{{DIAGRAM_LABEL}}</a><a href="#feedback">{{FEEDBACK_LABEL}}</a>
+  </nav>
+  <main>
+    <section id="decision"><h2>{{DECISION_LABEL}}</h2>{{DECISION_CONTENT}}</section>
+    <section id="findings"><h2>{{FINDINGS_LABEL}}</h2><article data-card-id="{{CARD_ID}}">{{FINDING_CONTENT}}</article></section>
+    <section id="evidence"><h2>{{EVIDENCE_LABEL}}</h2>{{EVIDENCE_CONTENT}}</section>
+    <section id="diagram"><h2>{{DIAGRAM_LABEL}}</h2><pre>{{MERMAID_SOURCE}}</pre></section>
+    <section id="feedback"><h2>{{FEEDBACK_LABEL}}</h2><p>{{FEEDBACK_NOTICE}}</p><textarea rows="6" aria-label="{{FEEDBACK_LABEL}}"></textarea></section>
+  </main>
+  <footer><a href="#top">{{BACK_TO_TOP_LABEL}}</a></footer>
+</body>
+</html>

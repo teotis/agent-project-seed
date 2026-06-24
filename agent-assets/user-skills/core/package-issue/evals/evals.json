@@ -1,0 +1,82 @@
+{
+  "skill_name": "package-issue",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这里有 19 个 Android 相机真机问题和 4 张截图。请核查当前代码和测试，补充问题表现，并整理成后续可以继续处理的问题包。",
+      "expected_output": "Produces a Chinese decision-first report using repo-backed investigation, stable source IDs and EV-* evidence IDs, dependency-closure-first packages, and an explicit next_route for every package.",
+      "files": [],
+      "assertions": [
+        {"text": "The default investigation reads relevant repository guidance, code, tests, and module boundaries, while preserving unrelated dirty changes."},
+        {"text": "The report begins with a compact decision summary covering input count, package count, evidence gaps, route distribution, and recommended order."},
+        {"text": "Every original problem is represented by a stable source ID and assigned to exactly one primary package unless a primary/related relationship is explicitly declared."},
+        {"text": "Evidence is registered with stable EV-* identifiers and package judgments reference those identifiers."},
+        {"text": "Each package declares one next_route from diagnosing-bugs, handoff, orchestration, external-assist, or deferred."}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "只有一个偶发崩溃，日志很长，帮我用 package-issue 深挖根因并直接修复。",
+      "expected_output": "Recognizes that a single hard bug requiring a feedback loop, deep diagnosis, and implementation is outside the core fit. Routes to diagnosing-bugs and does not manufacture multiple packages or modify product code.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not split one bug into artificial packages."},
+        {"text": "Routes the deep single-bug investigation to diagnosing-bugs or the normal implementation workflow."},
+        {"text": "Does not modify product code under the package-issue analysis-only contract."}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "这些已经是执行任务包了。它们有跨包依赖，我要并行 agent、状态账本、失败恢复和最终收口。",
+      "expected_output": "Routes directly to agent-orchestration-planner because the input is execution-ready and durable coordination is explicitly required.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not rerun broad problem packaging when the packages are already execution-ready."},
+        {"text": "Routes to orchestration because dependencies, parallel execution, durable state, recovery, and finalize are explicitly required."}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "这些反馈里有截图和主观感受，仓库可以看，但暂时没有设备和运行日志。先帮我打包。",
+      "expected_output": "Uses repo-backed investigation, registers screenshots and repository observations separately, marks missing device and log evidence as unavailable, and assigns external-assist or another evidence-appropriate route without pretending reproduction occurred.",
+      "files": [],
+      "assertions": [
+        {"text": "Inspects relevant current code, tests, and module boundaries because repo-backed is the default depth."},
+        {"text": "Separates screenshot-visible behavior, repository evidence, inference, and unavailable device or log evidence."},
+        {"text": "Produces useful provisional packages with confidence and next_route values without claiming reproduction."}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "把 12 个问题按 1-4、5-8、9-12 三组平均分掉，看起来整齐一些。",
+      "expected_output": "Rejects equal-size grouping and instead forms packages around shared modification boundaries, verification boundaries, stable interfaces, and dependency closures.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not use equal-size or adjacent-number grouping when it conflicts with technical ownership or dependency closure."},
+        {"text": "Explains why each package is cohesive and why remaining cross-package dependencies are low-coupling and primarily one-directional."}
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "预览旋转错误、对焦框错位和录像裁剪异常都依赖同一个预览几何状态。为了让每个包小一点，把它们拆成三个包。",
+      "expected_output": "Keeps the problems in one larger dependency-closure package when they must share changes or a verification matrix, unless repository evidence proves they communicate through stable independently verifiable interfaces.",
+      "files": [],
+      "assertions": [
+        {"text": "Treats shared modification and verification boundaries as stronger grouping signals than package size."},
+        {"text": "Allows a larger package when splitting would create bidirectional dependencies, duplicate investigation, or repeated regression validation."},
+        {"text": "Documents the dependency-closure rationale in the package."}
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "一共有 30 个问题，最后形成了一个很大的媒体包和两个互不依赖的小包。是不是因为数量多就必须用 orchestration？",
+      "expected_output": "Does not recommend orchestration solely because the batch or one package is large. Selects routes based on cross-package dependencies, parallel execution needs, durable status, recovery, audit, or finalize requirements.",
+      "files": [],
+      "assertions": [
+        {"text": "States that issue count and package size alone are insufficient reasons for orchestration."},
+        {"text": "Uses handoff for independently executable packages when durable coordination is unnecessary."},
+        {"text": "Requires an explicit orchestration reason if orchestration is selected."}
+      ]
+    }
+  ]
+}

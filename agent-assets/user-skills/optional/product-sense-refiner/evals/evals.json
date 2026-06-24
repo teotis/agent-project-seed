@@ -1,0 +1,45 @@
+{
+  "skill_name": "product-sense-refiner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A technically detailed agent scoring system has evidence gates, Elo, dimensions, and long reports, but the user says it lacks product sense. Refine the design.",
+      "expected_output": "Produces a product-sense refinement report with user decision, default answer shape, keep/change/remove/internal classification, and actionable recommendations.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names the user's actual decision before proposing mechanisms"
+        },
+        {
+          "text": "Provides a concise default user-facing answer shape"
+        },
+        {
+          "text": "Separates internal analysis from default output"
+        },
+        {
+          "text": "Identifies at least one metric or mechanism that could reward the wrong behavior"
+        },
+        {
+          "text": "Turns the final user-facing profile into an actionable recommendation"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Two tool outputs solve a task with different risk profiles: one is small and safe, the other is broad and structurally ambitious. The user asks which is better.",
+      "expected_output": "Produces a product-sense refinement report with user decision, default answer shape, keep/change/remove/internal classification, and actionable recommendations.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Considers that the results may be incomparable under a single default lens"
+        },
+        {
+          "text": "Explains what user decision or lens changes the recommendation"
+        },
+        {
+          "text": "Avoids forcing a fake total order without caveats"
+        }
+      ]
+    }
+  ]
+}

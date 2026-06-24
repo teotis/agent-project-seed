@@ -1,0 +1,200 @@
+{
+  "skill_name": "renewal-architect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们有一个 8 年的 Java 单体系统，订单状态逻辑散布在 5 个入口点，每次改规则都要同步改多处。帮我诊断一下，先别动代码，给我一份工程决策报告。",
+      "expected_output": "Produces a Diagnostic Mode interactive HTML review report (default formal deliverable) with a Fact Ledger separating evidence from inference, identifies the dominant constraint (order-state sprawl), recommends a measurable Pilot Cell with rollback, and does not modify any code. A Markdown source report is added only on explicit user request or when HTML generation is impossible.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a Fact Ledger that separates verifiable facts from inferences and unknowns."
+        },
+        {
+          "text": "Identifies the dominant constraint affecting delivery capability, not just listing every debt item."
+        },
+        {
+          "text": "Recommends a specific Pilot Cell with scope, rollback, timebox, and success signals."
+        },
+        {
+          "text": "Does not modify code or recommend a full rewrite without a first verifiable slice."
+        },
+        {
+          "text": "Generates an interactive HTML report path by default; only generates a Markdown source report on explicit request or HTML failure, in which case the HTML limitation is stated."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "这个项目太烂了，应该推倒重来用微服务。帮我出一个全面重写的方案。",
+      "expected_output": "Rejects the grand-rewrite framing when evidence and rollback are absent, redirects toward a bounded pilot or evidence-gathering phase, and asks for specific pain points rather than accepting the rewrite premise.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not accept 'rewrite everything' without defining a first value slice."
+        },
+        {
+          "text": "Asks for or demands concrete evidence of pain before recommending broad changes."
+        },
+        {
+          "text": "Separates business capability bottlenecks from architecture-narrative preferences."
+        },
+        {
+          "text": "Proposes a bounded, reversible first step instead of a full rewrite."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我只想让你分析一下，不要改任何代码。项目在 /Volumes/Extreme_SSD/project/teotis_skill。",
+      "expected_output": "Operates strictly in Diagnostic Mode, explores the project structure, produces a report with fact ledger and recommendations, and explicitly states that no code has been modified.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Explicitly states or demonstrates Diagnostic Mode with no code modifications."
+        },
+        {
+          "text": "Produces a fact-based analysis tied to files, classes, or configuration in the project."
+        },
+        {
+          "text": "Does not create, edit, or delete any source files."
+        },
+        {
+          "text": "Final response includes a statement that no code has been modified."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "帮我做一个 Pilot Design，目标是把支付模块从单体中隔离出来，我需要可回滚的试点方案。",
+      "expected_output": "Produces a Pilot Design with explicit scope, validation signals, timebox, rollback mechanism, stability floors, ownership, and a three-stage route from controlled pilot to scale-out with old-path retirement.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Defines a Pilot Cell with bounded scope and explicit rollback mechanism."
+        },
+        {
+          "text": "Specifies stability floors (SLOs, data correctness, security, compliance)."
+        },
+        {
+          "text": "Includes a three-stage route: controlled pilot, standardized replication, scale-out."
+        },
+        {
+          "text": "Names an accountable owner and describes knowledge transfer path."
+        },
+        {
+          "text": "Does not begin code execution without explicit authorization."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "帮我分析一下这个项目的部署瓶颈，我想看看 CI/CD 流水线和发布流程有没有优化空间。",
+      "expected_output": "Analyzes the deployment and release pipeline as a capability constraint, produces evidence-backed findings about build/test/deploy friction, and frames optimization as capability benefit rather than aesthetic improvement.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Focuses on deployment/release pipeline as a capability bottleneck candidate."
+        },
+        {
+          "text": "Connects findings to concrete capability signals (lead time, deployment frequency, rollback time)."
+        },
+        {
+          "text": "Does not recommend technology changes purely for aesthetic or fashion reasons."
+        },
+        {
+          "text": "Separates observed evidence from inferred conclusions."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "平台团队已经设计好统一鉴权 SDK，技术上没问题。问题是迁移成本全在业务团队，收益主要归平台团队，业务团队担心上线风险和 on-call 责任，所以一直拖。帮我做 renewal 诊断。",
+      "expected_output": "Flags adoption economics as a first-class constraint, distinguishes technical correctness from adoption feasibility, and proposes owner, budget, approval, risk ownership, and migration support changes before broad rollout.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Identifies the mismatch between beneficiaries and cost-bearing teams as a dominant or material constraint."
+        },
+        {
+          "text": "Does not treat the technically correct SDK as sufficient for adoption."
+        },
+        {
+          "text": "Names who benefits, who pays migration cost, who owns operational risk, and who can approve or block adoption."
+        },
+        {
+          "text": "Proposes an owner, budget/capacity, rollout support, or responsibility adjustment to make adoption feasible."
+        },
+        {
+          "text": "Defines a bounded pilot with success signals and rollback rather than mandating global migration."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "团队卡在争论：有人说必须上微服务，有人说必须保留单体，还有人说稳定性第一什么都不能动。现在没有共识，但订单查询链路确实拖慢发布。请先给诊断方案。",
+      "expected_output": "Classifies protected floors, experimentable variables, and deferred architecture debates before choosing a pilot; rejects architecture labels as the decision basis; and proposes a bounded experiment for the order query bottleneck.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Separates what must not break from what can be safely experimented with."
+        },
+        {
+          "text": "Identifies architecture-label debate as something to defer until evidence exists."
+        },
+        {
+          "text": "Frames the order query chain as a capability bottleneck candidate with required evidence."
+        },
+        {
+          "text": "Proposes a controlled pilot or evidence-gathering step instead of choosing microservices or monolith by identity."
+        },
+        {
+          "text": "Includes stability floors and decision gates."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "我们想试点把库存扣减逻辑抽出来，但现在只写了‘做一个库存服务试点，成功后扩大’，没有说明这个试点到底要验证什么。请改成可执行 Pilot Design。",
+      "expected_output": "Rewrites the vague pilot into a pilot-to-decision contract: states the missing fact, scope, metrics, timebox, success branch, failure branch, pause/rollback thresholds, and how the result changes the next step.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "States the concrete unknown the inventory pilot must resolve."
+        },
+        {
+          "text": "Defines scope, validation metrics, timebox, and rollback or stop conditions."
+        },
+        {
+          "text": "Includes explicit result branches such as expand, revise, pause, rollback, or stop."
+        },
+        {
+          "text": "Connects pilot results to the next migration decision instead of assuming success will scale."
+        },
+        {
+          "text": "Preserves data correctness and operational stability floors."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "twelve lenses 里没明确写“on-call risk ownership mismatch”，但平台迁移卡住是因为业务团队承担夜间故障风险，平台团队拿收益。请不要只套微服务、strangler 或平台化路线。",
+      "expected_output": "Treats on-call risk ownership mismatch as a model-discovered renewal constraint. It compares it against the dominant lens candidates, records beneficiary/cost/risk owner, operational assumption, pilot implication, false-positive guard, and decision gate, and recommends responsibility, support, rollback, or adoption-economics changes before any architecture-label migration.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names the model-discovered constraint instead of forcing the issue into a prewritten architecture lens."
+        },
+        {
+          "text": "Records who benefits, who pays migration cost, who owns on-call risk, and who can approve or block adoption."
+        },
+        {
+          "text": "Defines pilot implications, false-positive guard, and decision gate before broad migration."
+        },
+        {
+          "text": "Does not recommend microservices, strangler, or platformization purely because those lenses are prewritten."
+        }
+      ]
+    }
+  ]
+}

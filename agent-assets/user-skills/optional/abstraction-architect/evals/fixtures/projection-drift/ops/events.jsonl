@@ -1,0 +1,4 @@
+{"run_id":"camera-polish-2026-06-02","package_id":"camera-core","event_type":"dispatched","status":"running","created_at":"2026-06-02T09:00:00Z"}
+{"run_id":"camera-polish-2026-06-02","package_id":"camera-core","event_type":"verified","status":"verified","created_at":"2026-06-02T09:40:00Z"}
+{"run_id":"camera-polish-2026-06-02","package_id":"docs","event_type":"test_failed","status":"blocked","created_at":"2026-06-02T09:55:00Z"}
+{"run_id":"camera-polish-2026-06-02","package_id":"user-skill-sync","event_type":"approval_requested","status":"waiting_approval","created_at":"2026-06-02T10:00:00Z"}

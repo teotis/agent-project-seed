@@ -1,0 +1,390 @@
+{
+  "skill_name": "abstraction-architect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们的项目里有 4 种不同的用户状态模型，分散在认证、权限、订单、通知四个模块里，每个都有自己的枚举和转换逻辑。帮我分析一下有没有结构统一的机会。",
+      "expected_output": "Produces a Structural Abstraction report analyzing the four representations, identifies hidden invariants or divergent business rules, classifies the opportunity through the Admissibility Gate, and does not modify code.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Compares the four representations side by side with concrete evidence (fields, invariants, lifecycle transitions)."
+        },
+        {
+          "text": "Classifies the proposal as validated, unproven, false abstraction, or pragmatic sequencing problem."
+        },
+        {
+          "text": "Passes each candidate through the Admissibility Gate with mandatory proof obligations."
+        },
+        {
+          "text": "Does not modify code or production configuration."
+        },
+        {
+          "text": "Produces an interactive HTML architecture report by default; only adds a Markdown source report when the user explicitly requests one or the environment cannot generate HTML, in which case the HTML limitation must be stated."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "帮我在这个项目的 abstraction-architect skill 上做点改进，直接改代码。",
+      "expected_output": "Refuses to modify code without explicit authorization, explains that analysis-only mode is the default, and asks the user to review a transition plan before any implementation.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not modify any source files, tests, or configuration."
+        },
+        {
+          "text": "States that code changes require explicit user authorization after reviewing a plan."
+        },
+        {
+          "text": "Offers to produce an analysis or transition handoff instead of direct implementation."
+        },
+        {
+          "text": "Respects the authorization boundary between analysis and execution modes."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我有一段重复的适配器代码，把 XML 转 JSON、JSON 转 YAML、YAML 转 XML，到处都是。帮我看看能不能抽象。",
+      "expected_output": "Analyzes the adapter explosion as structural pressure, formulates a canonical intermediate representation hypothesis, identifies what complexity would disappear and what new complexity is introduced, finds at least one counterexample or meaningful difference, and classifies confidence.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Identifies the adapter/conversion explosion as a structural pressure signal."
+        },
+        {
+          "text": "Proposes a hidden invariant hypothesis (canonical representation or transformation protocol)."
+        },
+        {
+          "text": "Names at least one case that looks similar but must remain distinct."
+        },
+        {
+          "text": "Estimates complexity deletion (branches, adapters, tests removed) and new complexity introduced."
+        },
+        {
+          "text": "Classifies confidence and states missing evidence."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "帮我做一下这个项目的架构审查，看看有没有深层的结构性问题。",
+      "expected_output": "Performs a Full Architecture Analysis (Deep, user-invoked default) with structural pressure map, evidence ledger, candidate proposals with Admissibility Gate classification, rejected/deferred abstractions section, and an interactive HTML report; Markdown source is produced only on explicit request or HTML failure.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a structural pressure map showing representation duplication, conversion glue, or orchestration hotspots."
+        },
+        {
+          "text": "Includes a Rejected or Deferred Abstractions section (mandatory)."
+        },
+        {
+          "text": "Separates observed evidence from inference and unknowns in the evidence ledger."
+        },
+        {
+          "text": "Each proposal card includes concrete evidence with file/symbol references."
+        },
+        {
+          "text": "Does not present architecture diagrams implying facts not supported by inspection."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "我们有个 God object 做中心调度，所有模块都依赖它。帮我看看能不能拆。",
+      "expected_output": "Analyzes the coordinator as a structural pressure signal, evaluates whether local composition can replace central coordination, identifies which coordination responsibilities are genuinely global (transactions, security) vs which could compose locally, and provides a transition seam.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Examines whether local composition can replace central coordination."
+        },
+        {
+          "text": "Identifies which responsibilities genuinely require central coordination (e.g., transactions, rate limiting)."
+        },
+        {
+          "text": "Proposes a transition seam (adapter boundary, facade, staged API, or module replacement boundary)."
+        },
+        {
+          "text": "Does not recommend broad rewrite without a transition seam and rollback mechanism."
+        },
+        {
+          "text": "Classifies the proposal through the Admissibility Gate."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "我们的后台工具有十几个按钮和三种模式，用户总是不知道先点哪个，经常要撤销重来。请用 abstraction-architect 看看能不能从交互流程上简化。",
+      "expected_output": "Treats interaction flow and control-surface complexity as architectural structure, analyzes whether the current command-oriented interface should become a direct manipulation model, task object, guided state machine, or intent-level operation, and names the steps, modes, decisions, and recovery paths that would disappear.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Identifies control surface sprawl, mode choreography, or indirect intent mapping as structural pressure rather than only visual UI polish."
+        },
+        {
+          "text": "Maps the user's intent, current action sequence, visible controls or modes, and recovery loop before proposing a new interaction abstraction."
+        },
+        {
+          "text": "Proposes an interaction-level structure such as a direct manipulation model, task object, stateful workspace, guided flow, or intent-level operation."
+        },
+        {
+          "text": "Names concrete user steps, modes, decisions, confirmations, training instructions, or recovery paths removed by the redesign."
+        },
+        {
+          "text": "Still applies the Admissibility Gate with evidence, counterexamples, transition seam, and disproof signals."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "这个页面的按钮颜色和间距有点不好看，帮我用 abstraction-architect 优化一下。",
+      "expected_output": "Recognizes that simple visual polish is a weak fit for structural abstraction unless there is evidence of recurring workflow burden, control-surface sprawl, or interaction-state complexity; avoids inventing a large architecture proposal from cosmetic UI evidence alone.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not force a structural abstraction when the only evidence is cosmetic button color or spacing."
+        },
+        {
+          "text": "States what additional evidence would be needed to treat the UI issue as interaction-flow architecture."
+        },
+        {
+          "text": "Keeps recommendations proportionate and avoids replacing visual polish with an unnecessary framework or redesign."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "我们的 CI、多 agent 执行和人工审批流程状态散落在 YAML、数据库、日志、Slack checklist 和最终报告里，经常出现某处显示完成、另一处还在等待。请用 abstraction-architect 不要只建议拆 orchestrator，而要找更深的结构。",
+      "expected_output": "Performs a process-spatialization analysis: identifies the canonical execution object behind scattered runtime artifacts, treats YAML/database/log/checklist/report as projections of that object, checks projection consistency and gluing conditions, and defines deformation tests for adding new states, gates, or execution environments.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names the dynamic pressure as scattered projections of one execution or workflow object rather than only a God-object problem."
+        },
+        {
+          "text": "Identifies a base space such as environments, capability classes, branches, or approval contexts, and describes the fibers or local package/workflow instances over that base."
+        },
+        {
+          "text": "Maps YAML, database rows, logs, checklist items, reports, or UI states as projections and states which projection is authoritative for each invariant."
+        },
+        {
+          "text": "Defines gluing conditions for when local package, approval, or verification results compose into global completion."
+        },
+        {
+          "text": "Includes deformation tests such as adding a manual gate, retry state, new runner, or environment without editing many unrelated artifacts."
+        },
+        {
+          "text": "Still applies evidence, counterexamples, complexity deletion, transition seam, and disproof signals instead of recommending an abstract meta-model by taste."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "我们现在有 Web、CLI、background agent 三套流程，每套都有自己的状态枚举、错误恢复和报告格式。新增一个运行环境时总要改很多 if/else。请分析有没有格罗滕迪克式的结构优化空间。",
+      "expected_output": "Analyzes the environment variation as a base-change problem: separates stable workflow invariants from environment-specific capabilities, proposes a canonical workflow object with explicit base parameters and projection rules, preserves real differences, and rejects any abstraction that merely moves branch logic into a generic framework.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Separates stable workflow invariants from environment-specific capabilities, permissions, UI affordances, or verification limits."
+        },
+        {
+          "text": "Frames Web, CLI, and background agent flows as base-specific projections or fibers of a canonical workflow object."
+        },
+        {
+          "text": "Explains how base change should affect status, recovery, evidence, and reporting without duplicating lifecycle logic."
+        },
+        {
+          "text": "Names meaningful differences that must remain distinct and how the proposed model preserves them."
+        },
+        {
+          "text": "Rejects false generalization if the proposed model only hides if/else branches inside a DSL, registry, or generic adapter layer."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "我们的订单、支付、退款、通知四个模块都有自己的状态和事件表，表面看都像 lifecycle。请用 abstraction-architect 做深层分析，但不要只给一个你最喜欢的抽象；请比较不同结构解释。",
+      "expected_output": "Runs candidate competition before recommending a structure: proposes at least two plausible structural explanations, compares their evidence, deleted complexity, preserved differences, counterexamples, and transition seams, then recommends or defers the strongest candidate through the Admissibility Gate.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Presents at least two competing candidate structures, such as canonical lifecycle object, event-sourced process log, capability/policy model, or bounded-context separation."
+        },
+        {
+          "text": "Compares candidates by concrete evidence, complexity deletion, meaningful differences preserved, and counterexamples."
+        },
+        {
+          "text": "Explains why the weaker candidate is rejected, deferred, or scoped down rather than ignoring it."
+        },
+        {
+          "text": "Does not collapse all lifecycle-looking tables into one model without checking divergent business rules and failure semantics."
+        },
+        {
+          "text": "Classifies the chosen candidate or deferral through the Admissibility Gate."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "这个系统看起来哪里都有胶水：API caller 会预处理数据，后台 job 会修状态，前端还有一套兜底显示，配置里又按租户分支。请做结构分析，重点是怎么系统性发现真正的不变量。",
+      "expected_output": "Runs explicit discovery passes from data lifecycle, caller workarounds, failure/recovery paths, and environmental variation before constructing candidates. It uses those passes to identify one or more hidden invariant hypotheses, then tests them with deformation scenarios and disproof signals.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Separately analyzes data lifecycle, caller compensation, failure/recovery behavior, and environment or tenant variation."
+        },
+        {
+          "text": "Derives candidate invariants from the cross-pass evidence rather than from one repeated code shape alone."
+        },
+        {
+          "text": "Includes deformation tests such as adding a tenant, state, caller, recovery path, or data projection."
+        },
+        {
+          "text": "Names disproof signals that would prove the inferred invariant is too weak, too broad, or only moving glue elsewhere."
+        },
+        {
+          "text": "Keeps report generation secondary to completing the structural evidence and candidate comparison."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "请用 abstraction-architect 分析 fixture codebase：skills/abstraction-architect/evals/fixtures/lifecycle-kernel。只能基于真实文件证据判断，找出是否存在隐藏生命周期不变量；不要把所有看起来像状态机的模块直接合并。",
+      "expected_output": "Inspects the lifecycle-kernel fixture files, identifies the shared financial settlement lifecycle behind orders, payments, and refunds, preserves notifications as a meaningful counterexample, compares at least two candidate explanations, and classifies the strongest candidate through the Admissibility Gate with disproof tests.",
+      "files": [
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/orders/state.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/payments/state.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/refunds/state.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/notifications/state.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/customer_timeline.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/src/month_end_reconciliation.py",
+        "skills/abstraction-architect/evals/fixtures/lifecycle-kernel/tests/test_lifecycle_shapes.py"
+      ],
+      "assertions": [
+        {
+          "text": "Cites concrete file and symbol evidence from the fixture, including the order, payment, refund, and notification state definitions."
+        },
+        {
+          "text": "Identifies a hidden financial settlement or ledger-posting lifecycle across orders, payments, and refunds, not merely superficial enum similarity."
+        },
+        {
+          "text": "Explicitly excludes notifications from the proposed lifecycle kernel because delivery/read/retry semantics are not ledger posting semantics."
+        },
+        {
+          "text": "Uses customer_timeline.py or month_end_reconciliation.py as caller/recovery evidence for duplicated projection logic."
+        },
+        {
+          "text": "Compares at least two candidate explanations, such as canonical financial lifecycle, event-log projection, or bounded contexts should remain separate."
+        },
+        {
+          "text": "Names complexity deletion, a transition seam, and a disproof test such as finding a financial module whose terminal state cannot be expressed by posted versus closed-without-posting."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "请用 abstraction-architect 分析 fixture codebase：skills/abstraction-architect/evals/fixtures/projection-drift。重点判断 CI/agent/人工审批状态是不是散落为多个投影；不要只建议拆 orchestrator。",
+      "expected_output": "Inspects the projection-drift fixture files, detects status vocabulary drift and inconsistent projections across config, database schema, runner statuses, event log, TSV status, Slack checklist, and final report; proposes a canonical execution object or projection registry with gluing conditions and deformation tests.",
+      "files": [
+        "skills/abstraction-architect/evals/fixtures/projection-drift/config/run.yml",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/db/schema.sql",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/runner/orchestrator.py",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/runner/render_report.py",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/ops/events.jsonl",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/status/packages.tsv",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/slack/checklist.md",
+        "skills/abstraction-architect/evals/fixtures/projection-drift/reports/final_report.md"
+      ],
+      "assertions": [
+        {
+          "text": "Cites concrete projection evidence from config/run.yml, db/schema.sql, runner/orchestrator.py, events.jsonl, packages.tsv, slack/checklist.md, and final_report.md."
+        },
+        {
+          "text": "Identifies the dynamic process as projections of one execution object, including base context, package fibers, projections, gluing conditions, and deformations."
+        },
+        {
+          "text": "Detects at least two projection inconsistencies, such as docs being blocked in status/events but complete in Slack/final report, or user-skill-sync waiting for approval while the final report says no gates remain."
+        },
+        {
+          "text": "Explains why merely splitting or simplifying runner/orchestrator.py would not solve projection drift across artifacts."
+        },
+        {
+          "text": "Defines an authority rule or projection registry for statuses, events, reports, checklists, and manual gates."
+        },
+        {
+          "text": "Includes deformation tests such as adding a new manual approval gate, runner status, or package type without editing every projection by hand."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "订单和退款模块有相同字段、相同序列化格式，现有单元测试也都通过。候选 A 认为它们应统一成一个 lifecycle，候选 B 认为它们属于不同 bounded contexts。请用 abstraction-architect 判断哪个候选成立；如果现有证据无法区分，不要凭偏好选一个。",
+      "expected_output": "Evaluates the observational adequacy of the available evidence before choosing between candidates. It states the observer or context relative to which the modules appear equivalent, identifies observation blind spots, and proposes separating probes that could expose differences in lifecycle, failure, ownership, or recovery semantics. If no probe currently distinguishes the candidates, it classifies the conclusion as unproven rather than selecting by elegance.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "States that matching fields, serialization, and existing unit tests establish only observation-relative equivalence, not domain identity."
+        },
+        {
+          "text": "Lists the relevant probes or observers, such as callers, recovery jobs, reports, telemetry, authorization checks, or failure injection."
+        },
+        {
+          "text": "Identifies at least one observation blind spot where an important invariant is not covered by current evidence."
+        },
+        {
+          "text": "Proposes a separating probe that could distinguish the candidates through lifecycle, failure, ownership, ordering, or recovery behavior."
+        },
+        {
+          "text": "Classifies the candidate decision as promising but unproven when available observations cannot distinguish the rival explanations."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "三个服务 A、B、C 的状态投影两两校验都兼容，但沿 A→B→C→A 完整转换一圈后，审批责任丢失，最终状态无法由任何合法审批和补偿操作推导出来。请用 abstraction-architect 判断局部契约能否自然组合成全局事实。",
+      "expected_output": "Requires a local-to-global certificate instead of treating pairwise compatibility as sufficient. It defines the local units, overlap domains, compatibility predicate, authority and conflict rules, checks existence and uniqueness of a global state, and runs a residual obstruction test over legal transitions, approvals, compensations, and recovery operations. It identifies the cycle-level loss of approval ownership as a global residual and does not hide it behind a generic coordinator or DSL.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Rejects pairwise compatibility as sufficient evidence that a valid global state exists."
+        },
+        {
+          "text": "Defines the local units, overlap domains, compatibility predicate, truth authority, and conflict or arbitration rule."
+        },
+        {
+          "text": "Checks whether compatible local states produce an existing and unique global state while preserving approval ownership."
+        },
+        {
+          "text": "Runs a residual obstruction test asking whether the state can be legally generated, explained, eliminated, and recovered using allowed operations."
+        },
+        {
+          "text": "Identifies the full-cycle responsibility loss as a global residual and considers missing state dimensions, wrong boundaries, hidden coordination, or a real difference before recommending an abstraction."
+        },
+        {
+          "text": "Does not resolve the problem merely by adding a universal coordinator, registry, or DSL."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "已有方法 spec 没写“审批责任丢失”这个候选模型。模型发现所有状态表两两兼容，但完整流程循环后 owner 信息消失。不要只套 canonical workflow object。",
+      "expected_output": "Treats the discovered approval-ownership-loss model as a first-class candidate in candidate competition. It compares the low-abstraction baseline, a canonical workflow/process-spatialization candidate, and the rival model-discovered explanation; evaluates deleted complexity, preserved differences, counterexamples, separating probes, transition seam, and evidence strength; and may classify the result as unproven/defer/local deletion wins rather than choosing by elegance.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Includes the model-discovered candidate in the same competition table as baseline and method-derived candidates."
+        },
+        {
+          "text": "Compares candidates using evidence, deleted complexity, preserved differences, counterexamples, separating probes, and transition seam."
+        },
+        {
+          "text": "Does not force a canonical workflow object when a rival explanation better fits the observed obstruction."
+        },
+        {
+          "text": "Allows unproven, defer, or local deletion wins when the evidence cannot distinguish candidates."
+        }
+      ]
+    }
+  ]
+}

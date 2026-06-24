@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{REPORT_TITLE}}</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.55; }
+    body { margin: 0 auto; max-width: 980px; padding: 24px; }
+    header, nav, section { margin-bottom: 24px; }
+    nav { display: flex; flex-wrap: wrap; gap: 12px; border-block: 1px solid #8886; padding: 12px 0; }
+    a { color: #1769aa; } table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #8886; padding: 8px; text-align: left; vertical-align: top; }
+    pre, textarea { box-sizing: border-box; width: 100%; padding: 12px; overflow: auto; }
+    article { border-left: 4px solid #1769aa; padding-left: 16px; margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <header id="top"><h1>{{REPORT_TITLE}}</h1><p>{{REPORT_SUMMARY}}</p></header>
+  <nav aria-label="章节索引">
+    <a href="#decision">核心结论</a><a href="#findings">发现</a>
+    <a href="#evidence">证据</a><a href="#diagram">图示</a><a href="#feedback">反馈</a>
+  </nav>
+  <main>
+    <section id="decision"><h2>核心结论</h2>{{DECISION_CONTENT}}</section>
+    <section id="findings"><h2>发现与建议</h2><article data-card-id="{{CARD_ID}}">{{FINDING_CONTENT}}</article></section>
+    <section id="evidence"><h2>证据附录</h2>{{EVIDENCE_CONTENT}}</section>
+    <section id="diagram"><h2>Mermaid Source</h2><pre>{{MERMAID_SOURCE}}</pre></section>
+    <section id="feedback"><h2>评审反馈</h2><p>此降级模板不持久化反馈。</p><textarea rows="6" aria-label="评审反馈"></textarea></section>
+  </main>
+  <footer><a href="#top">返回顶部</a></footer>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{
+  "skill_name": "html-response",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "谢谢你的帮助！",
+      "expected_output": "Keeps the trivial acknowledgement in chat without generating an HTML file. The response is a simple conversational exchange that does not benefit from a browser-based surface.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate an HTML file for a trivial conversational exchange."
+        },
+        {
+          "text": "Responds directly in chat."
+        },
+        {
+          "text": "Does not mention the activation score or HTML evaluation to the user."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "帮我对比一下 React、Vue、Svelte 三个框架在性能、生态、学习曲线、团队适配度四个维度的优劣，我要给技术选型会议准备材料。",
+      "expected_output": "Generates a comprehension-first HTML Decision Board with a comparison matrix, upfront recommendation, and progressive disclosure for detailed evidence. Feedback, if included, is secondary and collapsed rather than the main interface.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Generates HTML output because the task involves multi-dimensional comparison and decision-making."
+        },
+        {
+          "text": "Uses Decision Board or Evidence Dashboard mode with structured comparison."
+        },
+        {
+          "text": "Keeps feedback controls secondary or omitted unless the user explicitly asks for formal review."
+        },
+        {
+          "text": "Shows the answer or recommendation in the opening viewport, not hidden below an ornamental title."
+        },
+        {
+          "text": "Includes a clickable section index with stable anchor targets when the page has multiple sections."
+        },
+        {
+          "text": "Provides a chat message with the conclusion and HTML link/path."
+        },
+        {
+          "text": "Opens the generated HTML in a browser by default, or explicitly reports that browser opening was unavailable."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "帮我审查一下这个 PDF 的排版效果，我需要逐页标注问题。",
+      "expected_output": "Recognizes that page-by-page annotation is primarily a review workflow. Uses or routes to reviewable-html-report mechanics for stable page IDs, comments, persistence, and feedback export; html-response may provide a comprehension layer only if needed.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not treat page-by-page annotation as a generic comprehension-only HTML task."
+        },
+        {
+          "text": "Routes to or borrows reviewable-html-report mechanics for formal annotation and feedback export."
+        },
+        {
+          "text": "Each reviewable element has a stable data-item-id or equivalent traceable page ID."
+        },
+        {
+          "text": "Supports region or page-level annotation, not just free-text comments."
+        },
+        {
+          "text": "Feedback export, when requested, preserves review IDs so the next agent turn can map comments to content."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "帮我生成一个项目状态仪表盘，要有进度条、风险矩阵、本周完成事项。",
+      "expected_output": "Generates an HTML Evidence Dashboard with visual progress indicators, risk matrix, and completed-items list. Uses semantic HTML, CSS-based visualizations without external CDN dependencies, and respects offline-first default.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Generates HTML with visual progress indicators and risk matrix."
+        },
+        {
+          "text": "Uses inline CSS for visualizations without requiring external CDN resources."
+        },
+        {
+          "text": "States 'offline-first' or self-contained without loading external fonts or scripts."
+        },
+        {
+          "text": "Uses semantic landmarks (header, main, section, nav)."
+        },
+        {
+          "text": "Includes a section index or dashboard navigation when the page has multiple major sections."
+        },
+        {
+          "text": "Includes keyboard-operable controls with visible focus indicators."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "你刚才给的 HTML 报告里，风险矩阵那个部分我有两个问题，另外建议操作优先级需要调整。",
+      "expected_output": "Recognizes this as a follow-up on an existing reviewable report. Revises the comprehension/priority structure if needed, but uses or routes to reviewable-html-report mechanics for region-specific comments, stable IDs, persistence, and feedback export.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Uses or routes to reviewable-html-report mechanics for section-specific feedback rather than inventing ad hoc controls."
+        },
+        {
+          "text": "Uses stable data-item-id or equivalent identifiers for traceable feedback."
+        },
+        {
+          "text": "Exported feedback includes section references so the agent can locate the commented content."
+        },
+        {
+          "text": "Does not instruct the next agent to send, deploy, or modify data without explicit user authorization."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "把这份大型相机项目架构分析转成一个真正帮助理解的 HTML。原文包含模块分层、依赖关系、按下快门的运行时路径，以及自动闪光灯、调色盘、夜景、人像、Live Photo 等功能如何跨层协作。不要只把文章切成卡片。",
+      "expected_output": "Generates a comprehension-first architecture explainer. The opening establishes the core mental model and an overview map; runtime behavior uses a labeled dynamic flow; feature variants use an aligned cross-layer comparison; source details remain traceable through evidence references and an appendix. Review controls are secondary and collapsed by default.",
+      "files": [
+        "/Users/dingren/.claude/projects/-Volumes-Extreme-SSD-project-open-camera/c6d59524-d3cc-4983-ad01-dcd09f19fc0c.jsonl"
+      ],
+      "assertions": [
+        {
+          "text": "Builds a semantic comprehension model before choosing layout: thesis, entities, labeled relationships, runtime flows, comparisons, evidence, and a coverage ledger."
+        },
+        {
+          "text": "The opening viewport contains a memorable architecture thesis and a genuine overview visual, not a title followed by prose cards."
+        },
+        {
+          "text": "Uses a labeled architecture/dependency map where direction, scope, color, and relationship meaning are explicit."
+        },
+        {
+          "text": "Uses a dynamic or sequence-style visual for at least one runtime story such as shutter-to-save, with numbered or otherwise explicit ordering."
+        },
+        {
+          "text": "Uses an aligned matrix or lane comparison to show how multiple camera features traverse Settings, Mode, Session, Device, and Media."
+        },
+        {
+          "text": "Preserves information fidelity through stable source/evidence references and a coverage ledger or appendix that exposes omitted detail."
+        },
+        {
+          "text": "Includes a clickable section index whose labels name reader questions or lenses, not generic chapter numbers."
+        },
+        {
+          "text": "Makes exploration controls such as lens switching, highlighting, filtering, or zoom more prominent than feedback controls."
+        },
+        {
+          "text": "Keeps review and export controls collapsed or visually secondary until the user chooses to review."
+        },
+        {
+          "text": "Does not repeat one visually identical card and feedback form for every source section."
+        },
+        {
+          "text": "Passes the 30-second test: a reader can state the governing architecture idea, major layers, and one end-to-end path without opening the appendix."
+        },
+        {
+          "text": "Opens the generated HTML in a browser by default, or states clearly why browser opening was not completed."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "把这份很长的技术分析转成 HTML。内容有总览、运行路径、方案对比、风险和证据附录。",
+      "expected_output": "Generates a long-form comprehension-first HTML page with a clickable section index, stable section IDs, browser opening by default, and a concise chat note that includes the HTML path and opening status.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Generates HTML because the source is long, multi-section, relationship-heavy technical analysis."
+        },
+        {
+          "text": "Includes a visible section index or lens navigation with `href=\"#section-id\"` links to stable section IDs."
+        },
+        {
+          "text": "Runs `validate_html.py` with the comprehension or architecture profile before delivery."
+        },
+        {
+          "text": "Opens the HTML via `scripts/open_browser.py` when the environment supports it, or reports the opening failure."
+        },
+        {
+          "text": "Does not add review cards, ratings, or persistent feedback controls unless the user asked for review-first interaction."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "skill_name": "reviewable-html-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请把刚才的架构分析结果转成一个可交互评审的 HTML 报告，要包含 Mermaid 图和评审卡。",
+      "expected_output": "Generates a self-contained HTML report with Mermaid topology diagrams, review cards with star ratings and comment fields, collapsible sections, local feedback persistence, and exportable review notes. The report does not modify the domain analysis — it only provides the presentation layer.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a single self-contained HTML file that opens correctly in a browser."
+        },
+        {
+          "text": "Includes Mermaid diagrams with readable fallbacks for environments without JS."
+        },
+        {
+          "text": "Contains review cards with interactive controls (star ratings, status fields, comments)."
+        },
+        {
+          "text": "Persists review feedback locally (localStorage or equivalent)."
+        },
+        {
+          "text": "Does not alter the domain analysis content — only applies presentation mechanics."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我有一个纯文本的 bug 报告，帮我在终端里直接回复就行，不需要 HTML。",
+      "expected_output": "Recognizes that a simple bug report does not need interactive HTML. Replies in plain text without invoking reviewable-html-report. May suggest html-response only if the user later wants a comprehension-first visual explanation.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate an HTML report for simple plain-text output."
+        },
+        {
+          "text": "Replies directly in the requested format (plain text / Markdown)."
+        },
+        {
+          "text": "May suggest html-response if a comprehension-first visual explanation becomes relevant."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把这个评审报告里的 Mermaid 图换成拓扑对比视图，左右两边显示 before 和 after。",
+      "expected_output": "Modifies the report's Mermaid or HTML section to show a side-by-side topology comparison (before/after), preserving all review card functionality and feedback persistence.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces a side-by-side topology comparison layout."
+        },
+        {
+          "text": "Preserves existing review card functionality and feedback persistence."
+        },
+        {
+          "text": "The modification only affects presentation, not domain conclusions."
+        }
+      ]
+    }
+  ]
+}

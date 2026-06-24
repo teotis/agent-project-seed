@@ -1,0 +1,23 @@
+run_id: camera-polish-2026-06-02
+branch: codex/camera-polish
+status_vocabulary:
+  - planned
+  - dispatched
+  - running
+  - blocked
+  - verified
+  - merged
+manual_gates:
+  - id: user-skill-sync
+    required_after: verified
+    owner: human
+packages:
+  - id: camera-core
+    agent: bg-001
+    gates: [build, unit, review]
+  - id: docs
+    agent: bg-002
+    gates: [spellcheck, review]
+  - id: user-skill-sync
+    agent: manual
+    gates: [check-user-skills, approval]

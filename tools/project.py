@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -19,6 +21,7 @@ REQUIRED_FILES = [
     "CLAUDE.md",
     ".codex/config.example.toml",
     ".codex/hooks.json",
+    "agent-assets/user-skills/manifest.json",
     "pyproject.toml",
     ".gitignore",
 ]
@@ -52,6 +55,7 @@ ALLOWED_PREFIXES = (
     ".env.example",
     ".codex/",
     ".claude/",
+    "agent-assets/",
     "control/",
     "tools/",
     "src/",
@@ -64,6 +68,8 @@ ALLOWED_PREFIXES = (
 REJECT_PREFIXES = (".env", "work/tmp/", ".pytest_cache/", "__pycache__/")
 
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".json", ".example", ".gitignore", ".yml", ".yaml"}
+USER_SKILLS_ROOT = ROOT / "agent-assets" / "user-skills"
+USER_SKILL_GROUPS = ("core", "optional", "superpowers")
 
 
 @dataclass
@@ -95,6 +101,10 @@ def package_name_from_project(name: str) -> str:
     if package[0].isdigit():
         package = f"p_{package}"
     return package
+
+
+def task_slug_from_name(name: str) -> str:
+    return slugify_project(name).replace("_", "-")
 
 
 def render_claude() -> str:
@@ -273,6 +283,63 @@ def check_codex_hook_files(result: Result) -> None:
         result.notices.append("Codex hook helper files present")
 
 
+def load_user_skill_manifest() -> dict:
+    path = USER_SKILLS_ROOT / "manifest.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid user skill manifest: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError("invalid user skill manifest: expected object")
+    return data
+
+
+def user_skill_entries(selected_groups: list[str] | None = None) -> list[tuple[str, str, Path]]:
+    manifest = load_user_skill_manifest()
+    groups = manifest.get("groups", {})
+    if not isinstance(groups, dict):
+        raise ValueError("invalid user skill manifest: groups must be an object")
+    selected = selected_groups or list(USER_SKILL_GROUPS)
+    if "all" in selected:
+        selected = list(USER_SKILL_GROUPS)
+    entries: list[tuple[str, str, Path]] = []
+    for group in selected:
+        names = groups.get(group)
+        if not isinstance(names, list):
+            raise ValueError(f"unknown or invalid user skill group: {group}")
+        for name in names:
+            if not isinstance(name, str) or not name:
+                raise ValueError(f"invalid user skill name in group {group}")
+            entries.append((group, name, USER_SKILLS_ROOT / group / name))
+    return entries
+
+
+def check_user_skill_assets(result: Result) -> None:
+    try:
+        entries = user_skill_entries(["all"])
+    except ValueError as exc:
+        result.issues.append(str(exc))
+        return
+    seen: dict[str, str] = {}
+    missing: list[str] = []
+    duplicates: list[str] = []
+    for group, name, path in entries:
+        prior = seen.get(name)
+        if prior is not None:
+            duplicates.append(f"{name} ({prior}, {group})")
+        seen[name] = group
+        if not (path / "SKILL.md").is_file():
+            missing.append(f"{group}/{name}/SKILL.md")
+    if duplicates:
+        result.issues.append(f"duplicate portable user skills: {', '.join(duplicates)}")
+    if missing:
+        result.issues.append(f"missing portable user skill files: {', '.join(missing[:10])}")
+    if entries and not duplicates and not missing:
+        result.notices.append(f"portable user skill assets present ({len(entries)} skills)")
+
+
 def check_work_dirs_have_gitkeep(result: Result) -> None:
     """Check that work subdirectories have .gitkeep files."""
     for subdir in ["work/in", "work/out", "work/tmp"]:
@@ -360,6 +427,7 @@ def check(args: argparse.Namespace) -> int:
     check_seed_residue(result)
     check_claude_hook_files(result)
     check_codex_hook_files(result)
+    check_user_skill_assets(result)
     check_work_dirs_have_gitkeep(result)
     if not args.skip_git:
         check_git(result)
@@ -554,12 +622,15 @@ A newly initialized agent-assisted project.
 2. Update this README with the product, library, or workflow this repository will actually provide.
 3. Run `python3 tools/project.py check`.
 4. Run `python3 -m pytest`.
+5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
 
 ## Useful Commands
 
 ```bash
 python3 tools/panel.py --mode entry
 python3 tools/project.py check
+python3 tools/project.py list-user-skills
+python3 tools/project.py install-user-skills --target codex --group core
 python3 -m pytest
 ```
 """
@@ -697,6 +768,218 @@ def commit(args: argparse.Namespace) -> int:
     return 0
 
 
+TASK_STATE_HEADER = (
+    "package_id\tstate\towner\tbranch\tworktree\tbase_commit\tcommit_hash\t"
+    "verification\tintegration\tcleanup\tlast_error\tupdated_at"
+)
+
+
+def tsv_field(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def git_head_or_pending() -> str:
+    if not (ROOT / ".git").exists():
+        return "pending"
+    completed = run_git(["rev-parse", "HEAD"])
+    if completed.returncode != 0:
+        return "pending"
+    return completed.stdout.strip() or "pending"
+
+
+def default_task_packages(packages: list[str] | None) -> list[str]:
+    values = [tsv_field(value) for value in (packages or []) if tsv_field(value)]
+    if not values:
+        values = ["01-main"]
+    if "99-finalize" not in values:
+        values.append("99-finalize")
+    return values
+
+
+def render_task_index(task_name: str, packages: list[str]) -> str:
+    package_lines = "\n".join(f"- `{package}`" for package in packages)
+    return f"""# {task_name}
+
+## Purpose
+
+Use this control surface only for complex work that spans multiple packages,
+branches, worktrees, agents, or handoff sessions. Routine single-session work
+should stay in `control/state.md`, `control/ledger.md`, and normal checkpoint
+commits.
+
+## Live State Contract
+
+- `status.tsv` is the live source of truth for package execution state.
+- `events.jsonl` is append-only history for important state transitions.
+- Package Markdown files hold human-readable evidence, verification, risks, and
+  blocker notes.
+- `control/ledger.md` records durable project decisions and risks; it should not
+  duplicate every package update.
+- chat transcripts, status panels, and final reports are secondary. If they
+  disagree with `status.tsv`, refresh them from the live state before deciding
+  whether the task is complete.
+
+## Packages
+
+{package_lines}
+
+## State Vocabulary
+
+Suggested states: `pending`, `in_progress`, `blocked`, `completed`,
+`integrated`, `finalized`, `canceled`.
+
+`99-finalize` should be marked `finalized` only after integration verification
+and cleanup evidence are recorded.
+"""
+
+
+def render_package_doc(package_id: str) -> str:
+    return f"""# {package_id}
+
+## Scope
+
+- Define the package goal before starting work.
+
+## Evidence
+
+- Branch: pending
+- Worktree: pending
+- Base commit: pending
+- Commit hash: pending
+- Changed files: pending
+
+## Verification
+
+- pending
+
+## Risks
+
+- none identified yet
+
+## Blocker Notes
+
+- Last error: n/a
+- Recovery hint: n/a
+
+Update `../status.tsv` when this package changes state.
+"""
+
+
+def status_row(package_id: str, base_commit: str, timestamp: str) -> str:
+    values = [
+        package_id,
+        "pending",
+        "unassigned",
+        "pending",
+        "pending",
+        base_commit,
+        "pending",
+        "pending",
+        "pending",
+        "pending",
+        "",
+        timestamp,
+    ]
+    return "\t".join(tsv_field(value) for value in values)
+
+
+def task_init(args: argparse.Namespace) -> int:
+    task_name = tsv_field(args.name)
+    if not task_name:
+        print("task name cannot be empty", file=sys.stderr)
+        return 2
+    slug = args.slug or task_slug_from_name(task_name)
+    if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", slug):
+        print(f"invalid task slug: {slug}", file=sys.stderr)
+        return 2
+    task_root = ROOT / "control" / "tasks" / slug
+    if task_root.exists():
+        print(f"task control surface already exists: {task_root.relative_to(ROOT)}", file=sys.stderr)
+        return 2
+
+    packages = default_task_packages(args.package)
+    timestamp = now_iso()
+    base_commit = git_head_or_pending()
+
+    (task_root / "packages").mkdir(parents=True, exist_ok=False)
+    (task_root / "INDEX.md").write_text(render_task_index(task_name, packages), encoding="utf-8")
+    (task_root / "status.tsv").write_text(
+        TASK_STATE_HEADER + "\n" + "\n".join(status_row(package, base_commit, timestamp) for package in packages) + "\n",
+        encoding="utf-8",
+    )
+    event = {
+        "ts": timestamp,
+        "event": "task_initialized",
+        "task": task_name,
+        "slug": slug,
+        "packages": packages,
+        "base_commit": base_commit,
+    }
+    (task_root / "events.jsonl").write_text(json.dumps(event) + "\n", encoding="utf-8")
+    for package in packages:
+        (task_root / "packages" / f"{package}.md").write_text(render_package_doc(package), encoding="utf-8")
+
+    print(f"Created complex task live state: {task_root.relative_to(ROOT)}")
+    print(f"Live state: {(task_root / 'status.tsv').relative_to(ROOT)}")
+    return 0
+
+
+def user_skill_target_root(target: str) -> Path:
+    home = Path.home()
+    if target == "codex":
+        return home / ".codex" / "skills"
+    if target == "claude":
+        return home / ".claude" / "skills"
+    raise ValueError(f"unknown target: {target}")
+
+
+def install_targets(target: str) -> list[tuple[str, Path]]:
+    if target == "all":
+        return [("codex", user_skill_target_root("codex")), ("claude", user_skill_target_root("claude"))]
+    return [(target, user_skill_target_root(target))]
+
+
+def skill_copy_ignore(_: str, names: list[str]) -> set[str]:
+    ignored = {name for name in names if name.startswith("._")}
+    ignored.update({".DS_Store", "__pycache__", ".pytest_cache"})
+    return ignored
+
+
+def list_user_skills(args: argparse.Namespace) -> int:
+    for group, name, path in user_skill_entries(args.group or ["all"]):
+        status = "ok" if (path / "SKILL.md").is_file() else "missing"
+        print(f"{group}\t{name}\t{status}\t{path.relative_to(ROOT)}")
+    return 0
+
+
+def install_user_skills(args: argparse.Namespace) -> int:
+    entries = user_skill_entries(args.group or ["core"])
+    actions: list[tuple[str, Path, Path]] = []
+    for _group, name, source in entries:
+        if not (source / "SKILL.md").is_file():
+            print(f"missing source skill: {source}", file=sys.stderr)
+            return 1
+        targets = [("custom", Path(args.install_root))] if args.install_root else install_targets(args.target)
+        for target_name, target_root in targets:
+            actions.append((target_name, source, target_root / name))
+
+    for target_name, source, destination in actions:
+        label = f"{target_name}:{destination.name}"
+        if destination.exists() and not args.force:
+            print(f"skip existing {label} (use --force to replace)")
+            continue
+        if args.dry_run:
+            action = "replace" if destination.exists() else "install"
+            print(f"{action} {label} <- {source.relative_to(ROOT)}")
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(source, destination, ignore=skill_copy_ignore)
+        print(f"installed {label}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Project scaffold command center.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -711,6 +994,37 @@ def build_parser() -> argparse.ArgumentParser:
     check_cmd.add_argument("--skip-git", action="store_true")
 
     sub.add_parser("sync-agents", help="sync thin agent entry files")
+
+    list_skills = sub.add_parser("list-user-skills", help="list bundled portable user skills")
+    list_skills.add_argument(
+        "--group",
+        action="append",
+        choices=[*USER_SKILL_GROUPS, "all"],
+        help="skill group to list; repeatable",
+    )
+
+    install_skills = sub.add_parser("install-user-skills", help="install bundled user skills")
+    install_skills.add_argument("--target", choices=["codex", "claude", "all"], default="codex")
+    install_skills.add_argument("--install-root", help="install into an explicit skills directory")
+    install_skills.add_argument(
+        "--group",
+        action="append",
+        choices=[*USER_SKILL_GROUPS, "all"],
+        help="skill group to install; repeatable",
+    )
+    install_skills.add_argument("--force", action="store_true", help="replace existing target skills")
+    install_skills.add_argument("--dry-run", action="store_true")
+
+    task = sub.add_parser("task", help="manage optional complex task live-state controls")
+    task_sub = task.add_subparsers(dest="task_command", required=True)
+    task_init_cmd = task_sub.add_parser("init", help="create a minimal complex-task live state surface")
+    task_init_cmd.add_argument("--name", required=True, help="human-readable task name")
+    task_init_cmd.add_argument("--slug", help="directory slug under control/tasks/")
+    task_init_cmd.add_argument(
+        "--package",
+        action="append",
+        help="package id to seed in status.tsv; repeatable. Defaults to 01-main plus 99-finalize.",
+    )
 
     commit_cmd = sub.add_parser("commit", help="safely commit allowed changes")
     commit_cmd.add_argument("--message", default="chore: checkpoint agent work")
@@ -728,6 +1042,14 @@ def main() -> int:
         return check(args)
     if args.command == "sync-agents":
         return sync_agents()
+    if args.command == "list-user-skills":
+        return list_user_skills(args)
+    if args.command == "install-user-skills":
+        return install_user_skills(args)
+    if args.command == "task":
+        if args.task_command == "init":
+            return task_init(args)
+        parser.error(f"unknown task command {args.task_command}")
     if args.command == "commit":
         return commit(args)
     parser.error(f"unknown command {args.command}")

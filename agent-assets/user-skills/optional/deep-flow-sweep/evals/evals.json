@@ -1,0 +1,421 @@
+{
+  "skill_name": "deep-flow-sweep",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "对这个项目做一次全面扫雷，预算充足，大水漫灌。",
+      "expected_output": "Infers the Exhaustive budget envelope, runs the lightweight flow probe, maps all release-critical flows, generates high-value failure scenarios, and adaptively selects evidence weapons from Git/memory, state, fault, variant, supply-chain, mutation, fuzzing, or trend methods only when triggered. Ranks findings, records run/skipped weapons and stop reason, produces task packages without modifying code, and creates a verification ledger.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Establishes scope and budget tier (Exhaustive) before writing findings."
+        },
+        {
+          "text": "Builds a flow map identifying entry points, key files, and success signals."
+        },
+        {
+          "text": "Generates high-value failure scenarios across all relevant scenario classes without mechanically expanding irrelevant classes."
+        },
+        {
+          "text": "Runs evidence from multiple relevant sources and records why heavy methods were selected or skipped."
+        },
+        {
+          "text": "Ranks findings as P0/P1/P2/P3 before producing task packages."
+        },
+        {
+          "text": "Produces a verification ledger with commands and pass/fail status, and does not edit project files."
+        },
+        {
+          "text": "Treats Exhaustive as a capacity envelope, not an obligation to run every heavy tool."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "快速排查一下这个项目的主流程，只做基础梳理。",
+      "expected_output": "Infers Normal budget tier, focuses on main flow happy-path and top failure scenarios, runs basic evidence (tests, validation commands), reports findings and task recommendations without applying fixes, and produces a concise Markdown source report.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Downgrades to Normal tier based on '快速排查' and '基础梳理' signals."
+        },
+        {
+          "text": "Focuses on main flows rather than expanding to all dimensions."
+        },
+        {
+          "text": "Does not run Git archaeology, memory cross-reference, or long-term trend analysis (those are Deep+ only)."
+        },
+        {
+          "text": "Produces a Markdown source report and treats any HTML review report as optional for this lightweight tier."
+        },
+        {
+          "text": "Does not apply code fixes during the sweep."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "扫雷发现了一个结构性模式：同一个 bug 类别修了 3 次以上。接下来该怎么办？",
+      "expected_output": "Recognizes that 3+ findings or fixes of the same bug class signals a missing invariant, stops individual classification, and recommends escalating to abstraction-architect rather than turning the pattern into individual fix tasks.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recognizes the cross-skill escalation trigger (same class found or fixed >3 times)."
+        },
+        {
+          "text": "Recommends escalating to abstraction-architect."
+        },
+        {
+          "text": "Does not continue producing individual fix tasks for the same pattern."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "用 Deep 预算审计订单同步流程。它支持 retry、cancel、resume，状态散落在数据库、队列和本地状态文件里；外部 API 偶尔超时。没有 parser，也没有已知同类漏洞。",
+      "expected_output": "先运行 flow probe 和 execution path map，然后由状态与外部边界信号选择 stateful model/invariants、fault injection 和 recovery drill。应跳过 fuzzing、cross-repository variant analysis 和 mutation testing，除非后续证据产生新触发信号。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Selects stateful model and invariants for retry/cancel/resume sequencing."
+        },
+        {
+          "text": "Selects fault injection and recovery checks for external API timeouts and distributed state."
+        },
+        {
+          "text": "Skips fuzzing and cross-repository variant analysis because their triggers are absent."
+        },
+        {
+          "text": "Records the adaptive weapon decisions in the ledger."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Exhaustive 扫雷已经覆盖全部 release-critical flow。最近两轮额外工具没有新增 P0/P1、没有增强证据、没有关闭未知项，但预算还够。是否继续跑 mutation、fuzz 和更多扫描器？",
+      "expected_output": "根据连续两轮低信息收益和关键 flow 已覆盖而停止扩张。报告 mutation、fuzz 和额外扫描器因缺少触发或边际收益而跳过，并把预算视为上限而非必须消耗的配额。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Stops after two consecutive low-information waves when critical coverage is complete."
+        },
+        {
+          "text": "Does not run mutation or fuzzing solely because budget remains."
+        },
+        {
+          "text": "Records saturation as the stop reason and lists skipped heavy weapons."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "对这个移动端项目做 deep-flow-sweep，侧重性能，尤其是启动速度、拍照延迟和内存，但不要漏掉主流程稳定性。",
+      "expected_output": "选择 performance profile，同时保留 main-flow 与 reliability 基线。先定义可重复指标和 workload，再取得 baseline 并选择 trace/profiler/benchmark；没有测量证据时不得把静态猜测提升为 P0/P1。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Selects the performance focus profile and records its allocation."
+        },
+        {
+          "text": "Retains baseline main-flow, reliability, recovery, and evidence checks."
+        },
+        {
+          "text": "Requires repeatable measurements before confirming a performance finding."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "只做分析。报告完成后即使发现 P0 也不要改源码、测试、配置或提交，等我另行授权。",
+      "expected_output": "进入 analysis-only mode latch，只允许在声明的 analysis artifact root 写报告、manifest、sub-ledger 和任务包。发现 P0 只报告；没有新的显式用户授权不得转入修复或提交。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Declares an analysis artifact root before writing."
+        },
+        {
+          "text": "Does not modify product source, tests, configuration, generated assets, dependency locks, or Git history."
+        },
+        {
+          "text": "Requires new explicit user authorization after presenting the analysis before implementation."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "历史报告把一个日志不统一问题标成 P0。请重新扫雷并沿用历史报告的严重度。",
+      "expected_output": "拒绝自动继承历史严重度。把历史报告作为候选证据，核验当前可达 flow、实际影响和直接证据；日志格式或诊断弱点通常只能成为 P2，除非能直接证明安全、数据或关键流程阻断影响。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Treats the historical P0 label as context rather than current severity proof."
+        },
+        {
+          "text": "Requires direct current evidence and reachable-flow impact for P0/P1."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "把多个模块交给并发 agent 扫雷，并合并它们之前生成过的同名报告。",
+      "expected_output": "创建 parent run manifest，要求每个 sub-ledger 带 run_id、git_sha、dirty_state、scope、source_agent、timestamps 和 artifact_path。旧同名报告只有通过 provenance/freshness 校验才可合并，否则隔离为历史参考。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Creates a parent run manifest before concurrent dispatch."
+        },
+        {
+          "text": "Requires matching provenance fields and freshness before merging sub-ledgers."
+        },
+        {
+          "text": "Does not treat a matching filename as evidence that an artifact belongs to the current run."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "用默认模式充分发挥 deep-flow-sweep。项目有 Web UI、后台任务和发布脚本，没有特别指定侧重。",
+      "expected_output": "选择 balanced playbook，先建立 critical flow 和 dimension coverage matrix。主流程与恢复是基线；性能、测试、安全、依赖、可观测性和历史维度按 trigger 选择，不平均分配。报告明确 verified/deferred/blocked 和 coverage debt。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Loads the balanced playbook and builds a dimension coverage matrix."
+        },
+        {
+          "text": "Does not allocate equal effort mechanically across every dimension."
+        },
+        {
+          "text": "Reports omitted or blocked dimensions as explicit coverage debt."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "侧重功能链路：核查拍照从点击快门、相机回调、后处理、写盘到相册可见是否真正完成，UI 不能假成功。",
+      "expected_output": "选择 main-flow playbook，建立 goal-to-outcome flow graph 和最终 success oracle。验证端到端 happy path、写盘或回调失败、重复点击/中断后的 recovery，并区分 UI 可见与真实持久化完成。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Builds a goal-to-outcome flow graph across UI, callbacks, processing, persistence, and visible result."
+        },
+        {
+          "text": "Defines a final success oracle instead of treating UI feedback as completion."
+        },
+        {
+          "text": "Tests interruption, failure, and recovery paths in addition to happy path."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "这次侧重稳定性。同步任务可能并发启动、网络超时、进程中断后恢复，还可能重复提交。",
+      "expected_output": "选择 reliability playbook，建立 state model、invariant ledger、fault matrix 和 recovery model。检查 retry budget/backoff、idempotency、并发 schedule、partial failure、restart 和 residual state，而不只搜索 catch/sleep。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Defines states, allowed transitions, and invariants for the synchronization flow."
+        },
+        {
+          "text": "Runs or designs fault injection for timeout, duplicate, partial failure, and restart."
+        },
+        {
+          "text": "Verifies cleanup, residual state, idempotency, and retry outcome."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "侧重测试覆盖。CI 显示 87% 行覆盖率，但线上缺陷仍反复出现，还有一些 flaky 测试。",
+      "expected_output": "选择 test-effectiveness playbook，建立 risk-to-test matrix 和 coverage provenance，检查 assertion quality、测试层级、隔离性和 flaky 根因。对最高风险模块运行 scoped mutation 或等价 detection probe；不得把 87% 直接解释成测试充分。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Maps critical flow risks to tests and behavioral failure oracles."
+        },
+        {
+          "text": "Records coverage provenance and refuses to equate line coverage with effectiveness."
+        },
+        {
+          "text": "Uses mutation or an equivalent deliberate-breakage probe on the highest-risk area."
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "侧重性能。开发者在 debug 模式模拟器上手测一次，启动快了 15%，请确认这是可信性能提升。",
+      "expected_output": "选择 performance playbook，但拒绝直接确认。建立 metric contract，使用 release-like build、受控 device/workload、cold/warm 定义、warm-up、重复样本和 comparator；先端到端 benchmark，再用 trace/profiler 归因，并判断差异是否超过方差。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Rejects a single debug-emulator timing as sufficient evidence."
+        },
+        {
+          "text": "Defines build, device, workload, lifecycle state, warm-up, sample count, statistic, and comparator."
+        },
+        {
+          "text": "Requires benchmark variance and trace or profiler attribution before confirming improvement."
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "侧重项目治理：请检查测试覆盖、日志打印、输入校验、CI 发布脚本、文档命令和依赖健康，判断这个项目是否适合交给 agent 长期维护。",
+      "expected_output": "选择 project-governance playbook，建立 delivery-oriented governance matrix，重点核查 CI、release、artifact provenance、doc-to-command、agent parity 和 ownership。测试、日志、输入安全分别路由到 test-effectiveness、observability、security playbook，不在 governance 中重复弱化 checklist。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Builds a governance matrix covering CI, release, artifact provenance, docs/agent parity, and ownership."
+        },
+        {
+          "text": "Routes testing, observability, and security evidence to their specialist playbooks."
+        },
+        {
+          "text": "Requires doc-to-command and source-to-artifact provenance evidence rather than surface signals."
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "deep-flow-sweep 找到了 6 个可执行风险包，我想直接交给后续 agent 落地。请让报告里的任务包可被 handoff 或 orchestration 直接消费，并且后续执行结果能回流训练技能。",
+      "expected_output": "每个可执行任务包使用 Task Package Contract 字段，包含 Falsification Ledger 和 Outcome Replay stub；按 handoff_mode、agent_capability、parallel_safety 和 dependencies 路由到 Codex 保留、handoff、orchestration、external-assist 或 deferred。结构化包必须通过 task_package_validator.py，执行后的 Outcome Replay 要能转成后续 eval 或技能规则。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Produces task packages in the shared Task Package Contract shape."
+        },
+        {
+          "text": "Includes a Falsification Ledger for each package before delegation."
+        },
+        {
+          "text": "Includes an Outcome Replay stub with expected evidence to collect after execution."
+        },
+        {
+          "text": "Routes packages by handoff_mode, capability, dependencies, and parallel safety."
+        },
+        {
+          "text": "Runs or requires task_package_validator.py for structured package blocks."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "侧重安全审计这个带多租户 API 和 LLM 工具调用的项目。依赖扫描器报了很多 high，但我只关心真正可利用、会越权或泄露数据的问题。",
+      "expected_output": "选择 security playbook，建立 trust-boundary 与 threat-to-control matrix。对 authentication、authorization、tenant isolation、input-to-sink、secrets 和 AI/LLM tool permissions 构造 exploitation scenario。scanner/CVE 只作为候选；P0/P1 必须有 proof of exploitability 或闭合的 source-to-sink 强静态证明。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Maps assets, trust boundaries, attacker capabilities, controls, sinks, and impact."
+        },
+        {
+          "text": "Separates authentication from authorization and checks tenant isolation."
+        },
+        {
+          "text": "Treats model output as untrusted and checks code-enforced tool permissions."
+        },
+        {
+          "text": "Does not inherit scanner or CVE severity without reachability and exploitability evidence."
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "prompt": "侧重可观测性。后台任务偶尔失败，用户只看到一直转圈，日志很多但很难把一次请求、worker 和重试串起来。",
+      "expected_output": "选择 observability playbook，从用户 symptom 建立到 cause 和 recovery 的链路。执行代表性 diagnostic drill，检查跨请求/worker/retry correlation、error/log/metric/trace/status artifact、敏感信息和最终 recovery signal；不能因日志很多就宣布可观测性充分。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Builds a symptom-to-recovery map for the background job."
+        },
+        {
+          "text": "Checks correlation across request, worker, retry, and final state."
+        },
+        {
+          "text": "Uses a diagnostic drill and checks sensitive-data handling."
+        },
+        {
+          "text": "Does not equate log volume or formatting with diagnosability."
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "prompt": "请对最近一次支付改动做意图恢复。commit 说是修性能，测试只检查返回 200，但需求文档要求不能重复扣款；当前日志显示偶发重试。请判断问题严重度以及下一步怎么处理。",
+      "expected_output": "按 requirement/task source → test oracle → implementation → runtime evidence 建立 intent recovery chain，识别性能表述、弱测试和幂等需求之间的断裂。分别记录 Severity、Confidence、Disposition；若重复扣款尚未复现但证据可信，应标为高影响候选并选择 investigate，而不是用 P1 标签替代证据或直接打包。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Builds the intent recovery chain in source, oracle, implementation, runtime-evidence order."
+        },
+        {
+          "text": "Does not treat the commit subject or existing test as the complete requirement."
+        },
+        {
+          "text": "Separates severity, confidence, and disposition."
+        },
+        {
+          "text": "Names the missing evidence before confirming or packaging a high-impact finding."
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "prompt": "侧重测试拓扑诊断。退款模块的 unit test 要 mock 12 个内部 service，共享一个全局数据库 fixture；同时所有关键行为又被一个 20 分钟 E2E 重复覆盖，失败时很难定位。",
+      "expected_output": "建立 test topology map，记录 production unit、系统边界、lowest sufficient level、internal mocks、shared mutable state、setup/runtime cost 和 failure localization。把 internal mock pressure 作为设计调查信号，区分系统边界替身；建议把行为放到最低充分层验证，并用证据判断是否需要升级 complexity-sweep。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Builds a test topology map rather than counting tests or mocks."
+        },
+        {
+          "text": "Separates internal mocks from legitimate system-boundary substitutes."
+        },
+        {
+          "text": "Assesses shared mutable state, runtime cost, duplicated levels, and failure localization."
+        },
+        {
+          "text": "Treats mock pressure as an investigation signal rather than an automatic defect."
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "prompt": "profile 里没写 AI agent memory residue，但发布流程会把 agent 生成报告、scratch 和状态摘要带进 release bundle；请扫雷不要只按 balanced playbook 平均分配。",
+      "expected_output": "不把 focus profile 视为封闭路线。提出 project-specific flow lens，例如 generated-artifact provenance / agent memory residue exposure，并把它绑定到真实 release flow、success oracle、证据产物、false-positive guard 和 stop condition。根据风险信号调整 evidence waves，而不是机械平均覆盖无关 profile；P0/P1 仍需要直接可达证据，缺口记录为 coverage debt。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Introduces a project-specific flow or risk lens outside the prewritten focus profiles when evidence warrants it."
+        },
+        {
+          "text": "Ties the new lens to a reachable user or release flow, success oracle, evidence artifact, false-positive guard, and stop condition."
+        },
+        {
+          "text": "Adapts evidence-wave allocation instead of mechanically expanding every profile equally."
+        },
+        {
+          "text": "Preserves the P0/P1 evidence threshold and records uncovered surfaces as coverage debt."
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "prompt": "balanced checklist 要求每个维度平均覆盖；但这次 release blocker 明确集中在 payment retry idempotency，日志很多但串不起一次重试链路。请严格按 checklist 平均展开所有章节，不要偏向支付链路。",
+      "expected_output": "拒绝机械 balanced checklist。把 checklist 作为触发式菜单而不是工作配额，优先围绕 reachable payment retry flow、idempotency invariant、success oracle、fault/recovery evidence 和 observability correlation 收集证据；无关维度只记录 verified/deferred/coverage debt，不因章节完整而稀释 blocker。若模板会诱导错误结论，应说明误导点，并保留 main-flow / recovery / P0-P1 evidence threshold。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Refuses to average effort across every balanced checklist dimension when evidence points to a concentrated release blocker."
+        },
+        {
+          "text": "Treats the checklist as a trigger-style menu and prioritizes reachable payment retry and idempotency evidence."
+        },
+        {
+          "text": "Keeps irrelevant or unverified dimensions as verified, deferred, or coverage debt instead of inflating the report."
+        },
+        {
+          "text": "Explains why the built-in template would mislead and preserves direct-evidence thresholds for P0/P1."
+        }
+      ]
+    }
+  ]
+}

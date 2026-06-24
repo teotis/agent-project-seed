@@ -1,0 +1,4 @@
+package_id	owner	status	last_event
+camera-core	bg-001	verified	verified
+docs	bg-002	blocked	test_failed
+user-skill-sync	human	waiting_approval	approval_requested

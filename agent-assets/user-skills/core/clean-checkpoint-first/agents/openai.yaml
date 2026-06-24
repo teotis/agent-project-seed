@@ -1,0 +1,6 @@
+interface:
+  display_name: "Clean Checkpoint First"
+  short_description: "End implementation sessions with auditable local checkpoints instead of new dirty tracked files."
+  default_prompt: "Use $clean-checkpoint-first for implementation, repair, merge, or closeout tasks: snapshot dirty state, preserve unrelated work, checkpoint task-owned changes, land local main when safe, and do not push without explicit approval."
+policy:
+  allow_implicit_invocation: true

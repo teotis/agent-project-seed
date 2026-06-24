@@ -1,0 +1,7 @@
+interface:
+  display_name: "Renewal Architect"
+  short_description: "为遗留系统现代化提供 evidence-first 的 pilot/decision 路线"
+  default_prompt: "使用 $renewal-architect 做工程现代化决策分析；默认用中文交付 fact ledger、dominant constraint、protect/experiment/defer 拆分、pilot/decision 草案、HTML 评审面和最终回复；agent active 自启用只做低预算轻量诊断、coverage debt 和 handoff 建议，用户显式调用才进入正式 Deep Diagnostic Mode，Exhaustive 仅在用户明确要求时进入。"
+
+policy:
+  allow_implicit_invocation: true

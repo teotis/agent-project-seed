@@ -1,0 +1,7 @@
+interface:
+  display_name: "Engineering Memory"
+  short_description: "记录和召回长期工程上下文"
+  default_prompt: "使用 $engineering-memory 记录或召回项目工程记忆；默认用中文总结历史决策、用户偏好、分析产物和后续行动。"
+
+policy:
+  allow_implicit_invocation: true

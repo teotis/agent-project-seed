@@ -92,6 +92,27 @@ links:
 - README.md
 - SETUP_NEW_MACHINE.md
 
+## 2026-06-25T04:04:16 - Bundle portable user skills for environment bootstrap
+
+type: decision
+status: closed
+tags: skills, bootstrap, codex, claude
+
+summary:
+- Carry selected user-installed skills in the seed so a cloned project can quickly rebuild a useful Codex or Claude environment.
+- Treat skills as universal packages; install targets only choose the destination user skill root.
+
+details:
+- Store portable skill snapshots under `agent-assets/user-skills/`, governed by `agent-assets/user-skills/manifest.json`.
+- Include a core migration set, the selected optional analysis/refinement set, and the complete local superpowers skill set.
+- Provide `tools/project.py list-user-skills` and `tools/project.py install-user-skills` for inspection and installation.
+- Do not migrate private machine-local config, API keys, MCP tokens, model provider settings, conversation logs, hook state, caches, or database files.
+
+links:
+- agent-assets/user-skills/manifest.json
+- tools/project.py
+- SETUP_NEW_MACHINE.md
+
 ## 2026-06-25T03:32:29 - Record project positioning
 
 type: decision
@@ -113,3 +134,23 @@ links:
 - README.md
 - SETUP_NEW_MACHINE.md
 - tools/project.py
+
+## 2026-06-25T04:05:36 - Add optional complex task live state
+
+type: decision
+status: closed
+tags: task-state, orchestration, template
+
+summary:
+- Keep the default initialized project lightweight.
+- Add an opt-in `tools/project.py task init` command for complex multi-package work that needs a live state source of truth.
+
+details:
+- Complex task state is generated under `control/tasks/<slug>/` only when explicitly requested.
+- The generated `status.tsv` owns package execution state; chat summaries, status panels, and final reports are secondary when they disagree.
+- This preserves the OpenCamera orchestration lesson without defaulting new projects into a heavy `docs/plans/*/packages/status/launchers` layout.
+
+links:
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md

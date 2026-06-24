@@ -195,6 +195,139 @@ def test_gemini_adapter_is_not_part_of_template():
     assert "GEMINI.md" not in module.ALLOWED_PREFIXES
 
 
+def test_user_skill_manifest_assets_are_valid():
+    module = load_project_tool()
+    entries = module.user_skill_entries(["all"])
+
+    assert len(entries) == 43
+    assert ("core", "clean-checkpoint-first", ROOT / "agent-assets" / "user-skills" / "core" / "clean-checkpoint-first") in entries
+    assert ("optional", "abstraction-architect", ROOT / "agent-assets" / "user-skills" / "optional" / "abstraction-architect") in entries
+    assert ("superpowers", "brainstorming", ROOT / "agent-assets" / "user-skills" / "superpowers" / "brainstorming") in entries
+
+    result = module.Result()
+    module.check_user_skill_assets(result)
+    assert result.issues == []
+    assert any("43 skills" in notice for notice in result.notices)
+
+
+def test_list_and_install_user_skills(tmp_path):
+    list_result = subprocess.run(
+        [sys.executable, "tools/project.py", "list-user-skills", "--group", "superpowers"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert list_result.returncode == 0, list_result.stdout + list_result.stderr
+    assert "superpowers\tbrainstorming\tok" in list_result.stdout
+    assert "core\tclean-checkpoint-first" not in list_result.stdout
+
+    install_root = tmp_path / "skills"
+    dry_run = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "install-user-skills",
+            "--group", "core",
+            "--install-root", str(install_root),
+            "--dry-run",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert dry_run.returncode == 0, dry_run.stdout + dry_run.stderr
+    assert "install custom:clean-checkpoint-first" in dry_run.stdout
+    assert not install_root.exists()
+
+    installed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "install-user-skills",
+            "--group", "superpowers",
+            "--install-root", str(install_root),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    assert (install_root / "brainstorming" / "SKILL.md").exists()
+    assert (install_root / "writing-skills" / "SKILL.md").exists()
+    assert not (install_root / "clean-checkpoint-first").exists()
+
+
+def test_task_init_creates_minimal_live_state_control_surface(tmp_path):
+    target = _copy_and_init(tmp_path, name="Workflow Lab", package="workflow_lab")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "init",
+            "--name",
+            "Complex Refactor",
+            "--package",
+            "01-contract-characterization",
+            "--package",
+            "02-implementation",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    task_root = target / "control" / "tasks" / "complex-refactor"
+    assert task_root.is_dir()
+    assert "control/tasks/complex-refactor/status.tsv" in completed.stdout
+
+    index = (task_root / "INDEX.md").read_text(encoding="utf-8")
+    assert "Complex Refactor" in index
+    assert "`status.tsv` is the live source of truth" in index
+    assert "chat transcripts, status panels, and final reports are secondary" in index
+
+    status_lines = (task_root / "status.tsv").read_text(encoding="utf-8").splitlines()
+    assert status_lines[0] == (
+        "package_id\tstate\towner\tbranch\tworktree\tbase_commit\tcommit_hash\t"
+        "verification\tintegration\tcleanup\tlast_error\tupdated_at"
+    )
+    assert status_lines[1].startswith("01-contract-characterization\tpending\t")
+    assert status_lines[2].startswith("02-implementation\tpending\t")
+    assert status_lines[3].startswith("99-finalize\tpending\t")
+
+    events = (task_root / "events.jsonl").read_text(encoding="utf-8")
+    assert '"event": "task_initialized"' in events
+    assert '"task": "Complex Refactor"' in events
+
+    package_doc = (task_root / "packages" / "01-contract-characterization.md").read_text(encoding="utf-8")
+    assert "# 01-contract-characterization" in package_doc
+    assert "Update `../status.tsv` when this package changes state." in package_doc
+
+
+def test_task_init_refuses_to_overwrite_existing_task(tmp_path):
+    target = _copy_and_init(tmp_path)
+    command = [
+        sys.executable,
+        "tools/project.py",
+        "task",
+        "init",
+        "--name",
+        "Shared Migration",
+    ]
+    first = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)
+    second = subprocess.run(command, cwd=target, text=True, capture_output=True, check=False)
+
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert second.returncode == 2
+    assert "already exists" in second.stderr
+
+
 def test_safety_check_detects_staged_env(tmp_path):
     target = tmp_path / "safety_project"
     ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")

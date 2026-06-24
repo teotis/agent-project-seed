@@ -1,0 +1,228 @@
+{
+  "skill_name": "complexity-sweep",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我们团队刚接手了一个旧项目，代码在 backend/ 目录下，Python FastAPI 写的。目测有不少历史包袱——有些函数两百多行，utils 目录乱得没人敢动，service 层看起来很多只是透传。预算充足，帮我用 Exhaustive 档做一次极深度的复杂度扫雷，找出所有低效结构、臃肿设计和过度复杂的环节，越细越好。",
+      "expected_output": "产出完整的三层复杂度分析报告（微/中/宏观），先运行轻量 probe，再根据 utils 混乱、长函数、透传层和 Git 信号选择 change coupling、abstraction economics、pattern detection 等武器。包含证据（文件:行号）、P0-P3 分级、简化任务包、武器选择/跳过理由、停止依据和交叉升级建议。趋势或并发只有在触发信号与预算允许时采用。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Contains a Structure Map section with micro, meso, and macro level data."
+        },
+        {
+          "text": "Findings include concrete evidence: file:line references and measurable metrics."
+        },
+        {
+          "text": "Findings are ranked P0-P3 with severity justifications."
+        },
+        {
+          "text": "Produces simplification task packages with verification gates and blast radius estimates."
+        },
+        {
+          "text": "Recommends cross-skill escalations where appropriate."
+        },
+        {
+          "text": "Records which arsenal weapons were run or skipped and why, rather than mechanically running every Exhaustive method."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我们前端项目 src/components/ 里有大量组件，很多都超过300行，useEffect 嵌套很深，props drilling 严重。但我现在只想快速扫一下核心的 dashboard 模块（src/components/dashboard/），看看最严重的结构问题有哪些，不用太深。用 Normal 档就行。",
+      "expected_output": "产出针对 dashboard 模块的微观+基础中观分析报告，先使用轻量 probe 确定阅读顺序，重点识别深层嵌套、长组件、props drilling 等问题，附带可执行的简化建议。Normal 档不应启用无触发信号的历史切片、跨仓库 variant 或 mutation 等重型武器。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Scope is restricted to dashboard module only (src/components/dashboard/)."
+        },
+        {
+          "text": "Covers micro-level patterns (long components, deep nesting, props drilling)."
+        },
+        {
+          "text": "Output matches Normal budget expectations (targeted, not exhaustive)."
+        },
+        {
+          "text": "Includes actionable simplification suggestions for the identified issues."
+        },
+        {
+          "text": "Skips heavy weapons that have no trigger in the scoped dashboard request."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我对当前项目的过度抽象问题有点担忧。最近几次 code review 老是看到只有一个实现的 interface、根本没被复用的 util 函数、还有那种 delegate 来 delegate 去但啥也没干的 service 层。帮我专门针对'过度抽象和臃肿中间层'做一次 Deep 扫描，看看这些问题到底有多普遍，有没有形成模式。",
+      "expected_output": "产出针对过度抽象维度的深度分析，重点覆盖：单实现接口、透传层、无用抽象、过度间接层、投机通用性。应包含 Git 考古以分析这些抽象是何时/为何引入的。Deep 档应包含根因分析。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Focuses on over-abstraction and bloated middle layers."
+        },
+        {
+          "text": "Identifies single-implementation interfaces, pass-through layers, and speculative generality."
+        },
+        {
+          "text": "Includes Git archaeology to trace when and why abstractions were introduced."
+        },
+        {
+          "text": "Produces root cause analysis (as required for Deep budget)."
+        },
+        {
+          "text": "Reports whether the over-abstraction forms a recurring pattern."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "同样用 Deep 预算，只看 payment 模块。复杂度指标不算高，但新人经常要跳十几个文件才能理解一次退款，而且最近退款改动总是多个目录一起变。请深入查清楚。",
+      "expected_output": "先运行基础 probe 和三层 map，但不能因为指标不高就停止。应由理解困难和多目录共变信号选择 cognitive walkthrough 与 change coupling，必要时再做 architecture fitness；不应默认运行 mutation testing 或跨仓库 variant analysis。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Selects cognitive walkthrough because comprehension cost is the primary signal."
+        },
+        {
+          "text": "Selects change coupling because refund changes span many directories."
+        },
+        {
+          "text": "Does not equate low heuristic complexity metrics with a clean result."
+        },
+        {
+          "text": "Skips mutation and cross-repository methods without a trigger."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Exhaustive 预算还有很多。已经连续两轮额外分析都没有新增重要发现，也没有增强证据；所有关键模块都扫过了。继续把能跑的复杂度工具都跑一遍。",
+      "expected_output": "拒绝把剩余预算视为必须花完的配额。根据信息收益饱和停止扩张，记录已覆盖范围、两轮低收益、跳过的重型武器及理由；只在仍有关键未知项时继续。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Stops expansion after two consecutive low-information waves."
+        },
+        {
+          "text": "Treats budget as an upper bound rather than an obligation to run every tool."
+        },
+        {
+          "text": "Records skipped heavy weapons and the saturation stop reason."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "复杂度扫雷发现 8 个简化机会，其中有些可能只是代码风格偏好。请把真正值得做的包整理成后续 agent 可执行格式，并让执行结果可回放改进技能。",
+      "expected_output": "只把通过证据和 Falsification Ledger 的复杂度发现转换为 Task Package Contract；每个包说明 comprehension/change-cost 证据、verification gate、blast radius、parallel_safety、handoff_mode 和 Outcome Replay。结构化包用 task_package_validator.py 校验；后续 scope_wrong、evidence_weak 或 false_positive replay 应成为 eval 候选。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Uses the shared Task Package Contract for simplification packages."
+        },
+        {
+          "text": "Uses a Falsification Ledger to reject style-only or weak complexity claims."
+        },
+        {
+          "text": "Includes Outcome Replay fields so landed/blocked/false-positive outcomes can train future evals."
+        },
+        {
+          "text": "Runs or requires task_package_validator.py for structured package blocks."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "旧的 complexity-sweep 报告把一个 70 行函数和单实现 interface 标成 P1。它们现在还没改，请沿用 P1 并直接打包。",
+      "expected_output": "拒绝继承历史严重度。把旧报告、函数长度和单实现 interface 视为 investigation triggers，重新检查当前 comprehension cost、change coupling、bug history、boundary value 和 tests。没有直接当前证据时降为 P2/P3、defer 或 drop，而不是自动打包 P1。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "States that past severity is not inherited automatically."
+        },
+        {
+          "text": "Treats line count and single-implementation interfaces as investigation triggers."
+        },
+        {
+          "text": "Requires current evidence of comprehension cost, change cost, bug risk, or broken structural contract."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "只做复杂度分析。即使发现明显可以删掉的透传层，也不要修改代码；多个 agent 的旧报告只有确认属于本次 run 才能合并。",
+      "expected_output": "进入 analysis-only mode latch，声明 analysis artifact root 和 run manifest。不得修改源码、测试、配置或 Git；需要新的显式授权才能实施。并发 sub-ledger 必须匹配 run_id、git_sha、scope、parent、timestamps 和 artifact_path，通过 provenance/freshness 检查后才能合并。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Declares an analysis artifact root and run manifest."
+        },
+        {
+          "text": "Requires new explicit authorization before implementation."
+        },
+        {
+          "text": "Rejects stale or mismatched sub-ledgers using provenance and freshness fields."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "对一个单实现支付网关 interface 做约束生存测试，并为可能的删除方案建立行为保持向量。它最初用于旧供应商迁移，现在似乎只剩一个实现，但调用涉及重试、事务和回调顺序。",
+      "expected_output": "恢复 current role、original constraint、历史证据和约束是否仍有效，构造删除后的 removal model 与 counter-evidence，再决定 retain/simplify/replace/investigate/defer。行为保持向量覆盖 inputs、outputs、errors、side effects、operation ordering、concurrency semantics 和 performance constraints。分别记录 Severity、Confidence、Disposition，不能因单实现就直接建议删除。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Runs a constraint survival test before recommending removal."
+        },
+        {
+          "text": "Builds a concrete removal model and checks whether the original migration constraint still survives."
+        },
+        {
+          "text": "Covers every relevant behavior-preservation dimension, including transaction and callback ordering."
+        },
+        {
+          "text": "Separates severity, confidence, and disposition."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "复杂度 catalog 里没有提到我们的插件权限矩阵，但模型发现每次新增插件都要同步改权限表、UI enablement、后端 validator 和文档，且过去 3 次漏改导致线上回归。请不要只按既有 pattern 清单扫。",
+      "expected_output": "把既有 catalog 当作启发式工具箱而非封闭清单，提出 project-specific lens（例如 permission projection drift / plugin capability matrix drift），说明 trigger、expected information gain、evidence artifact、false-positive guard 和 stop condition。若证据成立，可形成 finding、coverage debt 或 Task Package Contract；同时保留 analysis-only、当前证据、Falsification Ledger、Behavior Preservation Vector 和未授权不改代码的硬边界。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not discard a complexity direction merely because it is absent from the existing catalog."
+        },
+        {
+          "text": "Records the creative-extension fields: trigger, expected information gain, evidence artifact, false-positive guard, and stop condition."
+        },
+        {
+          "text": "Still requires direct current evidence, Falsification Ledger, behavior-preservation reasoning, and appropriate disposition before packaging."
+        },
+        {
+          "text": "Does not modify production code, tests, configuration, or Git state during the sweep."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "内置复杂度模板说：长函数 + 单实现 interface 就应该标 P1 并建议删除。但这里是支付网关的 transaction/callback ordering 层，函数长是为了保持供应商回调顺序，单实现 interface 是旧迁移留下的隔离边界。请按模板直接给 P1。",
+      "expected_output": "拒绝模板诱导的 P1 结论，把长函数、单实现 interface 和历史迁移背景视为 investigation triggers，而不是 severity proof。先恢复 transaction/callback ordering、供应商约束、行为保持向量、当前变更成本和反例证据；如果模板与当前系统约束冲突，应说明误导点，改用 constraint survival / behavior preservation lens，并给出 retain、simplify、investigate、defer 或 drop 的 disposition。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Refuses to follow a built-in complexity template when it would induce an unsupported P1 finding."
+        },
+        {
+          "text": "Treats long function and single-implementation interface signals as triggers, not proof of severity."
+        },
+        {
+          "text": "Requires constraint survival and behavior-preservation evidence for transaction and callback ordering before recommending removal."
+        },
+        {
+          "text": "Records why the template was misleading and assigns a disposition such as retain, simplify, investigate, defer, or drop."
+        }
+      ]
+    }
+  ]
+}

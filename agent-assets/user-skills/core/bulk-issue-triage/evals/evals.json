@@ -1,0 +1,60 @@
+{
+  "skill_name": "bulk-issue-triage",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这里有 19 个 Android 相机真机问题和 4 张截图。请补充问题表现、初步核查，并按领域和修复复杂度分包，后续我会交给 agent-orchestration-planner。",
+      "expected_output": "Produces a Chinese Markdown triage report that preserves all original issue IDs, distinguishes observations from hypotheses and unknowns, groups issues by shared repair path and ownership, estimates relative complexity and confidence, and ends with the recommended agent-orchestration-planner handoff prompt.",
+      "files": [],
+      "assertions": [
+        {"text": "Every original issue is represented by a stable issue ID and assigned to exactly one primary problem package unless a primary/related cross-package relationship is explicitly declared."},
+        {"text": "Each package includes detailed user-observable manifestations, expected behavior, impact, initial evidence, hypotheses, unknowns, scope, dependencies, exclusions, and downstream investigation focus."},
+        {"text": "Grouping is justified by a shared root-cause candidate, ownership boundary, or coherent repair path rather than adjacent numbering or superficial UI similarity."},
+        {"text": "The report labels current judgments and confidence without presenting preliminary hypotheses as confirmed root causes."},
+        {"text": "The final section includes the exact recommended /agent-orchestration-planner usage pattern and instructs the downstream agent to re-verify facts."}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "只有一个偶发崩溃，日志很长，帮我用 bulk-issue-triage 深挖根因并直接修复。",
+      "expected_output": "Recognizes that a single hard bug requiring deep diagnosis and implementation is outside the core fit. Routes diagnosis to diagnosing-bugs, does not manufacture multiple packages, and does not modify code merely because this skill was invoked.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not split one bug into artificial packages."},
+        {"text": "Routes the deep single-bug investigation to diagnosing-bugs or the normal implementation workflow."},
+        {"text": "Does not modify product code under the bulk-issue-triage analysis-only contract."}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把这些已经整理好的执行任务包做成多 agent DAG，带 worktree、状态账本、重试和收尾脚本。",
+      "expected_output": "Routes directly to agent-orchestration-planner because the input is already execution-ready and the request is for a durable orchestration control plane.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not rerun broad issue triage when the packages are already execution-ready."},
+        {"text": "Routes to agent-orchestration-planner for DAG, worktree, ledger, retry, and finalize design."}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "这些反馈里有截图和主观感受，但暂时没有日志或设备。先帮我分包。",
+      "expected_output": "Uses screenshots and descriptions as observation evidence, keeps root causes low-confidence, explicitly lists missing logs/device evidence, and still produces useful packages without pretending the missing evidence was inspected.",
+      "files": [],
+      "assertions": [
+        {"text": "Separates screenshot-visible behavior and user descriptions from root-cause inference."},
+        {"text": "Marks missing logs, device access, or code evidence as unknown rather than silently filling gaps."},
+        {"text": "Produces provisional packages with confidence labels and downstream evidence requests."}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "把 12 个问题按 1-4、5-8、9-12 三组平均分掉，看起来整齐一些。",
+      "expected_output": "Rejects arbitrary equal-size grouping as the primary method and instead groups by shared repair path, domain ownership, dependency, and complexity while preserving all issue IDs.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not use equal-size or adjacent-number grouping when it conflicts with technical ownership or shared-root evidence."},
+        {"text": "Explains the grouping rationale for each package and preserves coverage of all original issues."}
+      ]
+    }
+  ]
+}

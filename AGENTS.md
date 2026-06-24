@@ -105,6 +105,7 @@ src/                — Minimal general-purpose utilities
 The following do not have pre-built directories; generate them when needed:
 
 - data lifecycle: CSV/JSONL state tables, schema, sync scripts
+- complex task live state: generate `control/tasks/<slug>/status.tsv` with `python3 tools/project.py task init` when work spans multiple packages, worktrees, agents, or handoff sessions
 - content pipeline: draft/approved layering, publish gating, conflict resolution
 - image generation: provider, queue, manifest, cost gating
 - html delivery: Markdown + self-contained HTML dual delivery
@@ -126,5 +127,6 @@ No auto-generated files in this scaffold project.
 - Claude Code should read `CLAUDE.md`, which points back to this file.
 - Codex app should use this `AGENTS.md` as the shared project instruction file.
 - After modifying shared rules, run `python3 tools/project.py sync-agents`.
+- Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check`.
 - For guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into your user `~/.codex/config.toml` and update the absolute path.
 - For lightweight new-session context, enable the project status panel hook from `.claude/settings.example.json` or `.codex/hooks.json`.

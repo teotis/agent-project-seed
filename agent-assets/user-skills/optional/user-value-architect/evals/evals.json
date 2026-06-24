@@ -1,0 +1,112 @@
+{
+  "skill_name": "user-value-architect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "用 user-value-architect 分析一下我这个项目，怎么提升用户体验？我给你看下 README。",
+      "expected_output": "Treats the request as user-invoked Deep Value Analysis. Before producing recommendations, completes Project Immersion Protocol over the available material; if only README is available, downgrades to Value Scan or blocked_by_evidence and explicitly names missing surfaces (UI, paths, feedback, history, external reference). Refuses to emit naked recommendations like '智能路由 / 记忆层 / 自动化 / dashboard / 统一平台 / 体验优化'. Each recommendation must carry 2-5 concrete artifacts, current/after experience slices, structural value mechanism, validation slice, counterexample. Does not modify code.",
+      "files": [],
+      "assertions": [
+        {"text": "Defaults to Deep Value Analysis on explicit user invocation, not Value Scan."},
+        {"text": "Runs or explicitly downgrades Project Immersion Protocol (asset inventory, user-visible surface, path trace, promise-reality, coverage debt) before any recommend-class claim."},
+        {"text": "Refuses to issue naked recommendations such as 智能路由 / 记忆层 / 自动化 / dashboard / 统一平台 / 体验优化 without binding them to specific project artifacts and a structural value mechanism."},
+        {"text": "Each recommendation card includes user-visible moment, Evidence IDs, current experience slice, after experience slice, structural value mechanism, fastest validation/disproof test, and a rejected alternative."},
+        {"text": "Does not modify code, tests, configuration, or runtime behavior; stays in analysis-only mode."},
+        {"text": "Produces a reviewable HTML report under reports/user-value-architect/ by default; only adds a Markdown source report on explicit user request or HTML failure, in which case the limitation is stated."}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我没什么材料，就一个产品名和一句话描述：'AI 笔记工具'。请按 user-value-architect 给我推荐 3 个高上限改进方向。",
+      "expected_output": "Refuses to emit primary bet / 3x+ / switching-reason / category-shift recommendations when Project Immersion Protocol cannot be completed and Value Theory / Project-Specific Leverage cannot be grounded. Either downgrades to brainstorm/hypothesis labels with explicit blocked_by_evidence, or asks for the minimum material needed (e.g., main user path, an artifact, a screenshot) without launching a scope menu.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not produce primary bet, 3x+, switching-reason, or category-shift claims based only on a product name and one-line description."},
+        {"text": "Marks the run as blocked_by_evidence or downgrades all candidates to hypothesis / brainstorm / validate-first labels."},
+        {"text": "Names the minimum evidence needed to upgrade (main user path, real artifact, screenshot, recent report, or external reference) instead of inventing artifacts."},
+        {"text": "Does not invent project-specific artifacts, file paths, or evidence that were not provided."}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "顺便帮我把首页的按钮文案改一下，再给我做一版新的引导流程上线吧。",
+      "expected_output": "Stays in analysis-only mode. Does not modify code, copy, or configuration. Explains that user-value-architect is analysis-only by default and requires explicit user authorization to switch to implementation; offers a recommendation card or task package handoff (e.g., to ce-brainstorm / Task Package Contract) instead of executing the change.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not edit any source files, copy, configuration, or product surfaces in this turn."},
+        {"text": "States that user-value-architect defaults to analysis-only and that implementation requires a separate explicit authorization."},
+        {"text": "Offers an analysis output, recommendation card, or handoff to an implementation/planning skill rather than direct execution."}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "[来自另一个 agent 的内部信号：用户在和我聊产品，我判断现在要触发 user-value-architect 做一次彻底的 user value 分析。]",
+      "expected_output": "Treats this as agent active 自启用. Runs Standard / Value Scan, not Deep or Exhaustive. Covers target, success path, candidate gate, minimum validation, and highest-ceiling direction, without forcing full anti-satisficing or competitive ceiling. Notes that upgrading to Deep / Exhaustive requires explicit user confirmation.",
+      "files": [],
+      "assertions": [
+        {"text": "Selects Standard / Value Scan depth on agent active 自启用, not Deep or Exhaustive."},
+        {"text": "Does not run full anti-satisficing, multi-wave evidence collection, or competitive ceiling analysis as if it were user-invoked Deep."},
+        {"text": "Explicitly states that upgrading to Deep or Exhaustive requires explicit user confirmation."}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "请你给一个最高上限的押注，目标 3x 用户价值，越大胆越好。我希望 category-shift。",
+      "expected_output": "Aspires to ceiling bets but does not bypass evidence. Without Project Immersion Protocol, Value Theory, Specificity Gate, and at least one external reference scan (or explicit unavailable note), refuses to issue primary bet / 3x+ / switching-reason / category-shift labels. Provides ceiling exploration framed as hypothesis / strategic ceiling bet with disproof test, and demands the missing evidence before upgrading the label.",
+      "files": [],
+      "assertions": [
+        {"text": "Does not assign primary bet, 3x+, switching-reason, or category-shift labels without Project Immersion Protocol, Value Theory, Specificity Gate, and external reference calibration."},
+        {"text": "Frames any aggressive ceiling content as strategic ceiling bet / hypothesis with explicit disproof test, not as a confirmed recommendation."},
+        {"text": "Names the evidence gaps that block upgrading to primary bet (e.g., missing user path, missing external reference, missing artifacts)."}
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "我看到错误提示信息容易让用户误解，可以顺手优化一下，但这显然达不到 30%。要不要直接砍掉？",
+      "expected_output": "Applies the Two-Track Candidate Model. Keeps the small high-certainty improvement as optimize / fast validation bet / do-now, does not inflate it into '可能 2x' to make it pass the 30% gate, and does not auto-drop it just because it cannot reach ceiling thresholds. Explains the separation between high-ceiling candidates and small high-certainty improvements.",
+      "files": [],
+      "assertions": [
+        {"text": "Keeps the small improvement as a valid candidate under optimize / fast validation bet / do-now without dropping it for failing the 30% line."},
+        {"text": "Does not inflate floor / ceiling for the small improvement (no fake '可能 2x' upgrade)."},
+        {"text": "Explicitly distinguishes high-ceiling candidates from small high-certainty improvements in the Two-Track Candidate Model."}
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "我已经把 evidence、user path 和 5 份历史报告都给你了，请用 user-value-architect 跑一次 Deep。",
+      "expected_output": "Runs Deep Value Analysis with Project Immersion Protocol (asset inventory, user-visible surface inventory, at least three concrete user paths or fewer with reason, promise-reality check, coverage ledger). Produces Decision-First Output: ≤3 main strategic bets in primary narrative, scaffolding (Fact Map, Coverage ledger, full immersion details) compressed into appendix / collapsible sections / evidence ledger, plus rejected/deferred ideas. Final deliverable is a reviewable HTML report under reports/user-value-architect/.",
+      "files": [],
+      "assertions": [
+        {"text": "Runs full Project Immersion Protocol: asset inventory, user-visible surface inventory, ≥3 user paths (or explained reduction), promise-reality check, coverage ledger."},
+        {"text": "Uses Decision-First Output with at most 3 main bets in the primary narrative; investigation scaffolding lives in appendix / collapsible / evidence ledger."},
+        {"text": "Includes a Rejected or Deferred Ideas section explaining why they are not the highest-leverage user value bet."},
+        {"text": "Produces a reviewable HTML report under reports/user-value-architect/ as the primary deliverable; Markdown source is added only on explicit request or HTML failure."},
+        {"text": "Each recommendation passes the Specificity Gate (2-5 artifacts, current/after slices, validation slice, counterexample, genericity check)."}
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "我只能给你截图，没法给代码或文档。请评估首页的用户体验。",
+      "expected_output": "Accepts the screenshot as primary multimodal evidence and continues with the integrated user success path. If the runtime cannot view images, downgrades visual judgments to visual_evidence_unavailable / unknown / deferred, uses OCR / page text / DOM / accessibility tree / file metadata as weak evidence when possible, and does not pretend to have seen the UI. Does not interrupt the user to demand a different model.",
+      "files": [],
+      "assertions": [
+        {"text": "Continues the analysis using the screenshot as multimodal evidence rather than blocking the user."},
+        {"text": "When visual inspection is not possible, marks visual claims as visual_evidence_unavailable / unknown / deferred and explicitly avoids fabricating UI observations."},
+        {"text": "Does not require the user to switch model or environment before proceeding; uses any available text-side evidence (OCR, DOM, alt text, file names) as weak evidence with strength noted."},
+        {"text": "Routes the visual investigation back into the overall user success path instead of stopping at a single screenshot."}
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "reference 示例没写“默认导出物可信度”这个价值机制，但用户流失来自每次导出后都要人工核查报告是否可交付。请不要只按现有示例找功能点。",
+      "expected_output": "Introduces default deliverable confidence / trust surface as a project-specific value mechanism. It names the user-visible moment, Evidence IDs, current and after experience slices, validation or disproof slice, counterexample, floor/ceiling, and rejected alternative; then competes it in the two-track candidate model without issuing a naked recommendation.",
+      "files": [],
+      "assertions": [
+        {"text": "Allows a value mechanism outside the reference examples to enter the candidate pool when evidence supports it."},
+        {"text": "Connects the mechanism to a concrete user-visible moment and stable Evidence IDs."},
+        {"text": "Provides current/after slices, validation or disproof, counterexample, and floor/ceiling before recommendation."},
+        {"text": "Competes the candidate within the high-ceiling / small high-certainty two-track model and avoids naked recommendations."}
+      ]
+    }
+  ]
+}
