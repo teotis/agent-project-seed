@@ -24,6 +24,22 @@ REQUIRED_FILES = [
 ]
 
 REQUIRED_DIRS = ["control", "work/in", "work/out", "work/tmp", "tools", "src"]
+PROJECT_FACING_FILES = [
+    "README.md",
+    "AGENTS.md",
+    "control/state.md",
+    "control/ledger.md",
+    "control/init_manifest.md",
+]
+SEED_RESIDUE_PATTERNS = [
+    "Agent Project Seed",
+    "project_seed",
+    "Seed Template",
+    "codex://threads/",
+    "Record clean checkpoint design",
+    "Remove Gemini adapter",
+    "Define lightweight status panel contract",
+]
 
 ALLOWED_PREFIXES = (
     "AGENTS.md",
@@ -200,6 +216,30 @@ def check_init_status_consistency(result: Result) -> None:
         result.notices.append("init status is consistent across AGENTS.md/state")
 
 
+def is_initialized_project() -> bool:
+    agents = ROOT / "AGENTS.md"
+    state = ROOT / "control" / "state.md"
+    if state.exists() and "Initialized at:" in state.read_text(encoding="utf-8"):
+        return True
+    if agents.exists() and "Seed Template — copy this scaffold to start a new project." not in agents.read_text(encoding="utf-8"):
+        return True
+    return False
+
+
+def check_seed_residue(result: Result) -> None:
+    if not is_initialized_project():
+        return
+    for relative in PROJECT_FACING_FILES:
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for pattern in SEED_RESIDUE_PATTERNS:
+            if pattern in text:
+                result.issues.append(f"seed residue in initialized project: {relative} contains {pattern!r}")
+                break
+
+
 def check_claude_hook_files(result: Result) -> None:
     """Check that Claude hook files exist if settings.example.json references them."""
     example = ROOT / ".claude" / "settings.example.json"
@@ -317,6 +357,7 @@ def check(args: argparse.Namespace) -> int:
     check_package_import(result)
     check_panel_runs(result)
     check_init_status_consistency(result)
+    check_seed_residue(result)
     check_claude_hook_files(result)
     check_codex_hook_files(result)
     check_work_dirs_have_gitkeep(result)
@@ -403,7 +444,9 @@ def init_project(args: argparse.Namespace) -> int:
     rename_package(package_name)
     update_contract(args.name)
     update_state(args.name, package_name)
-    append_init_ledger(args.name, package_name)
+    update_readme(args.name, package_name)
+    reset_init_ledger(args.name, package_name)
+    write_init_manifest(args.name, package_name)
     activate_settings()
     if not args.no_git:
         run_git_init(args.name)
@@ -425,7 +468,7 @@ def now_iso() -> str:
 
 
 def update_contract(project_name: str) -> None:
-    """Update Current Intent section in AGENTS.md with initialized template."""
+    """Update AGENTS.md with initialized project-facing template."""
     path = ROOT / "AGENTS.md"
     if not path.exists():
         return
@@ -452,6 +495,22 @@ def update_contract(project_name: str) -> None:
             f"## Current Intent\n\n{new_intent}\n\\1",
             text, count=1,
         )
+    overview = (
+        "## Project overview\n"
+        "\n"
+        "A newly initialized agent-assisted project. Replace this section with the "
+        "project's real purpose, audience, non-goals, and acceptance criteria after initialization.\n"
+    )
+    if "## Project overview" in text:
+        text = re.sub(
+            r"## Project overview\n\n.*?(?=\n## )",
+            overview + "\n",
+            text,
+            count=1,
+            flags=re.DOTALL,
+        )
+    else:
+        text = text.replace("## How to work in this repository", overview + "\n## How to work in this repository")
     path.write_text(text, encoding="utf-8")
 
 
@@ -475,32 +534,97 @@ def update_state(project_name: str, package_name: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def append_init_ledger(project_name: str, package_name: str) -> None:
-    """Append an initialization record to ledger.md."""
+def update_readme(project_name: str, package_name: str) -> None:
+    path = ROOT / "README.md"
+    content = f"""# {project_name}
+
+A newly initialized agent-assisted project.
+
+## Current Setup
+
+- Project name: {project_name}
+- Python package: `{package_name}`
+- Shared agent rules: `AGENTS.md`
+- Current state snapshot: `control/state.md`
+- Long-term project ledger: `control/ledger.md`
+
+## First Actions
+
+1. Edit `AGENTS.md` to define the real project goals, non-goals, and acceptance criteria.
+2. Update this README with the product, library, or workflow this repository will actually provide.
+3. Run `python3 tools/project.py check`.
+4. Run `python3 -m pytest`.
+
+## Useful Commands
+
+```bash
+python3 tools/panel.py --mode entry
+python3 tools/project.py check
+python3 -m pytest
+```
+"""
+    path.write_text(content, encoding="utf-8")
+
+
+def reset_init_ledger(project_name: str, package_name: str) -> None:
+    """Reset ledger.md to the initialized project's first durable record."""
     path = ROOT / "control" / "ledger.md"
-    if not path.exists():
-        return
-    existing = path.read_text(encoding="utf-8")
-    record = (
-        f"\n## {now_iso()} - Project initialized from seed\n"
-        f"\n"
-        f"type: decision\n"
-        f"tags: init, scaffold\n"
-        f"\n"
-        f"summary:\n"
-        f"- Initialized project `{project_name}` from Agent Project Seed\n"
-        f"- Package name: `{package_name}`\n"
-        f"\n"
-        f"details:\n"
-        f"- Completed: text replacement, package rename, settings activation, contract/state update\n"
-        f"- Todo: edit `AGENTS.md` to specify project goals\n"
-        f"\n"
-        f"links:\n"
-        f"- AGENTS.md\n"
-        f"- control/state.md\n"
+    content = (
+        "# Ledger\n"
+        "\n"
+        "Unified record ledger. Requirements, decisions, sessions, risks, issues, and artifacts are all appended here as Records.\n"
+        "\n"
+        f"## {now_iso()} - Project initialized\n"
+        "\n"
+        "type: decision\n"
+        "status: closed\n"
+        "tags: init, project-setup\n"
+        "\n"
+        "summary:\n"
+        f"- Initialized `{project_name}` as a new project workspace.\n"
+        f"- Package name: `{package_name}`.\n"
+        "\n"
+        "details:\n"
+        "- Completed: project-facing README rewrite, package rename, settings activation, contract/state update, initialization manifest.\n"
+        "- Next: edit `AGENTS.md` and `README.md` to specify the real project goals and usage.\n"
+        "\n"
+        "links:\n"
+        "- AGENTS.md\n"
+        "- README.md\n"
+        "- control/state.md\n"
+        "- control/init_manifest.md\n"
     )
-    separator = "\n" if existing.endswith("\n\n") else "\n\n"
-    path.write_text(existing.rstrip() + separator + record, encoding="utf-8")
+    path.write_text(content, encoding="utf-8")
+
+
+def write_init_manifest(project_name: str, package_name: str) -> None:
+    path = ROOT / "control" / "init_manifest.md"
+    content = f"""# Initialization Manifest
+
+- Project name: {project_name}
+- Package name: {package_name}
+- Initialized at: {now_iso()}
+
+## Automatically Updated
+
+- AGENTS.md
+- README.md
+- pyproject.toml
+- control/state.md
+- control/ledger.md
+- control/init_manifest.md
+- src/{package_name}/
+- .claude/settings.json
+
+## Review Next
+
+- Replace placeholder goals in AGENTS.md.
+- Replace placeholder project description in README.md.
+- Add project-specific source code and tests.
+- Run `python3 tools/project.py check`.
+- Run `python3 -m pytest`.
+"""
+    path.write_text(content, encoding="utf-8")
 
 
 def parse_status_line(line: str) -> GitChange:

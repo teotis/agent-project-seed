@@ -72,3 +72,22 @@ links:
 - tools/panel.py
 - .claude/hooks/panel_hook.py
 - .codex/hooks.json
+
+## 2026-06-25T03:31:15 - Treat init as project workspace transition
+
+type: decision
+status: closed
+tags: init, residue-check, project-setup
+
+summary:
+- Initialization should turn a copied template into a new project workspace, not leave project-facing seed history behind.
+- Project-facing files should be rewritten or checked so seed names, development records, and private thread links do not leak into the initialized project.
+
+details:
+- `tools/project.py init` rewrites README, AGENTS overview/state, resets the ledger, renames the package, activates settings, and writes an initialization manifest.
+- `tools/project.py check` rejects obvious seed residue in initialized project-facing files.
+
+links:
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md

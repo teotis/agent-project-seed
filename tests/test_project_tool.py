@@ -95,6 +95,52 @@ def test_init_project_copy_no_git(tmp_path):
     assert (target / "work" / "in" / ".gitkeep").exists()
 
 
+def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
+    target = _copy_and_init(tmp_path, name="Customer Portal", package="customer_portal")
+
+    readme = (target / "README.md").read_text(encoding="utf-8")
+    assert readme.startswith("# Customer Portal")
+    assert "Agent Project Seed" not in readme
+    assert "project_seed" not in readme
+    assert "Initialize this repository" not in readme
+
+    agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+    assert "**Project**: Customer Portal" in agents
+    assert "A newly initialized agent-assisted project." in agents
+    assert "copy this scaffold" not in agents
+
+    ledger = (target / "control" / "ledger.md").read_text(encoding="utf-8")
+    assert "Project initialized" in ledger
+    assert "Record clean checkpoint design" not in ledger
+    assert "Remove Gemini adapter" not in ledger
+    assert "codex://threads/" not in ledger
+    assert "Agent Project Seed" not in ledger
+
+    manifest = (target / "control" / "init_manifest.md").read_text(encoding="utf-8")
+    assert "Project name: Customer Portal" in manifest
+    assert "Package name: customer_portal" in manifest
+    assert "AGENTS.md" in manifest
+    assert "README.md" in manifest
+    assert "control/ledger.md" in manifest
+
+
+def test_initialized_project_check_rejects_seed_residue(tmp_path):
+    target = _copy_and_init(tmp_path)
+    (target / "README.md").write_text("# Demo Project\n\nAgent Project Seed\n", encoding="utf-8")
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 1
+    assert "seed residue" in completed.stdout
+    assert "README.md" in completed.stdout
+
+
 def test_codex_notify_hook_finds_project_root():
     hook = ROOT / "tools" / "hooks" / "codex_notify.py"
     spec = importlib.util.spec_from_file_location("codex_notify", hook)
@@ -119,8 +165,10 @@ def test_init_updates_contract_state_and_ledger(tmp_path):
     assert "my_app" in state
 
     ledger = (target / "control" / "ledger.md").read_text(encoding="utf-8")
-    assert "Project initialized from seed" in ledger
+    assert "Project initialized" in ledger
     assert "My App" in ledger
+    assert "from seed" not in ledger
+    assert (target / "control" / "init_manifest.md").exists()
 
 
 def test_no_legacy_directories_in_template():

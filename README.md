@@ -68,6 +68,14 @@ make test
 
 See [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md) for detailed first-time setup.
 
+Initialization is a one-way transition from template workspace to project
+workspace. It rewrites the project-facing README, updates `AGENTS.md` and
+`control/state.md`, resets `control/ledger.md` to a project-local first record,
+renames the Python package, activates local Claude settings, and writes
+`control/init_manifest.md` so the user can see what changed and what still needs
+manual project-specific editing. The health check rejects obvious template
+residue in project-facing files after initialization.
+
 ## Directory Layout
 
 ```text

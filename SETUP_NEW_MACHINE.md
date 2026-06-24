@@ -6,7 +6,13 @@ After cloning this repository, run the initialization command to set up project 
 python3 tools/project.py init --name "Your Project Name"
 ```
 
-This renames the package, updates `AGENTS.md`, `control/state.md`, and `control/ledger.md`, and activates the Claude Code settings.
+This turns the copied template into a project workspace. It renames the package,
+rewrites the project-facing README, updates `AGENTS.md` and `control/state.md`,
+resets `control/ledger.md` to the new project's first record, writes
+`control/init_manifest.md`, and activates the Claude Code settings.
+
+After initialization, review `control/init_manifest.md` first. It lists the
+files updated automatically and the remaining project-specific edits to make.
 
 ## Environment Variables
 
