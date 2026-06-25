@@ -135,7 +135,8 @@ def test_init_output_explains_project_level_and_optional_user_level_setup(tmp_pa
     assert "Project-level Claude Code settings are active" in completed.stdout
     assert ".claude/settings.json" in completed.stdout
     assert "User-level hook/config setup is optional" in completed.stdout
-    assert "configure-claude --default-mode auto" in completed.stdout
+    assert "tools/project.py configure-claude" in completed.stdout
+    assert "v2.1.140 or newer" in completed.stdout
 
 
 def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
@@ -166,10 +167,10 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "README.md" in manifest
     assert "control/ledger.md" in manifest
     assert "Windows: `py -3 tools/project.py check`" in manifest
-    assert "configure-claude --default-mode auto" in manifest
+    assert "tools/project.py configure-claude" in manifest
     assert "Windows PowerShell" in readme
     assert "py -3 tools/project.py check" in readme
-    assert "py -3 tools/project.py configure-claude --default-mode auto" in readme
+    assert "py -3 tools/project.py configure-claude" in readme
     assert "governance init --profile sustained" in readme
 
 
@@ -181,10 +182,12 @@ def test_seed_docs_include_windows_setup_commands():
         assert "Windows PowerShell" in text
         assert "py -3 tools/project.py init" in text
         assert "py -3 -m pytest" in text
-        assert "configure-claude --default-mode auto" in text
+        assert "tools/project.py configure-claude" in text
         assert "governance init --profile sustained" in text
         assert "Governance Lifecycle" in text
-        assert "2026-06-01" in text
+        assert "v2.1.140" in text
+        assert "dontAsk" not in text
+        assert "bypassPermissions" not in text
     assert "Copy-Item" in readme
     assert "Copy-Item" in setup
 
@@ -460,7 +463,7 @@ def test_list_and_install_user_skills(tmp_path):
 
 def test_configure_claude_sets_user_default_mode(tmp_path):
     module = load_project_tool()
-    assert module.parse_claude_release_date("Claude Code 2026.06.02") == (2026, 6, 2)
+    assert module.parse_claude_version("Claude Code v2.1.140") == (2, 1, 140)
 
     settings = tmp_path / "settings.json"
     settings.write_text(json.dumps({"permissions": {"allow": ["Bash(git status *)"]}}), encoding="utf-8")
@@ -472,10 +475,8 @@ def test_configure_claude_sets_user_default_mode(tmp_path):
             "configure-claude",
             "--settings-file",
             str(settings),
-            "--default-mode",
-            "auto",
             "--claude-version-output",
-            "Claude Code 2026.06.02",
+            "Claude Code v2.1.140",
         ],
         cwd=ROOT,
         text=True,
@@ -501,10 +502,8 @@ def test_configure_claude_dry_run_does_not_write_settings(tmp_path):
             "configure-claude",
             "--settings-file",
             str(settings),
-            "--default-mode",
-            "dontAsk",
             "--claude-version-output",
-            "Claude Code 2026.06.02",
+            "Claude Code v2.1.140",
             "--dry-run",
         ],
         cwd=ROOT,
@@ -530,7 +529,7 @@ def test_configure_claude_blocks_old_version_without_override(tmp_path):
             "--settings-file",
             str(settings),
             "--claude-version-output",
-            "Claude Code 2026.05.31",
+            "Claude Code v2.1.139",
         ],
         cwd=ROOT,
         text=True,
@@ -539,8 +538,34 @@ def test_configure_claude_blocks_old_version_without_override(tmp_path):
     )
 
     assert completed.returncode == 2
-    assert "older than 2026-06-01" in completed.stdout
-    assert "--allow-old-version" in completed.stderr
+    assert "older than v2.1.140" in completed.stdout
+    assert "--skip-version-check" in completed.stderr
+    assert json.loads(settings.read_text(encoding="utf-8")) == {}
+
+
+def test_configure_claude_blocks_unknown_version_without_override(tmp_path):
+    settings = tmp_path / "settings.json"
+    settings.write_text("{}", encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "configure-claude",
+            "--settings-file",
+            str(settings),
+            "--claude-version-output",
+            "Claude Code nightly",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "v2.1.140 or newer" in completed.stdout
+    assert "--skip-version-check" in completed.stderr
     assert json.loads(settings.read_text(encoding="utf-8")) == {}
 
 

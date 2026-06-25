@@ -402,10 +402,31 @@ summary:
 - Fix initialized-project residue detection so valid package names such as `test_project_seed` do not fail health checks.
 
 details:
-- `tools/project.py configure-claude --default-mode auto` now preserves existing Claude `allow`/`deny` rules, writes only `permissions.defaultMode`, and checks whether `claude --version` appears to be from 2026-06-01 or newer.
-- `auto` is documented as the recommended global default; `dontAsk` and `bypassPermissions` are documented as riskier defaults for normal project work.
+- `tools/project.py configure-claude` preserves existing Claude `allow`/`deny` rules and writes only `permissions.defaultMode`.
+- This record's initial version-check rule was superseded by the follow-up record requiring Claude Code v2.1.140 or newer.
 - Seed residue checking now treats `project_seed` as a standalone identifier, not as a substring inside initialized package names.
 - Windows setup docs now put Claude Code version/default-mode setup before portable skill installation and verification.
+
+links:
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md
+- tests/test_project_tool.py
+
+## 2026-06-25T22:48:43 - Narrow Claude bootstrap to auto and v2.1.140+
+
+type: decision
+status: closed
+tags: windows, claude-code, bootstrap, permissions
+
+summary:
+- Simplify Claude Code new-machine setup to one default: user-level `permissions.defaultMode = "auto"`.
+- Treat Claude Code v2.1.140 or newer as a required precondition for the helper to write settings.
+
+details:
+- Public setup docs now show `tools/project.py configure-claude` without mode selection; the helper defaults to `auto`.
+- The helper now refuses to write settings when `claude --version` is older than v2.1.140 or cannot be parsed as a semantic version.
+- `--skip-version-check` is available only for cases where the user has manually verified Claude Code is v2.1.140 or newer.
 
 links:
 - tools/project.py

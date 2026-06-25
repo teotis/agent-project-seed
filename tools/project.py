@@ -49,9 +49,10 @@ SEED_RESIDUE_PATTERNS = [
     "Remove Gemini adapter",
     "Define lightweight status panel contract",
 ]
-CLAUDE_DEFAULT_MODES = ("default", "acceptEdits", "plan", "auto", "bypassPermissions", "dontAsk")
+CLAUDE_DEFAULT_MODES = ("auto",)
 RECOMMENDED_CLAUDE_DEFAULT_MODE = "auto"
-MIN_CLAUDE_CODE_RELEASE_DATE = (2026, 6, 1)
+MIN_CLAUDE_CODE_VERSION = (2, 1, 140)
+MIN_CLAUDE_CODE_VERSION_TEXT = "v2.1.140"
 
 ALLOWED_PREFIXES = (
     "AGENTS.md",
@@ -560,8 +561,8 @@ def init_project(args: argparse.Namespace) -> int:
     )
     print(
         "For smoother new Claude Code sessions, run "
-        "`python3 tools/project.py configure-claude --default-mode auto` "
-        "or on Windows `py -3 tools/project.py configure-claude --default-mode auto`."
+        "`python3 tools/project.py configure-claude` "
+        "or on Windows `py -3 tools/project.py configure-claude` after updating Claude Code to v2.1.140 or newer."
     )
     return 0
 
@@ -668,7 +669,7 @@ A newly initialized agent-assisted project.
 3. Run the health check for your platform.
 4. Run the tests for your platform.
 5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
-6. Optional for Claude Code: run `python3 tools/project.py configure-claude --default-mode auto` to make new sessions use auto permission review after confirming Claude Code is current enough.
+6. Optional for Claude Code: run `python3 tools/project.py configure-claude` to make new sessions use auto permission review after updating Claude Code to v2.1.140 or newer.
 7. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
 8. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
 
@@ -681,7 +682,7 @@ python3 tools/panel.py --mode entry
 python3 tools/project.py check
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex
-python3 tools/project.py configure-claude --default-mode auto
+python3 tools/project.py configure-claude
 python3 tools/project.py governance init --profile sustained
 python3 -m pytest
 ```
@@ -693,7 +694,7 @@ py -3 tools/panel.py --mode entry
 py -3 tools/project.py check
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex
-py -3 tools/project.py configure-claude --default-mode auto
+py -3 tools/project.py configure-claude
 py -3 tools/project.py governance init --profile sustained
 py -3 -m pytest
 ```
@@ -756,7 +757,7 @@ def write_init_manifest(project_name: str, package_name: str) -> None:
 - Replace placeholder goals in AGENTS.md.
 - Replace placeholder project description in README.md.
 - Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
-- Optional: run `python3 tools/project.py configure-claude --default-mode auto` or Windows `py -3 tools/project.py configure-claude --default-mode auto` for smoother new Claude Code sessions.
+- Optional: run `python3 tools/project.py configure-claude` or Windows `py -3 tools/project.py configure-claude` for smoother new Claude Code sessions after updating Claude Code to v2.1.140 or newer.
 - Add project-specific source code and tests.
 - macOS/Linux: `python3 tools/project.py check`
 - Windows: `py -3 tools/project.py check`
@@ -1124,32 +1125,29 @@ def install_user_skills(args: argparse.Namespace) -> int:
     return 0
 
 
-def parse_claude_release_date(version_output: str) -> tuple[int, int, int] | None:
-    patterns = [
-        r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})",
-        r"(\d{4})(\d{2})(\d{2})",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, version_output)
-        if match:
-            year, month, day = (int(value) for value in match.groups())
-            return year, month, day
+def parse_claude_version(version_output: str) -> tuple[int, int, int] | None:
+    match = re.search(r"\bv?(\d+)\.(\d+)\.(\d+)\b", version_output)
+    if match:
+        return tuple(int(value) for value in match.groups())
     return None
 
 
 def claude_version_status(version_output: str) -> tuple[str, str]:
     if not version_output.strip():
-        return "unknown", "Claude Code version could not be checked."
-    release_date = parse_claude_release_date(version_output)
-    if release_date is None:
-        return "unknown", f"Claude Code version output did not include a release date: {version_output.strip()}"
-    minimum = MIN_CLAUDE_CODE_RELEASE_DATE
-    if release_date < minimum:
+        return "unknown", "Claude Code version could not be checked; install or update Claude Code before configuring defaults."
+    version = parse_claude_version(version_output)
+    if version is None:
+        return (
+            "unknown",
+            f"Claude Code version output did not include a parseable version; update to {MIN_CLAUDE_CODE_VERSION_TEXT} or newer, then rerun.",
+        )
+    minimum = MIN_CLAUDE_CODE_VERSION
+    if version < minimum:
         return (
             "outdated",
-            "Claude Code appears older than 2026-06-01; update before relying on auto permission mode.",
+            f"Claude Code appears older than {MIN_CLAUDE_CODE_VERSION_TEXT}; update before relying on auto permission mode.",
         )
-    return "ok", f"Claude Code release date looks current enough: {release_date[0]:04d}-{release_date[1]:02d}-{release_date[2]:02d}"
+    return "ok", f"Claude Code version is current enough: v{version[0]}.{version[1]}.{version[2]}"
 
 
 def read_claude_version_output(args: argparse.Namespace) -> str:
@@ -1195,9 +1193,9 @@ def configure_claude(args: argparse.Namespace) -> int:
     version_output = read_claude_version_output(args)
     version_state, version_message = claude_version_status(version_output)
 
-    if version_state == "outdated" and not args.allow_old_version:
+    if version_state in {"outdated", "unknown"} and not args.skip_version_check:
         print(version_message)
-        print("Use --allow-old-version to keep this configuration despite the version warning.", file=sys.stderr)
+        print(f"Use --skip-version-check only if you have separately verified Claude Code is {MIN_CLAUDE_CODE_VERSION_TEXT} or newer.", file=sys.stderr)
         return 2
 
     if args.dry_run:
@@ -1208,8 +1206,6 @@ def configure_claude(args: argparse.Namespace) -> int:
         print(f"set {settings_path} permissions.defaultMode = {args.default_mode}")
 
     print(version_message)
-    if version_state == "unknown":
-        print("Version check is advisory; verify Claude Code is from 2026-06-01 or newer before first use.")
     return 0
 
 
@@ -1264,9 +1260,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="test hook: provide claude --version output instead of invoking claude",
     )
     configure_claude_cmd.add_argument(
-        "--allow-old-version",
+        "--skip-version-check",
         action="store_true",
-        help="do not fail when the detected Claude Code release date is older than 2026-06-01",
+        help=f"write settings after a separate manual check confirmed Claude Code is {MIN_CLAUDE_CODE_VERSION_TEXT} or newer",
     )
     configure_claude_cmd.add_argument("--dry-run", action="store_true")
 

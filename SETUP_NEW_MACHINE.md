@@ -25,38 +25,27 @@ files updated automatically and the remaining project-specific edits to make.
 
 ## Claude Code New-Session Defaults
 
-For the smoothest Claude Code path, use a Claude Code build from 2026-06-01 or
-newer, then set user-level new sessions to auto permission review:
+For the smoothest Claude Code path, use Claude Code v2.1.140 or newer, then set
+user-level new sessions to `auto` permission review:
 
 macOS/Linux:
 
 ```bash
-python3 tools/project.py configure-claude --default-mode auto
+python3 tools/project.py configure-claude
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -3 tools/project.py configure-claude --default-mode auto
+py -3 tools/project.py configure-claude
 ```
 
 The command edits only the user-level Claude settings JSON
 (`~/.claude/settings.json` on macOS/Linux or `%USERPROFILE%\.claude\settings.json`
 on Windows) and preserves existing `allow`/`deny` rules. It checks
-`claude --version` for a release date and warns or fails if the installed Claude
-Code appears older than 2026-06-01. Use `--dry-run` to preview the target file
+`claude --version` and refuses to write if it cannot verify that the installed
+Claude Code is v2.1.140 or newer. Use `--dry-run` to preview the target file
 without writing it.
-
-Recommended mode:
-
-- `auto`: smooth default for trusted project work; Claude Code's reviewer can
-  still stop risky operations and your `deny` rules still win.
-
-Avoid as a default unless you explicitly accept the risk:
-
-- `dontAsk`: fewer interruptions, but operations not blocked by `deny` rules can
-  run without the auto reviewer.
-- `bypassPermissions`: dangerous mode; keep it for isolated disposable sandboxes.
 
 ## Portable User Skills
 
@@ -280,7 +269,7 @@ macOS/Linux:
 make preflight     # Run project health check
 make test          # Run tests
 python3 tools/panel.py  # Print status panel
-python3 tools/project.py configure-claude --default-mode auto
+python3 tools/project.py configure-claude
 python3 tools/project.py list-user-skills
 python3 tools/project.py governance init --profile sustained
 codex mcp get context7
@@ -293,7 +282,7 @@ Windows PowerShell:
 py -3 tools/project.py check
 py -3 -m pytest
 py -3 tools/panel.py
-py -3 tools/project.py configure-claude --default-mode auto
+py -3 tools/project.py configure-claude
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py governance init --profile sustained
 codex mcp get context7
