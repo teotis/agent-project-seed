@@ -49,6 +49,9 @@ SEED_RESIDUE_PATTERNS = [
     "Remove Gemini adapter",
     "Define lightweight status panel contract",
 ]
+CLAUDE_DEFAULT_MODES = ("default", "acceptEdits", "plan", "auto", "bypassPermissions", "dontAsk")
+RECOMMENDED_CLAUDE_DEFAULT_MODE = "auto"
+MIN_CLAUDE_CODE_RELEASE_DATE = (2026, 6, 1)
 
 ALLOWED_PREFIXES = (
     "AGENTS.md",
@@ -253,9 +256,15 @@ def check_seed_residue(result: Result) -> None:
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in SEED_RESIDUE_PATTERNS:
-            if pattern in text:
+            if seed_residue_found(text, pattern):
                 result.issues.append(f"seed residue in initialized project: {relative} contains {pattern!r}")
                 break
+
+
+def seed_residue_found(text: str, pattern: str) -> bool:
+    if pattern == "project_seed":
+        return re.search(r"(?<![A-Za-z0-9_])project_seed(?![A-Za-z0-9_])", text) is not None
+    return pattern in text
 
 
 def check_claude_hook_files(result: Result) -> None:
@@ -549,6 +558,11 @@ def init_project(args: argparse.Namespace) -> int:
         "User-level hook/config setup is optional; use it only when you want the "
         "same behavior outside this project-level Claude Code config."
     )
+    print(
+        "For smoother new Claude Code sessions, run "
+        "`python3 tools/project.py configure-claude --default-mode auto` "
+        "or on Windows `py -3 tools/project.py configure-claude --default-mode auto`."
+    )
     return 0
 
 
@@ -654,8 +668,9 @@ A newly initialized agent-assisted project.
 3. Run the health check for your platform.
 4. Run the tests for your platform.
 5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
-6. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
-7. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
+6. Optional for Claude Code: run `python3 tools/project.py configure-claude --default-mode auto` to make new sessions use auto permission review after confirming Claude Code is current enough.
+7. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
+8. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
 
 ## Useful Commands
 
@@ -666,6 +681,7 @@ python3 tools/panel.py --mode entry
 python3 tools/project.py check
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py configure-claude --default-mode auto
 python3 tools/project.py governance init --profile sustained
 python3 -m pytest
 ```
@@ -677,6 +693,7 @@ py -3 tools/panel.py --mode entry
 py -3 tools/project.py check
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py configure-claude --default-mode auto
 py -3 tools/project.py governance init --profile sustained
 py -3 -m pytest
 ```
@@ -739,6 +756,7 @@ def write_init_manifest(project_name: str, package_name: str) -> None:
 - Replace placeholder goals in AGENTS.md.
 - Replace placeholder project description in README.md.
 - Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
+- Optional: run `python3 tools/project.py configure-claude --default-mode auto` or Windows `py -3 tools/project.py configure-claude --default-mode auto` for smoother new Claude Code sessions.
 - Add project-specific source code and tests.
 - macOS/Linux: `python3 tools/project.py check`
 - Windows: `py -3 tools/project.py check`
@@ -1106,6 +1124,95 @@ def install_user_skills(args: argparse.Namespace) -> int:
     return 0
 
 
+def parse_claude_release_date(version_output: str) -> tuple[int, int, int] | None:
+    patterns = [
+        r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})",
+        r"(\d{4})(\d{2})(\d{2})",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, version_output)
+        if match:
+            year, month, day = (int(value) for value in match.groups())
+            return year, month, day
+    return None
+
+
+def claude_version_status(version_output: str) -> tuple[str, str]:
+    if not version_output.strip():
+        return "unknown", "Claude Code version could not be checked."
+    release_date = parse_claude_release_date(version_output)
+    if release_date is None:
+        return "unknown", f"Claude Code version output did not include a release date: {version_output.strip()}"
+    minimum = MIN_CLAUDE_CODE_RELEASE_DATE
+    if release_date < minimum:
+        return (
+            "outdated",
+            "Claude Code appears older than 2026-06-01; update before relying on auto permission mode.",
+        )
+    return "ok", f"Claude Code release date looks current enough: {release_date[0]:04d}-{release_date[1]:02d}-{release_date[2]:02d}"
+
+
+def read_claude_version_output(args: argparse.Namespace) -> str:
+    if args.claude_version_output is not None:
+        return args.claude_version_output
+    try:
+        completed = subprocess.run(
+            ["claude", "--version"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return ""
+    return (completed.stdout + "\n" + completed.stderr).strip()
+
+
+def load_json_object(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return data
+
+
+def configure_claude(args: argparse.Namespace) -> int:
+    settings_path = Path(args.settings_file).expanduser() if args.settings_file else Path.home() / ".claude" / "settings.json"
+    try:
+        settings = load_json_object(settings_path)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"cannot read Claude settings: {exc}", file=sys.stderr)
+        return 1
+
+    permissions = settings.get("permissions")
+    if not isinstance(permissions, dict):
+        permissions = {}
+        settings["permissions"] = permissions
+    permissions["defaultMode"] = args.default_mode
+
+    version_output = read_claude_version_output(args)
+    version_state, version_message = claude_version_status(version_output)
+
+    if version_state == "outdated" and not args.allow_old_version:
+        print(version_message)
+        print("Use --allow-old-version to keep this configuration despite the version warning.", file=sys.stderr)
+        return 2
+
+    if args.dry_run:
+        print(f"would set {settings_path} permissions.defaultMode = {args.default_mode}")
+    else:
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings_path.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"set {settings_path} permissions.defaultMode = {args.default_mode}")
+
+    print(version_message)
+    if version_state == "unknown":
+        print("Version check is advisory; verify Claude Code is from 2026-06-01 or newer before first use.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Project scaffold command center.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1140,6 +1247,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install_skills.add_argument("--force", action="store_true", help="replace existing target skills")
     install_skills.add_argument("--dry-run", action="store_true")
+
+    configure_claude_cmd = sub.add_parser(
+        "configure-claude",
+        help="configure user-level Claude Code defaults for smoother new sessions",
+    )
+    configure_claude_cmd.add_argument(
+        "--default-mode",
+        choices=CLAUDE_DEFAULT_MODES,
+        default=RECOMMENDED_CLAUDE_DEFAULT_MODE,
+        help="permissions.defaultMode to write into the user Claude settings file",
+    )
+    configure_claude_cmd.add_argument("--settings-file", help="explicit Claude settings JSON file")
+    configure_claude_cmd.add_argument(
+        "--claude-version-output",
+        help="test hook: provide claude --version output instead of invoking claude",
+    )
+    configure_claude_cmd.add_argument(
+        "--allow-old-version",
+        action="store_true",
+        help="do not fail when the detected Claude Code release date is older than 2026-06-01",
+    )
+    configure_claude_cmd.add_argument("--dry-run", action="store_true")
 
     task = sub.add_parser("task", help="manage optional complex task live-state controls")
     task_sub = task.add_subparsers(dest="task_command", required=True)
@@ -1186,6 +1315,8 @@ def main() -> int:
         return list_user_skills(args)
     if args.command == "install-user-skills":
         return install_user_skills(args)
+    if args.command == "configure-claude":
+        return configure_claude(args)
     if args.command == "task":
         if args.task_command == "init":
             return task_init(args)

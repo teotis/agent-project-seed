@@ -390,3 +390,25 @@ links:
 - agent-assets/user-skills/skills/agent-task-planner/references/examples.md
 - agent-assets/user-skills/skills/agent-task-planner/evals/evals.json
 - tests/test_project_tool.py
+
+## 2026-06-25T22:40:04 - Smooth Windows Claude Code bootstrap
+
+type: decision
+status: closed
+tags: windows, claude-code, bootstrap, init
+
+summary:
+- Add a project helper for Claude Code new-session defaults instead of relying on ad hoc edits to `%USERPROFILE%\.claude\settings.json`.
+- Fix initialized-project residue detection so valid package names such as `test_project_seed` do not fail health checks.
+
+details:
+- `tools/project.py configure-claude --default-mode auto` now preserves existing Claude `allow`/`deny` rules, writes only `permissions.defaultMode`, and checks whether `claude --version` appears to be from 2026-06-01 or newer.
+- `auto` is documented as the recommended global default; `dontAsk` and `bypassPermissions` are documented as riskier defaults for normal project work.
+- Seed residue checking now treats `project_seed` as a standalone identifier, not as a substring inside initialized package names.
+- Windows setup docs now put Claude Code version/default-mode setup before portable skill installation and verification.
+
+links:
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md
+- tests/test_project_tool.py

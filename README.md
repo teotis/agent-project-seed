@@ -29,6 +29,7 @@ AI agents work better when they share the same operating context. This scaffold 
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
 | Portable User Skills | Bundles selected user-installed skills for fast Codex/Claude setup |
+| Claude Code Defaults | Configures user-level new sessions to `auto` permission review after checking the Claude Code release date |
 | Standard MCP Checks | Records Context7 as the default documentation MCP to verify on new machines |
 | Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
 | Governance Lifecycle | Optional `tools/project.py governance init` command for long-lived projects that need rule/script/report lifecycle tracking |
@@ -80,6 +81,29 @@ claude mcp get context7
 If either command fails, fix the user-level MCP configuration outside this
 repository. Do not copy API keys, MCP tokens, or provider credentials into the
 project.
+
+## Claude Code New-Session Defaults
+
+On new machines, use a Claude Code build from 2026-06-01 or newer, then run the
+project helper to make new sessions default to auto permission review:
+
+macOS/Linux:
+
+```bash
+python3 tools/project.py configure-claude --default-mode auto
+```
+
+Windows PowerShell:
+
+```powershell
+py -3 tools/project.py configure-claude --default-mode auto
+```
+
+This edits only the user-level Claude settings file and preserves existing
+`allow`/`deny` rules. The recommended default is `auto`: it is smoother than
+prompting for every unlisted action while still letting Claude Code review risky
+operations. `dontAsk` and `bypassPermissions` are intentionally not recommended
+as global defaults for normal project work.
 
 ## Complex Task Live State
 
@@ -163,6 +187,7 @@ macOS/Linux:
 ```bash
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py configure-claude --default-mode auto
 python3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
@@ -171,6 +196,7 @@ Windows PowerShell:
 ```powershell
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py configure-claude --default-mode auto
 py -3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
