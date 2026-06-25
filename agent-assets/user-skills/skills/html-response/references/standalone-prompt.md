@@ -118,7 +118,7 @@ coverage ledger 必须说明重要信息位于：`visible` / `interactive` / `ap
 
 只有当交互改变用户看见的信息或降低认知负担时才添加。静态 HTML 必须仍然可读。
 
-## Presentation Modes
+## 呈现模式
 
 选择一个主要模式，必要时组合一个辅助模式：
 
