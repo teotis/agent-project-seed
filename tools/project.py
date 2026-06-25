@@ -540,14 +540,15 @@ def run_git_init(project_name: str) -> None:
 
 def init_project(args: argparse.Namespace) -> int:
     package_name = args.package_name or package_name_from_project(args.name)
+    platform_name = active_platform(args.platform)
     replace_text(args.name, package_name)
     rename_package(package_name)
     update_contract(args.name)
     update_state(args.name, package_name)
     update_readme(args.name, package_name)
     reset_init_ledger(args.name, package_name)
-    write_init_manifest(args.name, package_name)
-    activate_settings()
+    write_init_manifest(args.name, package_name, platform_name)
+    activate_platform_configs(platform_name)
     if not args.no_git:
         run_git_init(args.name)
     print(f"Initialized {args.name} with package {package_name}.")
@@ -555,6 +556,7 @@ def init_project(args: argparse.Namespace) -> int:
         "Project-level Claude Code settings are active in .claude/settings.json "
         "(status panel + guarded local checkpoint commit)."
     )
+    print(f"Activated project hook/config files for platform: {platform_name}.")
     print(
         "User-level hook/config setup is optional; use it only when you want the "
         "same behavior outside this project-level Claude Code config."
@@ -567,12 +569,34 @@ def init_project(args: argparse.Namespace) -> int:
     return 0
 
 
-def activate_settings() -> None:
-    """Ensure the project-level Claude settings file exists for copied templates."""
-    example = ROOT / ".claude" / "settings.example.json"
-    target = ROOT / ".claude" / "settings.json"
-    if example.exists() and not target.exists():
-        target.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+def active_platform(value: str) -> str:
+    if value != "auto":
+        return value
+    return "windows" if os.name == "nt" else "posix"
+
+
+def platform_template(target: Path, platform_name: str) -> Path:
+    if platform_name == "windows":
+        for windows in [
+            target.with_name(f"{target.stem}.windows{target.suffix}"),
+            target.with_name(f"{target.stem}.windows.example{target.suffix}"),
+        ]:
+            if windows.exists():
+                return windows
+    example = target.with_name(f"{target.stem}.example{target.suffix}")
+    return example if example.exists() else target
+
+
+def activate_platform_configs(platform_name: str) -> None:
+    """Write active project hook/config files from the platform-specific examples."""
+    active_files = [
+        ROOT / ".claude" / "settings.json",
+        ROOT / ".codex" / "hooks.json",
+    ]
+    for target in active_files:
+        source = platform_template(target, platform_name)
+        if source.exists():
+            target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def now_iso() -> str:
@@ -733,12 +757,13 @@ def reset_init_ledger(project_name: str, package_name: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def write_init_manifest(project_name: str, package_name: str) -> None:
+def write_init_manifest(project_name: str, package_name: str, platform_name: str) -> None:
     path = ROOT / "control" / "init_manifest.md"
     content = f"""# Initialization Manifest
 
 - Project name: {project_name}
 - Package name: {package_name}
+- Active platform config: {platform_name}
 - Initialized at: {now_iso()}
 
 ## Automatically Updated
@@ -751,12 +776,14 @@ def write_init_manifest(project_name: str, package_name: str) -> None:
 - control/init_manifest.md
 - src/{package_name}/
 - .claude/settings.json
+- .codex/hooks.json
 
 ## Review Next
 
 - Replace placeholder goals in AGENTS.md.
 - Replace placeholder project description in README.md.
 - Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
+- Project hook/config files were activated for `{platform_name}`.
 - Optional: run `python3 tools/project.py configure-claude` or Windows `py -3 tools/project.py configure-claude` for smoother new Claude Code sessions after updating Claude Code to v2.1.140 or newer.
 - Add project-specific source code and tests.
 - macOS/Linux: `python3 tools/project.py check`
@@ -1217,6 +1244,12 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--name", default=ROOT.name)
     init.add_argument("--package-name", default=None)
     init.add_argument("--no-git", action="store_true")
+    init.add_argument(
+        "--platform",
+        choices=["auto", "posix", "windows"],
+        default="auto",
+        help="active hook/config platform to write during init; default detects the current OS",
+    )
 
     check_cmd = sub.add_parser("check", help="check scaffold health")
     check_cmd.add_argument("--quiet", action="store_true")

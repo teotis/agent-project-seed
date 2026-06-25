@@ -413,6 +413,27 @@ links:
 - SETUP_NEW_MACHINE.md
 - tests/test_project_tool.py
 
+## 2026-06-25T23:17:36 - Activate hook configs per platform during init
+
+type: decision
+status: closed
+tags: windows, hooks, init, robustness
+
+summary:
+- Fix Windows initialization so active project hook/config files use `py -3` instead of the Unix `python3` launcher.
+- Apply the same platform activation rule to Claude Code and Codex project hook files.
+
+details:
+- Root cause: copied templates already contain active `.claude/settings.json` and `.codex/hooks.json`, so the previous `activate_settings()` path did not replace them with Windows-specific examples.
+- `tools/project.py init` now chooses an active platform (`auto`, `posix`, or `windows`) and rewrites `.claude/settings.json` plus `.codex/hooks.json` from the matching examples.
+- The default remains auto-detection; tests can force `--platform windows` to verify active hook commands use `py -3`.
+
+links:
+- tools/project.py
+- .claude/settings.windows.example.json
+- .codex/hooks.windows.json
+- tests/test_project_tool.py
+
 ## 2026-06-25T22:48:43 - Narrow Claude bootstrap to auto and v2.1.140+
 
 type: decision

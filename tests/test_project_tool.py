@@ -61,7 +61,7 @@ def test_check_and_sync_agents_are_healthy():
     assert "GEMINI" not in sync.stdout
 
 
-def _copy_and_init(tmp_path, name="Demo Project", package="demo_project"):
+def _copy_and_init(tmp_path, name="Demo Project", package="demo_project", platform="auto"):
     target = tmp_path / "copied_project"
     ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
     shutil.copytree(ROOT, target, ignore=ignore)
@@ -74,6 +74,7 @@ def _copy_and_init(tmp_path, name="Demo Project", package="demo_project"):
             "--name", name,
             "--package-name", package,
             "--no-git",
+            "--platform", platform,
         ],
         cwd=target,
         text=True,
@@ -109,6 +110,22 @@ def test_init_project_copy_no_git(tmp_path):
     assert (target / "work" / "in" / ".gitkeep").exists()
 
 
+def test_init_activates_windows_claude_and_codex_hooks(tmp_path):
+    target = _copy_and_init(tmp_path, platform="windows")
+
+    claude_settings = (target / ".claude" / "settings.json").read_text(encoding="utf-8")
+    codex_hooks = (target / ".codex" / "hooks.json").read_text(encoding="utf-8")
+    manifest = (target / "control" / "init_manifest.md").read_text(encoding="utf-8")
+
+    assert "py -3 .claude/hooks/panel_hook.py" in claude_settings
+    assert "py -3 tools/project.py commit" in claude_settings
+    assert "py -3 .codex/hooks/panel_hook.py" in codex_hooks
+    assert "py -3 .codex/hooks/clean_checkpoint_first.py stop" in codex_hooks
+    assert "python3" not in claude_settings
+    assert "python3" not in codex_hooks
+    assert "Active platform config: windows" in manifest
+
+
 def test_init_output_explains_project_level_and_optional_user_level_setup(tmp_path):
     target = tmp_path / "copied_project"
     ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
@@ -134,6 +151,7 @@ def test_init_output_explains_project_level_and_optional_user_level_setup(tmp_pa
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert "Project-level Claude Code settings are active" in completed.stdout
     assert ".claude/settings.json" in completed.stdout
+    assert "Activated project hook/config files for platform:" in completed.stdout
     assert "User-level hook/config setup is optional" in completed.stdout
     assert "tools/project.py configure-claude" in completed.stdout
     assert "v2.1.140 or newer" in completed.stdout

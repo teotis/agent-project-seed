@@ -17,8 +17,9 @@ py -3 tools/project.py init --name "Your Project Name"
 This turns the copied template into a project workspace. It renames the package,
 rewrites the project-facing README, updates `AGENTS.md` and `control/state.md`,
 resets `control/ledger.md` to the new project's first record, writes
-`control/init_manifest.md`, activates the Claude Code settings, and keeps the
-project-level Codex hooks ready for the status panel and clean-checkpoint gate.
+`control/init_manifest.md`, activates the Claude Code settings for the current
+platform, and keeps the project-level Codex hooks ready for the status panel and
+clean-checkpoint gate.
 
 After initialization, review `control/init_manifest.md` first. It lists the
 files updated automatically and the remaining project-specific edits to make.
@@ -197,7 +198,11 @@ Copy-Item .env.example .env
 
 ## Claude Code Settings
 
-Initialized projects include `.claude/settings.json` as the default project-level Claude Code configuration. To customize permissions or hooks, edit `.claude/settings.json` (not the example file).
+Initialized projects include `.claude/settings.json` as the active project-level
+Claude Code configuration. During `init`, this file is rewritten from the
+platform-specific example: Windows uses `py -3`, while macOS/Linux uses
+`python3`. To customize permissions or hooks after initialization, edit
+`.claude/settings.json` (not the example file).
 
 The project settings include:
 
@@ -210,7 +215,9 @@ behavior outside repositories that carry this project-level configuration.
 
 ## Codex Hooks
 
-Initialized projects include `.codex/hooks.json` by default. It records a
+Initialized projects include `.codex/hooks.json` by default. During `init`, this
+file is activated for the current platform: Windows uses `py -3`, while
+macOS/Linux uses `python3`. It records a
 tracked-dirty baseline at session start, updates the latest tracked-dirty state
 after tool use, and blocks Stop if the session leaves new tracked dirty changes
 without a local checkpoint. It also loads the same Chinese status panel from

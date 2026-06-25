@@ -285,8 +285,10 @@ residue in project-facing files after initialization.
 
 ## Claude Code Project Hooks
 
-Initialized projects include `.claude/settings.json` by default. This project
-level configuration is the default path for Claude Code:
+Initialized projects include `.claude/settings.json` as the active project-level
+configuration. During `init`, the active file is rewritten from the
+platform-specific example: Windows uses `py -3`, while macOS/Linux uses
+`python3`. This project-level configuration is the default path for Claude Code:
 
 - `UserPromptSubmit`: inject the lightweight Chinese status panel.
 - `Stop`: run `tools/project.py commit` to create a guarded local checkpoint
@@ -303,7 +305,8 @@ behavior outside repositories that carry this project-level configuration.
 ## Codex Hooks
 
 Codex reads the shared entry point from `AGENTS.md`. Initialized projects carry
-`.codex/hooks.json` by default with:
+`.codex/hooks.json` by default; during `init`, it is activated for the current
+platform so Windows uses `py -3` and macOS/Linux uses `python3`. It includes:
 
 - `SessionStart`: record the starting tracked dirty baseline.
 - `PostToolUse`: keep the latest tracked dirty snapshot available for debugging.
