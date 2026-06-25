@@ -321,3 +321,72 @@ links:
 - agent-assets/user-skills/core/agent-task-planner/SKILL.md
 - agent-assets/user-skills/core/agent-task-planner/references/task-plan-contract.md
 - tests/test_project_tool.py
+
+## 2026-06-25T07:07:16 - Flatten portable user skill bundle
+
+type: decision
+status: closed
+tags: skills, bootstrap, template-simplification
+
+summary:
+- Collapse portable user skill packages into one flat `agent-assets/user-skills/skills/` directory.
+- Move installation selection from physical directory groups to manifest profiles.
+
+details:
+- The previous `core`, `optional`, and `superpowers` directories mixed install policy, provenance, and physical layout.
+- The seed now treats skill packages as universal portable units; `manifest.json` records `recommended` versus `all` install profiles and optional source metadata.
+- Default installation uses the `recommended` profile. Full installation uses `--profile all`.
+
+links:
+- agent-assets/user-skills/manifest.json
+- agent-assets/user-skills/skills/
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md
+- tests/test_project_tool.py
+
+## 2026-06-25T08:13:58 - Default Claude project hooks
+
+type: decision
+status: closed
+tags: claude-code, hooks, init, checkpoint
+
+summary:
+- Treat Claude Code project-level configuration as the default path for status panels and guarded local checkpoint commits.
+- Keep user-level hook/config setup as an optional cross-project enhancement, not part of the default initialization contract.
+
+details:
+- `.claude/settings.json` now carries project-level `UserPromptSubmit` and `Stop` hooks.
+- `tools/project.py init` reports that project-level Claude Code settings are active and reminds users that user-level setup is optional.
+- Codex Desktop/user-level hook guarantees remain outside the default scope for this change.
+
+links:
+- .claude/settings.json
+- .claude/settings.example.json
+- .claude/settings.windows.example.json
+- tools/project.py
+- README.md
+- SETUP_NEW_MACHINE.md
+- tests/test_project_tool.py
+
+## 2026-06-25T08:05:26 - Add standalone planner prompt
+
+type: decision
+status: closed
+tags: skills, planning, prompt, chat
+
+summary:
+- Add a standalone `agent-task-planner` prompt for external chat surfaces that cannot load Codex skills.
+- Keep the prompt copy-pasteable: it includes intake, lane choice, exit paths, task pack sections, and a follow-the-user-language output contract.
+
+details:
+- The prompt tells chat models not to pretend they have repository access and to ask only one blocking question when missing information changes boundaries, acceptance, permission, or risk.
+- The prompt emits copyable `TASK_PLAN.md`, `AGENT_PROMPTS.md`, `status.tsv`, and `HANDOFF.md` sections for manual use.
+- Skill metadata, examples, and evals now expose the standalone prompt and verify that user-facing prose follows the user's language while machine values remain stable.
+
+links:
+- agent-assets/user-skills/skills/agent-task-planner/references/standalone-prompt.md
+- agent-assets/user-skills/skills/agent-task-planner/SKILL.md
+- agent-assets/user-skills/skills/agent-task-planner/references/examples.md
+- agent-assets/user-skills/skills/agent-task-planner/evals/evals.json
+- tests/test_project_tool.py

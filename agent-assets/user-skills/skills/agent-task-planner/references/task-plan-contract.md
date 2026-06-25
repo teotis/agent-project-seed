@@ -3,28 +3,43 @@
 Use this contract when creating a lightweight task pack for `agent-task-planner`.
 The goal is enough structure to start safely, not a full scheduler.
 
+## Language Contract
+
+Write all user-facing prose and Markdown headings in the user's language. For a
+Chinese request, use Simplified Chinese for the plan body, package explanations,
+agent prompt prose, handoff notes, risks, and next steps. For an English request,
+use English.
+
+Keep file names, paths, commands, code symbols, package IDs, lane values, exit
+outcome values, `status.tsv` headers, and status enums stable. `status.tsv` is
+coordination memory, not a user-reading report, so its headers and state values
+stay English.
+
+The Markdown section labels below are semantic labels. Localize them when the
+user's language is not English.
+
 ## TASK_PLAN.md
 
 ```markdown
-# <Task Title> - Task Plan
+# <localized task title> - <localized task plan label>
 
-## Goal
+## <localized: Goal>
 <one concrete outcome>
 
-## Current Truth
+## <localized: Current Truth>
 - Repo:
 - Branch:
 - Dirty state:
 - Relevant files/docs inspected:
 - Existing related plan or status:
 
-## Lane Decision
+## <localized: Lane Decision>
 - Selected lane: `direct | single-agent | small-parallel | manual-pack | upgrade`
 - Why this lane:
 - Why not full orchestration:
 - Upgrade trigger if conditions change:
 
-## Exit Path
+## <localized: Exit Path>
 - Exit outcome: `none | no-viable-plan | needs-user-decision | blocked-with-handoff | defer | upgrade-required`
 - Evidence checked:
 - Why continuing would be unsafe or wasteful:
@@ -37,12 +52,12 @@ The goal is enough structure to start safely, not a full scheduler.
 - Main uncertainty:
 - Complexity / boundary risk:
 
-## Packages
+## <localized: Packages>
 | ID | Title | Owner | Depends On | Allowed Paths | Verification | State |
 |---|---|---|---|---|---|---|
 | 01-... | ... | main-thread/agent/manual | none | ... | ... | ready |
 
-## Execution Notes
+## <localized: Execution Notes>
 - Branch/worktree strategy:
 - Checkpoint rule:
 - External gates:
@@ -52,7 +67,9 @@ The goal is enough structure to start safely, not a full scheduler.
 
 ## AGENT_PROMPTS.md
 
-Each prompt should be short enough for a weaker model to follow.
+Each prompt should be short enough for a weaker model to follow. Write prompt
+prose in the user's language while preserving file names, paths, commands, and
+machine field names.
 
 ```markdown
 # Agent Prompts
@@ -85,7 +102,8 @@ Before finishing:
 
 ## status.tsv
 
-Use a tiny status table. It is coordination memory, not scheduler truth.
+Use a tiny status table. It is coordination memory, not scheduler truth. Keep
+headers and state values in English.
 
 ```text
 id	title	owner	state	branch_or_worktree	verification	next
@@ -106,19 +124,19 @@ Allowed states:
 ```markdown
 # Handoff
 
-## Results
+## <localized: Results>
 - ...
 
-## Modified Or New Files
+## <localized: Modified Or New Files>
 - ...
 
-## Verification
+## <localized: Verification>
 - `<command>`: pass/fail/not run
 
-## Risks
+## <localized: Risks>
 - No new risks found.
 
-## Next Steps
+## <localized: Next Steps>
 - <concrete next action>
 ```
 

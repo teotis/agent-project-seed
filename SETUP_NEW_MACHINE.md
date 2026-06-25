@@ -27,7 +27,8 @@ files updated automatically and the remaining project-specific edits to make.
 
 This seed includes a portable skill bundle in `agent-assets/user-skills/`.
 Skills are treated as universal packages; the install target only chooses which
-user skill directory receives the copy.
+user skill directory receives the copy. Skill packages live under one flat
+`skills/` directory; the manifest chooses install profiles.
 
 Inspect the bundle:
 
@@ -35,30 +36,30 @@ macOS/Linux:
 
 ```bash
 python3 tools/project.py list-user-skills
-python3 tools/project.py list-user-skills --group superpowers
+python3 tools/project.py list-user-skills --profile recommended
 ```
 
 Windows PowerShell:
 
 ```powershell
 py -3 tools/project.py list-user-skills
-py -3 tools/project.py list-user-skills --group superpowers
+py -3 tools/project.py list-user-skills --profile recommended
 ```
 
-Install the default core set:
+Install the default recommended set:
 
 macOS/Linux:
 
 ```bash
-python3 tools/project.py install-user-skills --target codex --group core
-python3 tools/project.py install-user-skills --target claude --group core
+python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py install-user-skills --target claude
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -3 tools/project.py install-user-skills --target codex --group core
-py -3 tools/project.py install-user-skills --target claude --group core
+py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py install-user-skills --target claude
 ```
 
 Install everything bundled by this seed:
@@ -66,13 +67,13 @@ Install everything bundled by this seed:
 macOS/Linux:
 
 ```bash
-python3 tools/project.py install-user-skills --target all --group all --force
+python3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -3 tools/project.py install-user-skills --target all --group all --force
+py -3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
 The installer intentionally does not migrate private user config such as API
@@ -172,11 +173,16 @@ Copy-Item .env.example .env
 
 ## Claude Code Settings
 
-The init command copies `.claude/settings.example.json` to `.claude/settings.json` automatically. To customize permissions or hooks, edit `.claude/settings.json` (not the example file).
+Initialized projects include `.claude/settings.json` as the default project-level Claude Code configuration. To customize permissions or hooks, edit `.claude/settings.json` (not the example file).
 
-The example settings include a `UserPromptSubmit` status-panel hook. It injects
-a short Chinese project snapshot only on the first prompt of a session, unless a
-handoff flow explicitly requests `panel_mode=handoff`.
+The project settings include:
+
+- `UserPromptSubmit`: injects a short Chinese project snapshot only on the first prompt of a session, unless a handoff flow explicitly requests `panel_mode=handoff`.
+- `Stop`: runs `tools/project.py commit` to create a guarded local checkpoint commit when allowed changes are present.
+
+This is the default Claude Code path and does not require user-level hook setup.
+User-level hook/config setup is optional; use it only when you want similar
+behavior outside repositories that carry this project-level configuration.
 
 ## Codex Hooks
 

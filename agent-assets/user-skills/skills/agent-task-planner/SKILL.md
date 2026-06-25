@@ -83,6 +83,27 @@ permissions, state your assumption and continue. If it would change one of those
 things and the repo cannot answer it, return `needs-user-decision` with the first
 clarifying question instead of inventing packages.
 
+## Language Contract
+
+Follow the user's language for all user-facing prose and Markdown headings in
+the chat reply, `TASK_PLAN.md`,
+`AGENT_PROMPTS.md`, and `HANDOFF.md`. If the user asks in Chinese, write the
+plan body in Simplified Chinese; if the user asks in English, write it in
+English. For mixed-language requests, use the dominant language and state the
+assumption briefly when it matters.
+
+Do not let English template text leak into a Chinese-facing plan. Localize
+section headings such as goal, current truth, lane decision, exit path, packages,
+risks, and next steps when the user's language is Chinese.
+
+Keep these values unchanged: file names, paths, commands, code symbols, raw log
+lines, error messages, package IDs, lane values, exit outcome values,
+`status.tsv` headers, and status enums. Preserve quoted source evidence in its
+original language, then explain it in the user's language if needed.
+
+For external Chat surfaces that cannot load skills, read
+`references/standalone-prompt.md` and copy the complete prompt there.
+
 ## Workflow
 
 1. Read the repo instructions, current git state, relevant project status, and

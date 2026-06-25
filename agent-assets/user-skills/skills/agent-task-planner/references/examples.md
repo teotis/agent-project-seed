@@ -1,7 +1,9 @@
 # Agent Task Planner Examples
 
 Use these as shape examples, not templates to copy blindly. Keep real task packs
-repo-specific and evidence-backed.
+repo-specific and evidence-backed. Follow the user's language for user-facing
+plan prose and Markdown headings; preserve paths, commands, lane values, and
+status values.
 
 ## Example 1: Direct Bugfix
 
@@ -15,6 +17,8 @@ Correct behavior:
   no handoff is needed.
 - Produce either a very small task pack or proceed in the main thread if the user
   asked for implementation.
+- If the user asks in Chinese, produce a 中文计划 with localized headings while
+  preserving file paths, commands, lane values, and status enums.
 
 Plan shape:
 
@@ -115,3 +119,36 @@ Smallest useful next action:
 If the user instead asks for automatic multi-agent scheduling, persistent state,
 retry, and final merge control, choose `upgrade-required` and name the needed
 control-plane capability instead of generating a lightweight pack.
+
+## Example 4: Chinese Request, Chinese Plan
+
+User asks: "我刚 clone 一个项目，想马上修一个登录超时问题。模型比较弱，先帮我拆一下怎么做。"
+
+Correct behavior:
+
+- Use Simplified Chinese for the chat reply, plan body, package descriptions,
+  handoff prose, and any clarifying question.
+- Keep stable machine values such as `single-agent`, `TASK_PLAN.md`,
+  `pytest tests/auth`, and `ready` unchanged.
+- Do not copy English template headings into the Chinese-facing plan.
+
+Response shape:
+
+```markdown
+## 目标
+修复登录超时问题，并保留当前登录流程的既有行为。
+
+## 当前事实
+- Dirty state: <来自 `git status --short` 的结果>
+- 已检查证据: <登录相关测试、日志或代码路径>
+
+## 路线判断
+- Selected lane: `single-agent`
+- 为什么选择这条路线: 登录超时通常集中在认证链路，适合一个 agent 按证据推进。
+- 为什么不需要完整 orchestration: 当前没有 durable DAG、retry automation 或 finalizer state 需求。
+
+## 任务包
+| ID | 标题 | Owner | Depends On | Allowed Paths | Verification | State |
+|---|---|---|---|---|---|---|
+| 01-login-timeout | 定位并修复登录超时 | agent | none | `src/auth/`, `tests/auth/` | `pytest tests/auth` | ready |
+```

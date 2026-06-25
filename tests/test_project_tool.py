@@ -97,11 +97,44 @@ def test_init_project_copy_no_git(tmp_path):
     assert (target / ".codex" / "hooks" / "panel_hook.py").exists()
     assert (target / ".codex" / "hooks" / "clean_checkpoint_first.py").exists()
     assert (target / ".claude" / "settings.windows.example.json").exists()
+    claude_settings = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    assert "UserPromptSubmit" in claude_settings["hooks"]
+    assert "Stop" in claude_settings["hooks"]
+    stop_command = claude_settings["hooks"]["Stop"][0]["hooks"][0]["command"]
+    assert "tools/project.py commit" in stop_command
     hooks = json.loads((target / ".codex" / "hooks.json").read_text(encoding="utf-8"))
     assert "SessionStart" in hooks["hooks"]
     assert "PostToolUse" in hooks["hooks"]
     assert "Stop" in hooks["hooks"]
     assert (target / "work" / "in" / ".gitkeep").exists()
+
+
+def test_init_output_explains_project_level_and_optional_user_level_setup(tmp_path):
+    target = tmp_path / "copied_project"
+    ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
+    shutil.copytree(ROOT, target, ignore=ignore)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "init",
+            "--name",
+            "Demo Project",
+            "--package-name",
+            "demo_project",
+            "--no-git",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "Project-level Claude Code settings are active" in completed.stdout
+    assert ".claude/settings.json" in completed.stdout
+    assert "User-level hook/config setup is optional" in completed.stdout
 
 
 def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
@@ -160,6 +193,7 @@ def test_windows_agent_config_examples_avoid_unix_python_launcher():
     assert '"py"' in codex_config
     assert '"-3"' in codex_config
     assert "py -3 .claude/hooks/panel_hook.py" in claude_settings
+    assert "py -3 tools/project.py commit" in claude_settings
     assert "python3" not in codex_hooks
     assert "python3" not in codex_config
     assert "python3" not in claude_settings
@@ -241,10 +275,26 @@ def test_user_skill_manifest_assets_are_valid():
     entries = module.user_skill_entries(["all"])
 
     assert len(entries) == 44
-    assert ("core", "clean-checkpoint-first", ROOT / "agent-assets" / "user-skills" / "core" / "clean-checkpoint-first") in entries
-    assert ("core", "agent-task-planner", ROOT / "agent-assets" / "user-skills" / "core" / "agent-task-planner") in entries
-    assert ("optional", "abstraction-architect", ROOT / "agent-assets" / "user-skills" / "optional" / "abstraction-architect") in entries
-    assert ("superpowers", "brainstorming", ROOT / "agent-assets" / "user-skills" / "superpowers" / "brainstorming") in entries
+    assert (
+        "recommended",
+        "clean-checkpoint-first",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "clean-checkpoint-first",
+    ) in entries
+    assert (
+        "recommended",
+        "agent-task-planner",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "agent-task-planner",
+    ) in entries
+    assert (
+        "all",
+        "abstraction-architect",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "abstraction-architect",
+    ) in entries
+    assert (
+        "all",
+        "brainstorming",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "brainstorming",
+    ) in entries
 
     result = module.Result()
     module.check_user_skill_assets(result)
@@ -253,14 +303,14 @@ def test_user_skill_manifest_assets_are_valid():
 
 
 def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods():
-    skill = (ROOT / "agent-assets" / "user-skills" / "core" / "agent-task-planner" / "SKILL.md").read_text(
+    skill = (ROOT / "agent-assets" / "user-skills" / "skills" / "agent-task-planner" / "SKILL.md").read_text(
         encoding="utf-8"
     )
     contract = (
         ROOT
         / "agent-assets"
         / "user-skills"
-        / "core"
+        / "skills"
         / "agent-task-planner"
         / "references"
         / "task-plan-contract.md"
@@ -269,17 +319,26 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
         ROOT
         / "agent-assets"
         / "user-skills"
-        / "core"
+        / "skills"
         / "agent-task-planner"
         / "references"
         / "examples.md"
+    ).read_text(encoding="utf-8")
+    standalone_prompt = (
+        ROOT
+        / "agent-assets"
+        / "user-skills"
+        / "skills"
+        / "agent-task-planner"
+        / "references"
+        / "standalone-prompt.md"
     ).read_text(encoding="utf-8")
     evals = json.loads(
         (
             ROOT
             / "agent-assets"
             / "user-skills"
-            / "core"
+            / "skills"
             / "agent-task-planner"
             / "evals"
             / "evals.json"
@@ -295,30 +354,52 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
     assert "## Exit Paths" in skill
     assert "`no-viable-plan`" in skill
     assert "`blocked-with-handoff`" in skill
+    assert "## Language Contract" in skill
+    assert "Follow the user's language" in skill
+    assert "If the user asks in Chinese" in skill
+    assert "Do not let English template text leak into a Chinese-facing plan" in skill
+    assert "始终使用简体中文" not in skill
+    assert "references/standalone-prompt.md" in skill
     assert "## Lightweight Engineering Method" in skill
     assert "Simplicity first" in skill
     assert "Surgical changes" in skill
     assert "Root cause before repair" in skill
-    assert "## Exit Path" in contract
+    assert "## Language Contract" in contract
+    assert "Write all user-facing prose and Markdown headings in the user's language" in contract
+    assert "Chinese request" in contract
+    assert "status.tsv" in contract
+    assert "<localized: Exit Path>" in contract
     assert "Exit outcome:" in contract
     assert "Complexity / boundary risk:" in contract
     assert "Example 1: Direct Bugfix" in examples
     assert "Example 2: Small Parallel Refactor" in examples
     assert "Example 3: Intake Or Exit" in examples
+    assert "Example 4: Chinese Request, Chinese Plan" in examples
+    assert "你是 Agent Task Planner 的 Chat 版任务规划助手" in standalone_prompt
+    assert "跟随用户语言" in standalone_prompt
+    assert "中文请求下" in standalone_prompt
+    assert "始终使用简体中文" not in standalone_prompt
+    assert "TASK_PLAN.md" in standalone_prompt
+    assert "AGENT_PROMPTS.md" in standalone_prompt
     assert any("onboarding" in item["prompt"] for item in evals["evals"])
+    assert any(
+        "user's language" in assertion["text"] or "用户语言" in assertion["text"]
+        for item in evals["evals"]
+        for assertion in item["assertions"]
+    )
 
 
 def test_list_and_install_user_skills(tmp_path):
     list_result = subprocess.run(
-        [sys.executable, "tools/project.py", "list-user-skills", "--group", "superpowers"],
+        [sys.executable, "tools/project.py", "list-user-skills", "--profile", "recommended"],
         cwd=ROOT,
         text=True,
         capture_output=True,
         check=False,
     )
     assert list_result.returncode == 0, list_result.stdout + list_result.stderr
-    assert "superpowers\tbrainstorming\tok" in list_result.stdout
-    assert "core\tclean-checkpoint-first" not in list_result.stdout
+    assert "recommended\tclean-checkpoint-first\tok" in list_result.stdout
+    assert "all\tbrainstorming\tok" not in list_result.stdout
 
     install_root = tmp_path / "skills"
     dry_run = subprocess.run(
@@ -326,7 +407,6 @@ def test_list_and_install_user_skills(tmp_path):
             sys.executable,
             "tools/project.py",
             "install-user-skills",
-            "--group", "core",
             "--install-root", str(install_root),
             "--dry-run",
         ],
@@ -344,7 +424,7 @@ def test_list_and_install_user_skills(tmp_path):
             sys.executable,
             "tools/project.py",
             "install-user-skills",
-            "--group", "superpowers",
+            "--profile", "all",
             "--install-root", str(install_root),
         ],
         cwd=ROOT,
@@ -355,7 +435,7 @@ def test_list_and_install_user_skills(tmp_path):
     assert installed.returncode == 0, installed.stdout + installed.stderr
     assert (install_root / "brainstorming" / "SKILL.md").exists()
     assert (install_root / "writing-skills" / "SKILL.md").exists()
-    assert not (install_root / "clean-checkpoint-first").exists()
+    assert (install_root / "clean-checkpoint-first" / "SKILL.md").exists()
 
 
 def test_task_init_creates_minimal_live_state_control_surface(tmp_path):

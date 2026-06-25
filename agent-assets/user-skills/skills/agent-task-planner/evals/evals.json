@@ -11,10 +11,13 @@
           "text": "Chooses direct or single-agent unless durable scheduling is specifically needed."
         },
         {
-          "text": "Includes goal, current truth, fix-worthiness, allowed paths, verification, and checkpoint rule."
+          "text": "Includes goal/current truth/fix-worthiness, allowed paths, verification, checkpoint rule, and Simplified Chinese output when the user asks in 简体中文."
         },
         {
           "text": "Does not generate orchestrate.sh, 99-finalize, or signed scheduler state."
+        },
+        {
+          "text": "Follows the user's language: for this Chinese prompt, user-facing prose and Markdown headings are in Simplified Chinese while paths, commands, lane values, and status enums remain stable."
         }
       ]
     },

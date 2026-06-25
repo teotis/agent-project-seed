@@ -23,11 +23,12 @@ AI agents work better when they share the same operating context. This scaffold 
 | --- | --- |
 | Status Panel | Shows a compact Chinese entry/handoff snapshot: git state, recent worktrees/branches, open ledger items, risks, and next action |
 | Safe Commit | Whitelist-based commit command for agent-made changes |
+| Claude Code Project Hooks | Project-level `.claude/settings.json` enables the status panel and a guarded Stop-time local checkpoint commit |
 | Clean Checkpoint Gate | Project-level Codex hook blocks session stop when new tracked dirty changes are left uncheckpointed |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
-| Portable User Skills | Bundles selected user-installed skills and superpowers skills for fast Codex/Claude setup |
+| Portable User Skills | Bundles selected user-installed skills for fast Codex/Claude setup |
 | Standard MCP Checks | Records Context7 as the default documentation MCP to verify on new machines |
 | Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
 | Governance Lifecycle | Optional `tools/project.py governance init` command for long-lived projects that need rule/script/report lifecycle tracking |
@@ -148,31 +149,29 @@ delete files, create recurring process, or make preflight stricter.
 ## Portable User Skills
 
 This seed carries a portable skill bundle under `agent-assets/user-skills/`.
-The bundle is organized by migration intent, not by agent vendor:
+The bundle keeps skill packages in one flat directory:
 
-- `core`: default workflow and engineering skills for a fresh environment.
-- `optional`: generally useful analysis and interview/refinement skills selected
-  for this workspace family.
-- `superpowers`: the complete local superpowers skill set, copied as ordinary
-  portable skills.
+- `skills/<skill-name>/`: the portable skill package copied into a user skill root.
+- `manifest.json`: profile and source metadata for installation decisions.
 
 The manifest at `agent-assets/user-skills/manifest.json` is the source of truth.
-Use the project tool to inspect or install the bundle:
+Use the project tool to inspect or install the bundle. The default install
+profile is `recommended`; `all` installs every bundled skill.
 
 macOS/Linux:
 
 ```bash
 python3 tools/project.py list-user-skills
-python3 tools/project.py install-user-skills --target codex --group core
-python3 tools/project.py install-user-skills --target all --group all --force
+python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
 Windows PowerShell:
 
 ```powershell
 py -3 tools/project.py list-user-skills
-py -3 tools/project.py install-user-skills --target codex --group core
-py -3 tools/project.py install-user-skills --target all --group all --force
+py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
 The installer copies skills into the chosen user skill root. It does not copy
@@ -252,12 +251,30 @@ residue in project-facing files after initialization.
 │       └── panel_hook.py
 ├── .claude/
 │   ├── hooks/panel_hook.py
+│   ├── settings.json
 │   ├── settings.example.json
 │   └── settings.windows.example.json
 ├── AGENTS.md               # Shared source of truth
 ├── CLAUDE.md               # Claude Code entry point
 └── SETUP_NEW_MACHINE.md    # First-time setup guide
 ```
+
+## Claude Code Project Hooks
+
+Initialized projects include `.claude/settings.json` by default. This project
+level configuration is the default path for Claude Code:
+
+- `UserPromptSubmit`: inject the lightweight Chinese status panel.
+- `Stop`: run `tools/project.py commit` to create a guarded local checkpoint
+  commit when allowed changes are present.
+
+The Stop hook uses the same safe-commit allowlist as manual
+`python3 tools/project.py commit`. If there are no changes, it exits cleanly. If
+changes are unsafe or outside the allowlist, it refuses the commit instead of
+staging secrets, temp files, generated outputs, or unrelated paths.
+
+User-level Claude/Codex hook setup is optional. Use it only when you want similar
+behavior outside repositories that carry this project-level configuration.
 
 ## Codex Hooks
 

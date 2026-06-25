@@ -24,6 +24,8 @@ REQUIRED_FILES = [
     ".codex/hooks.json",
     ".codex/hooks.windows.json",
     ".codex/hooks/clean_checkpoint_first.py",
+    ".claude/settings.json",
+    ".claude/settings.example.json",
     ".claude/settings.windows.example.json",
     "agent-assets/user-skills/manifest.json",
     "pyproject.toml",
@@ -73,7 +75,8 @@ REJECT_PREFIXES = (".env", "work/tmp/", ".pytest_cache/", "__pycache__/")
 
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".json", ".example", ".gitignore", ".yml", ".yaml"}
 USER_SKILLS_ROOT = ROOT / "agent-assets" / "user-skills"
-USER_SKILL_GROUPS = ("core", "optional", "superpowers")
+USER_SKILLS_DIR = USER_SKILLS_ROOT / "skills"
+USER_SKILL_PROFILES = ("recommended", "all")
 GOVERNANCE_PROFILES = ("one-off", "lightweight", "sustained")
 
 
@@ -310,23 +313,28 @@ def load_user_skill_manifest() -> dict:
     return data
 
 
-def user_skill_entries(selected_groups: list[str] | None = None) -> list[tuple[str, str, Path]]:
+def user_skill_entries(selected_profiles: list[str] | None = None) -> list[tuple[str, str, Path]]:
     manifest = load_user_skill_manifest()
-    groups = manifest.get("groups", {})
-    if not isinstance(groups, dict):
-        raise ValueError("invalid user skill manifest: groups must be an object")
-    selected = selected_groups or list(USER_SKILL_GROUPS)
-    if "all" in selected:
-        selected = list(USER_SKILL_GROUPS)
+    skills = manifest.get("skills", [])
+    if not isinstance(skills, list):
+        raise ValueError("invalid user skill manifest: skills must be a list")
+    selected = selected_profiles or ["all"]
+    unknown = [profile for profile in selected if profile not in USER_SKILL_PROFILES]
+    if unknown:
+        raise ValueError(f"unknown user skill profile: {', '.join(unknown)}")
+    include_all = "all" in selected
     entries: list[tuple[str, str, Path]] = []
-    for group in selected:
-        names = groups.get(group)
-        if not isinstance(names, list):
-            raise ValueError(f"unknown or invalid user skill group: {group}")
-        for name in names:
-            if not isinstance(name, str) or not name:
-                raise ValueError(f"invalid user skill name in group {group}")
-            entries.append((group, name, USER_SKILLS_ROOT / group / name))
+    for item in skills:
+        if not isinstance(item, dict):
+            raise ValueError("invalid user skill manifest: each skill must be an object")
+        name = item.get("name")
+        profile = item.get("profile")
+        if not isinstance(name, str) or not name:
+            raise ValueError("invalid user skill name in manifest")
+        if profile not in USER_SKILL_PROFILES:
+            raise ValueError(f"invalid user skill profile for {name}: {profile}")
+        if include_all or profile in selected:
+            entries.append((profile, name, USER_SKILLS_DIR / name))
     return entries
 
 
@@ -339,13 +347,13 @@ def check_user_skill_assets(result: Result) -> None:
     seen: dict[str, str] = {}
     missing: list[str] = []
     duplicates: list[str] = []
-    for group, name, path in entries:
+    for profile, name, path in entries:
         prior = seen.get(name)
         if prior is not None:
-            duplicates.append(f"{name} ({prior}, {group})")
-        seen[name] = group
+            duplicates.append(f"{name} ({prior}, {profile})")
+        seen[name] = profile
         if not (path / "SKILL.md").is_file():
-            missing.append(f"{group}/{name}/SKILL.md")
+            missing.append(f"skills/{name}/SKILL.md")
     if duplicates:
         result.issues.append(f"duplicate portable user skills: {', '.join(duplicates)}")
     if missing:
@@ -533,11 +541,19 @@ def init_project(args: argparse.Namespace) -> int:
     if not args.no_git:
         run_git_init(args.name)
     print(f"Initialized {args.name} with package {package_name}.")
+    print(
+        "Project-level Claude Code settings are active in .claude/settings.json "
+        "(status panel + guarded local checkpoint commit)."
+    )
+    print(
+        "User-level hook/config setup is optional; use it only when you want the "
+        "same behavior outside this project-level Claude Code config."
+    )
     return 0
 
 
 def activate_settings() -> None:
-    """Copy settings.example.json to settings.json if settings.json does not exist."""
+    """Ensure the project-level Claude settings file exists for copied templates."""
     example = ROOT / ".claude" / "settings.example.json"
     target = ROOT / ".claude" / "settings.json"
     if example.exists() and not target.exists():
@@ -629,6 +645,7 @@ A newly initialized agent-assisted project.
 - Shared agent rules: `AGENTS.md`
 - Current state snapshot: `control/state.md`
 - Long-term project ledger: `control/ledger.md`
+- Project-level Claude Code hooks: `.claude/settings.json` enables the status panel and guarded local checkpoint commits
 
 ## First Actions
 
@@ -637,7 +654,8 @@ A newly initialized agent-assisted project.
 3. Run the health check for your platform.
 4. Run the tests for your platform.
 5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
-6. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
+6. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
+7. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
 
 ## Useful Commands
 
@@ -647,7 +665,7 @@ macOS/Linux:
 python3 tools/panel.py --mode entry
 python3 tools/project.py check
 python3 tools/project.py list-user-skills
-python3 tools/project.py install-user-skills --target codex --group core
+python3 tools/project.py install-user-skills --target codex
 python3 tools/project.py governance init --profile sustained
 python3 -m pytest
 ```
@@ -658,7 +676,7 @@ Windows PowerShell:
 py -3 tools/panel.py --mode entry
 py -3 tools/project.py check
 py -3 tools/project.py list-user-skills
-py -3 tools/project.py install-user-skills --target codex --group core
+py -3 tools/project.py install-user-skills --target codex
 py -3 tools/project.py governance init --profile sustained
 py -3 -m pytest
 ```
@@ -720,6 +738,7 @@ def write_init_manifest(project_name: str, package_name: str) -> None:
 
 - Replace placeholder goals in AGENTS.md.
 - Replace placeholder project description in README.md.
+- Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
 - Add project-specific source code and tests.
 - macOS/Linux: `python3 tools/project.py check`
 - Windows: `py -3 tools/project.py check`
@@ -1053,16 +1072,16 @@ def skill_copy_ignore(_: str, names: list[str]) -> set[str]:
 
 
 def list_user_skills(args: argparse.Namespace) -> int:
-    for group, name, path in user_skill_entries(args.group or ["all"]):
+    for profile, name, path in user_skill_entries(args.profile or ["all"]):
         status = "ok" if (path / "SKILL.md").is_file() else "missing"
-        print(f"{group}\t{name}\t{status}\t{path.relative_to(ROOT)}")
+        print(f"{profile}\t{name}\t{status}\t{path.relative_to(ROOT)}")
     return 0
 
 
 def install_user_skills(args: argparse.Namespace) -> int:
-    entries = user_skill_entries(args.group or ["core"])
+    entries = user_skill_entries(args.profile or ["recommended"])
     actions: list[tuple[str, Path, Path]] = []
-    for _group, name, source in entries:
+    for _profile, name, source in entries:
         if not (source / "SKILL.md").is_file():
             print(f"missing source skill: {source}", file=sys.stderr)
             return 1
@@ -1104,20 +1123,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_skills = sub.add_parser("list-user-skills", help="list bundled portable user skills")
     list_skills.add_argument(
-        "--group",
+        "--profile",
         action="append",
-        choices=[*USER_SKILL_GROUPS, "all"],
-        help="skill group to list; repeatable",
+        choices=USER_SKILL_PROFILES,
+        help="skill profile to list; repeatable",
     )
 
     install_skills = sub.add_parser("install-user-skills", help="install bundled user skills")
     install_skills.add_argument("--target", choices=["codex", "claude", "all"], default="codex")
     install_skills.add_argument("--install-root", help="install into an explicit skills directory")
     install_skills.add_argument(
-        "--group",
+        "--profile",
         action="append",
-        choices=[*USER_SKILL_GROUPS, "all"],
-        help="skill group to install; repeatable",
+        choices=USER_SKILL_PROFILES,
+        help="skill profile to install; repeatable",
     )
     install_skills.add_argument("--force", action="store_true", help="replace existing target skills")
     install_skills.add_argument("--dry-run", action="store_true")
