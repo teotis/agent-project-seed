@@ -244,12 +244,39 @@ renames the Python package, activates local Claude settings, and writes
 manual project-specific editing. The health check rejects obvious template
 residue in project-facing files after initialization.
 
+## Run a Problem-Solving Round
+
+Use this lightweight path when a user brings external material and wants an
+agent to analyze a problem, propose a solution, make the change, verify it, and
+hand off cleanly.
+
+1. Put user-provided material in `work/in/<task-slug>/` when it should be kept
+   with the project, or reference its existing path when it is already in the
+   repository.
+2. Ask the agent to read `AGENTS.md`, `control/state.md`, relevant recent
+   records in `control/ledger.md`, and the task input before proposing changes.
+3. Put durable analysis reports in `reports/<topic>/` when the task produces a
+   reusable conclusion. Keep final deliverables that should not be committed in
+   `work/out/`.
+4. Record only durable facts in `control/ledger.md`: requests, decisions, risks,
+   issues, sessions, and artifact links. Do not paste full chat logs or raw
+   private material into the ledger.
+5. Run `python3 tools/project.py check` plus the smallest task-specific tests
+   that prove the result. Use `py -3` equivalents on Windows.
+6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only
+   when the work spans multiple packages, worktrees, agents, or handoff
+   sessions.
+7. Finish with this round's results, modified/new files, risk points, and
+   concrete next steps. If tracked files changed, close with a local checkpoint
+   commit unless the blocker is explicitly documented.
+
 ## Directory Layout
 
 ```text
 ├── control/
 │   ├── ledger.md           # Structured long-term records
 │   └── state.md            # Current state snapshot
+├── reports/                # Durable analysis reports and review artifacts
 ├── work/
 │   ├── in/                 # Input materials
 │   ├── out/                # Final artifacts, not committed

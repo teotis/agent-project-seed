@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Value Architect Report - project_seed</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --paper: #ffffff;
+      --ink: #1f2933;
+      --muted: #5c6675;
+      --line: #d9dee8;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --accent-3: #334155;
+      --soft: #eaf6f3;
+      --warn: #fff6e5;
+      --bad: #fff0f0;
+      --good: #edf7ed;
+      --code: #f1f5f9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.62;
+    }
+    a { color: var(--accent); }
+    header {
+      background: #113b3a;
+      color: white;
+      padding: 36px min(6vw, 72px);
+    }
+    header p { max-width: 980px; color: #d8f1ee; }
+    main {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 28px;
+      padding: 28px min(5vw, 64px) 64px;
+    }
+    nav {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    nav h2 { font-size: 14px; margin: 0 0 10px; }
+    nav a {
+      display: block;
+      padding: 7px 0;
+      color: var(--accent-3);
+      text-decoration: none;
+      border-top: 1px solid #eef1f5;
+      font-size: 14px;
+    }
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(28px, 4vw, 44px); letter-spacing: 0; }
+    h2 { margin: 0 0 14px; font-size: 23px; letter-spacing: 0; }
+    h3 { margin: 24px 0 8px; font-size: 18px; letter-spacing: 0; }
+    .meta, .muted { color: var(--muted); }
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card, .review-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+    .primary { border-left: 5px solid var(--accent); }
+    .fast { border-left: 5px solid var(--accent-2); }
+    .strategic { border-left: 5px solid #4f46e5; }
+    .small { border-left: 5px solid #64748b; }
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      font-size: 12px;
+      color: var(--accent-3);
+      background: #f8fafc;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+    }
+    th { background: #f3f6fa; }
+    code, pre {
+      background: var(--code);
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    code { padding: 1px 4px; }
+    pre { padding: 12px; overflow: auto; }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 12px 0;
+      background: #fbfcfe;
+    }
+    summary { cursor: pointer; font-weight: 650; }
+    .callout {
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+      background: var(--soft);
+      border: 1px solid #bee5dc;
+    }
+    .warn { background: var(--warn); border-color: #f2d19b; }
+    .bad { background: var(--bad); border-color: #f0b7b7; }
+    .good { background: var(--good); border-color: #b7dfb9; }
+    .review-controls {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    select, textarea, button {
+      font: inherit;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      background: white;
+    }
+    textarea { width: 100%; min-height: 72px; resize: vertical; }
+    button {
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      border-color: var(--accent);
+    }
+    .button-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; padding: 18px; }
+      nav { position: static; }
+      .decision-grid { grid-template-columns: 1fr; }
+      .review-controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>User Value Architect Report</h1>
+    <p>对象：<code>project_seed</code>。问题：新环境下载后，能否天然支持“外部资料输入 → agent 分析 → 方案生成 → 落地 → 验证 → 交付”的标准问题解决流程；以及如何吸收外部开源 agent 工作流经验，而不破坏长期价值。</p>
+    <p class="meta">生成时间：2026-06-28 09:25 Asia/Shanghai。模式：Deep Value Analysis，analysis-only。</p>
+  </header>
+  <main>
+    <nav aria-label="章节索引">
+      <h2>章节索引</h2>
+      <a href="#executive">执行建议</a>
+      <a href="#handoff">一屏交接</a>
+      <a href="#scope">范围与证据</a>
+      <a href="#value-theory">价值理论</a>
+      <a href="#candidates">候选矩阵</a>
+      <a href="#recommendations">推荐卡</a>
+      <a href="#external">外部参照</a>
+      <a href="#fact-map">事实地图</a>
+      <a href="#validation">验证计划</a>
+      <a href="#defer">拒绝与延后</a>
+      <a href="#feedback">评审导出</a>
+    </nav>
+
+    <div>
+      <section id="executive">
+        <h2>执行建议</h2>
+        <div class="callout good">
+          <strong>Primary bet：</strong>把“标准问题解决流程”提升为项目的一等公民：新增一个可初始化、可审计、可归档的 <strong>Task Capsule / 问题解决胶囊</strong>。它不是更重的项目管理，而是把外部资料、用户问题、分析报告、方案、验证证据、风险和交付物放进同一个稳定对象，删除新环境下最大的路径记忆负担。
+        </div>
+        <div class="decision-grid">
+          <article class="card primary">
+            <h3>主押注：Task Capsule</h3>
+            <p>用户可见时刻：用户把资料放入仓库后，只需运行一个初始化命令或按一个目录约定，就获得本轮问题的入口、证据、报告、验证和交接路径。</p>
+            <p><span class="tag">floor: 30%+</span><span class="tag">ceiling: 2x</span><span class="tag">confidence: medium</span></p>
+          </article>
+          <article class="card fast">
+            <h3>最快验证：路径演练脚本</h3>
+            <p>不先建设完整平台。先用一个最小样例任务，在新克隆环境里演练“资料输入到交付报告”的路径，记录用户是否还需要临时发明文件夹或问 agent 放哪里。</p>
+            <p><span class="tag">time: days</span><span class="tag">investment: small</span></p>
+          </article>
+          <article class="card strategic">
+            <h3>战略上限：外部坐标雷达</h3>
+            <p>建立轻量的“外部优秀仓库观察”机制，让项目持续吸收 agent 工作流、环境复现、审计报告、PR 自动化的成熟做法，但只通过价值 gate 进入模板。</p>
+            <p><span class="tag">ceiling: 3x hypothesis</span><span class="tag">route: validate-first</span></p>
+          </article>
+        </div>
+        <h3>结论压缩</h3>
+        <ul>
+          <li><strong>最值得做的架构优化不是先加更多目录，而是定义“一个问题解决回合”的稳定对象。</strong>当前项目已有 <code>control/</code>、<code>work/</code>、<code>reports</code> 可扩展空间、hooks 和 portable skills，但缺少把它们串成单轮工作流的用户可见结构。</li>
+          <li><strong>外部热门仓库的启发应变成校准机制，而不是目录仿制。</strong>GitHub Copilot coding agent、Codex 的 <code>AGENTS.md</code> 约定、OpenHands/aider 等项目都在强化说明、环境、任务、验证、PR/报告的可追踪性；本项目的差异化应是“轻量但完整的问题解决回路”。</li>
+          <li><strong>不要让模板从轻量 scaffold 膨胀成 agent 平台。</strong>任何新增结构必须能明显降低新用户的 setup、路径选择、证据归档、验证或交接成本。</li>
+        </ul>
+      </section>
+
+      <section id="handoff">
+        <h2>一屏交接</h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>证据</th><th>置信度</th><th>下一步</th><th>验证产物</th><th>Owner skill</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>UVA-01</td>
+              <td>E01, E02, E03, E06, E10</td>
+              <td>Medium</td>
+              <td>用 <code>abstraction-architect</code> 或 <code>codebase-design</code> 设计 Task Capsule 的最小领域对象和目录/命令投影。</td>
+              <td>一个样例 <code>control/tasks/&lt;slug&gt;</code> 或 <code>work/cases/&lt;slug&gt;</code> 回放包，能从输入材料追到验证结论。</td>
+              <td><code>abstraction-architect</code></td>
+            </tr>
+            <tr>
+              <td>UVA-02</td>
+              <td>E01, E04, E05, E07</td>
+              <td>High</td>
+              <td>补一个“新环境标准问题解决流程”文档切片，明确资料放置、报告落点、ledger 写法、验证和交付格式。</td>
+              <td>README/SETUP 中一条端到端路径，新用户无需猜目录。</td>
+              <td><code>codebase-design</code></td>
+            </tr>
+            <tr>
+              <td>UVA-03</td>
+              <td>E08, E09, X01-X04</td>
+              <td>Low-Medium</td>
+              <td>建立外部参照 ledger 的轻量模板，不自动引入竞品功能，只记录 expectation、ceiling signal、copy risk。</td>
+              <td>一次外部参照记录能影响候选优先级或明确拒绝一个浅复制方案。</td>
+              <td><code>user-value-architect</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="scope">
+        <h2>范围与证据</h2>
+        <p><strong>Scope assumption：</strong>本报告分析当前仓库作为“可复制的 agent-assisted project scaffold”的用户价值与架构优化方向，重点是新环境标准问题解决流程与外部开源经验校准，不进入实现。</p>
+        <table>
+          <tr><th>用户</th><td>把该 seed 复制到新项目中的项目 owner，随后让 Codex/Claude 等 agent 处理真实问题。</td></tr>
+          <tr><th>目标结果</th><td>外部资料、分析、方案、修改、验证、交接都能在新环境中自然落位，长期记录可追踪，agent 不靠临时记忆工作。</td></tr>
+          <tr><th>30% 入场线</th><td>减少至少 30% 的“我该把资料/分析/证据/报告放哪里、怎么交接、怎么证明完成”的路径决策与恢复成本。</td></tr>
+          <tr><th>理想上限</th><td>从“轻量模板”升级为“问题解决回合可回放”的 seed：第十次任务比第一次更稳、更快、更可信。</td></tr>
+          <tr><th>多模态证据</th><td><code>visual_evidence_unavailable</code>：未发现或未检查 UI 截图、录屏、真实 rendered report；本报告基于文本、代码、脚本、文档、外部公开文档。</td></tr>
+        </table>
+      </section>
+
+      <section id="value-theory">
+        <h2>价值理论</h2>
+        <h3>项目特有杠杆</h3>
+        <p><code>project_seed</code> 的稀缺价值不是“多一个模板仓库”，而是保护用户的 <strong>判断力、恢复能力和长期可追踪性</strong>。当 agent 参与真实项目，用户最怕的不是少一个目录，而是 agent 把问题理解、证据、风险、实现和验证散落在聊天、临时文件和未提交改动里。</p>
+        <p>当前独特资产包括：共享 <code>AGENTS.md</code>、统一 <code>control/ledger.md</code>、<code>control/state.md</code>、安全 commit 工具、Codex/Claude hooks、portable user skills、preflight 和 optional complex task live state。最大价值泄漏点是：这些资产还没有在“单轮问题解决流程”上形成一个天然入口。</p>
+        <div class="callout">
+          <strong>Leverage thesis：</strong>把“任务回合”建成轻量领域对象，会让现有资产成为同一机制的投影：输入材料、分析报告、验证结果、ledger 记录、handoff 都能自然连接。这样才是用户可感知的架构优化。
+        </div>
+      </section>
+
+      <section id="candidates">
+        <h2>候选矩阵</h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>候选</th><th>类型</th><th>用户可见性</th><th>Floor</th><th>Ceiling</th><th>置信度</th><th>处置</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>UVA-01</td><td>Task Capsule / 问题解决胶囊</td><td>流程 + 长期能力 + 信任</td><td>Obvious</td><td>30%+</td><td>2x</td><td>Medium</td><td>recommend</td></tr>
+            <tr><td>UVA-02</td><td>新环境标准问题解决流程文档切片</td><td>默认体验 + 文档</td><td>Obvious</td><td>below-30</td><td>30%+</td><td>High</td><td>fast validation bet / do-now</td></tr>
+            <tr><td>UVA-03</td><td>外部参照 ledger / radar</td><td>反馈闭环 + 战略校准</td><td>Indirect</td><td>30% hypothesis</td><td>3x hypothesis</td><td>Low-Medium</td><td>validate-first</td></tr>
+            <tr><td>UVA-04</td><td>把 <code>reports/</code> 正式纳入 scaffold</td><td>输出路径</td><td>Obvious</td><td>below-30</td><td>30% local</td><td>High</td><td>optimize</td></tr>
+            <tr><td>UVA-05</td><td>全量复制热门仓库目录和 CI</td><td>内部结构</td><td>Weak</td><td>unknown</td><td>low</td><td>Medium</td><td>drop</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="recommendations">
+        <h2>推荐卡</h2>
+        <article class="review-card primary" data-card-id="UVA-01">
+          <h3>UVA-01：Task Capsule / 问题解决胶囊</h3>
+          <p><strong>用户可见时刻：</strong>用户开始一个真实问题时，不再问“外部资料放哪里、分析报告放哪里、方案和验证怎么关联”。仓库给出一个本轮任务的固定入口和完成出口。</p>
+          <p><strong>当前体验切片：</strong>1. 新项目初始化后有 <code>control/</code> 与 <code>work/</code>；2. 外部资料可放 <code>work/in</code>，但没有任务级索引；3. 复杂任务可选 <code>tools/project.py task init</code>，但触发条件偏“多包/多 agent”；4. 报告目录不是 scaffold 的正式目录；5. ledger 记录事实，但不天然聚合本轮 evidence、recommendation、validation。</p>
+          <p><strong>改后体验切片：</strong>1. 用户运行或手动创建一个 task capsule；2. 胶囊内有 input、analysis、decision、validation、handoff 的稳定槽位；3. agent 产出报告时自动/明确回链 capsule；4. ledger 只记录 durable facts，细证据留在 capsule；5. handoff 可以从 capsule 回放，不依赖聊天上下文。</p>
+          <p><strong>结构性价值机制：</strong>把“问题解决回合”从散落流程变成稳定对象，删除 setup、上下文重建、证据追踪、完成证明和失败恢复这五类重复负担。</p>
+          <p><strong>Floor：</strong>30%+，因为它直接减少每轮任务的路径决策、归档和交接成本。</p>
+          <p><strong>Ceiling：</strong>2x，若后续和 hooks、status panel、report manifest、validation replay 连接，重度用户的第 N 次任务可显著更快更稳。</p>
+          <p><strong>Path to ceiling：</strong>需要一个小到不会压垮 seed 的对象边界：只收束任务回合，不替代 issue tracker、不变成数据库、不强制所有任务使用。</p>
+          <p><strong>反证测试：</strong>找 3 个真实新任务，让用户只用现有 <code>work/</code> + <code>ledger</code> 跑；若他们不迷路、交接不丢证据、报告可追踪，则 capsule 价值不足。</p>
+          <p><strong>拒绝替代：</strong>不要直接引入完整项目管理系统或重型 workflow engine；这会破坏 seed 的轻量长期价值。</p>
+          <div class="review-controls">
+            <select data-field="status"><option>待评审</option><option>接受</option><option>需修改</option><option>拒绝</option></select>
+            <textarea data-field="comment" placeholder="对 UVA-01 的评审意见"></textarea>
+          </div>
+        </article>
+
+        <article class="review-card fast" data-card-id="UVA-02">
+          <h3>UVA-02：新环境标准问题解决流程文档切片</h3>
+          <p><strong>用户可见时刻：</strong>用户刚复制项目，就能看到一条端到端路径：放资料、让 agent 分析、报告落点、验证、ledger、交接。</p>
+          <p><strong>当前体验切片：</strong>README/SETUP 对初始化、hooks、skills、governance 讲得比较完整，但用户提出的“标准问题解决流程”没有作为 first-class path 出现。</p>
+          <p><strong>改后体验切片：</strong>文档新增一段“Run a problem-solving round”：输入材料放置、推荐报告目录、何时写 ledger、何时创建 task live state、完成回复格式。</p>
+          <p><strong>处置：</strong>这是 small high-certainty improvement，不伪装成 2x 押注；它适合作为 Task Capsule 前的最快验证。</p>
+          <p><strong>反证测试：</strong>如果新用户读完现有 README 已能无歧义跑完整流程，则新增文档只是重复。</p>
+          <div class="review-controls">
+            <select data-field="status"><option>待评审</option><option>接受</option><option>需修改</option><option>拒绝</option></select>
+            <textarea data-field="comment" placeholder="对 UVA-02 的评审意见"></textarea>
+          </div>
+        </article>
+
+        <article class="review-card strategic" data-card-id="UVA-03">
+          <h3>UVA-03：外部参照 ledger / radar</h3>
+          <p><strong>用户可见时刻：</strong>用户不再担心项目闭门造车，因为每个重大模板能力都能说明借鉴了哪些外部 expectation、哪些只是 parity、哪些 copy risk 被拒绝。</p>
+          <p><strong>当前体验切片：</strong>项目 ledger 记录内部决策，但没有专门表达“外部参照如何影响模板演进”的字段；用户需要临时让 agent 搜索和判断。</p>
+          <p><strong>改后体验切片：</strong>每次架构/流程优化前，可追加一条 external reference record：reference type、user expectation、ceiling signal、copy risk、differentiation path、evidence status。</p>
+          <p><strong>Floor：</strong>30% hypothesis，只对长期演进决策成立；单次任务可见性弱。</p>
+          <p><strong>Ceiling：</strong>3x hypothesis，如果它持续防止项目追逐浅层热门做法，并把优秀外部模式转化为轻量 seed 能力。</p>
+          <p><strong>反证测试：</strong>连续 3 次优化中，外部参照没有改变任何优先级、拒绝项或验证计划，则 radar 只是形式主义。</p>
+          <div class="review-controls">
+            <select data-field="status"><option>待评审</option><option>接受</option><option>需修改</option><option>拒绝</option></select>
+            <textarea data-field="comment" placeholder="对 UVA-03 的评审意见"></textarea>
+          </div>
+        </article>
+      </section>
+
+      <section id="external">
+        <h2>外部参照</h2>
+        <p>外部扫描用于校准 ceiling，不用于照搬结构。当前网络证据受限于公开页面可访问性，以下分类保守使用。</p>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>参照</th><th>用户期待</th><th>Ceiling signal</th><th>Copy risk</th><th>差异化路径</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>X01</td>
+              <td>GitHub Copilot coding agent docs</td>
+              <td>agent 任务应有仓库上下文、环境准备、可审阅 PR/任务结果。</td>
+              <td>任务执行应可审计、可交接，而不只是一段聊天。</td>
+              <td>把 seed 变成 GitHub 专用 PR 机器人。</td>
+              <td>保留平台无关、轻量、文件系统优先的问题解决回合。</td>
+            </tr>
+            <tr>
+              <td>X02</td>
+              <td>OpenAI Codex / <code>AGENTS.md</code> convention</td>
+              <td>agent 能读取仓库内明确指令并按项目规则工作。</td>
+              <td>项目 instruction file 是 table stakes，下一步是让任务证据也结构化。</td>
+              <td>只堆更多规则，导致 AGENTS 过重。</td>
+              <td>AGENTS 保持短，复杂流程放 task capsule、skills、scripts。</td>
+            </tr>
+            <tr>
+              <td>X03</td>
+              <td>OpenHands 等开源 agent 项目</td>
+              <td>agent 工作流需要环境、运行、验证、日志和贡献路径。</td>
+              <td>新环境 setup 与可复现执行是成熟 agent 工程的核心。</td>
+              <td>复制大型平台目录和依赖。</td>
+              <td>吸收“可复现与可审计”机制，而非平台体量。</td>
+            </tr>
+            <tr>
+              <td>X04</td>
+              <td>aider 等代码 agent 工具</td>
+              <td>用户期待 agent 对 git、上下文、约定、提交有清晰边界。</td>
+              <td>轻量工具也可以通过约定和审计给信任。</td>
+              <td>把交互工具特性误当成项目 scaffold 特性。</td>
+              <td>强化本项目已有 clean checkpoint、safe commit、ledger 的组合价值。</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="muted">参考 URL：<a href="https://docs.github.com/en/copilot/how-tos/agents/copilot-coding-agent/best-practices-for-using-copilot-to-work-on-tasks">GitHub Copilot coding agent best practices</a>；<a href="https://github.com/openai/codex/blob/main/AGENTS.md">OpenAI Codex AGENTS.md</a>；<a href="https://github.com/All-Hands-AI/OpenHands">OpenHands</a>；<a href="https://github.com/Aider-AI/aider">aider</a>。</p>
+      </section>
+
+      <section id="fact-map">
+        <h2>事实地图与证据账本</h2>
+        <details open>
+          <summary>Project Immersion 摘要</summary>
+          <ul>
+            <li><strong>资产：</strong><code>README.md</code>、<code>SETUP_NEW_MACHINE.md</code>、<code>AGENTS.md</code>、<code>control/state.md</code>、<code>control/ledger.md</code>、<code>tools/project.py</code>、<code>tools/panel.py</code>、Codex/Claude hooks、portable user skills、tests。</li>
+            <li><strong>用户可见面：</strong>Quick Start、new machine setup、status panel、safe commit、preflight/test、task init、governance init、skill install、AGENTS/CLAUDE entry points。</li>
+            <li><strong>三条路径：</strong>新项目初始化路径；真实问题解决路径；复杂任务/多 agent 交接路径。</li>
+            <li><strong>Promise-reality 张力：</strong>项目承诺多 agent 协作和记录 trail，但标准问题解决回合还没有稳定对象；<code>reports/</code> 被 skill 使用但不在 scaffold layout 中；外部参照目前依赖临时搜索。</li>
+          </ul>
+        </details>
+        <table>
+          <thead><tr><th>ID</th><th>类型</th><th>来源</th><th>摘要</th><th>强度</th></tr></thead>
+          <tbody>
+            <tr><td>E01</td><td>observed</td><td><code>AGENTS.md</code></td><td>定义 reading order、ledger rule、completion format、validation 与 commit 规则。</td><td>High</td></tr>
+            <tr><td>E02</td><td>observed</td><td><code>control/state.md</code></td><td>当前状态只保留 seed 初始化下一步，没有任务回合结构。</td><td>High</td></tr>
+            <tr><td>E03</td><td>observed</td><td><code>README.md</code></td><td>详细描述 scaffold、hooks、skills、task init、governance，但没有端到端 problem-solving round。</td><td>High</td></tr>
+            <tr><td>E04</td><td>observed</td><td><code>SETUP_NEW_MACHINE.md</code></td><td>新环境 setup 完整，偏安装和工具检查。</td><td>High</td></tr>
+            <tr><td>E05</td><td>observed</td><td><code>tools/project.py</code></td><td>已有 init、check、sync、safe commit、task init、governance init 等命令基础。</td><td>High</td></tr>
+            <tr><td>E06</td><td>observed</td><td><code>tools/panel.py</code></td><td>状态 panel 读取 ledger/state/git，为交接提供轻量入口。</td><td>High</td></tr>
+            <tr><td>E07</td><td>observed</td><td><code>.codex/hooks/clean_checkpoint_first.py</code></td><td>已解决“结束时留下新 tracked dirt”的一类 agent 失败路径。</td><td>High</td></tr>
+            <tr><td>E08</td><td>observed</td><td><code>agent-assets/user-skills/manifest.json</code></td><td>portable skill bundle 覆盖规划、诊断、架构、报告等能力，但安装 profile 与任务流程未绑定。</td><td>High</td></tr>
+            <tr><td>E09</td><td>reported/inferred</td><td>用户本轮问题</td><td>核心担心是新环境标准问题解决流程会混乱，以及闭门造车。</td><td>High</td></tr>
+            <tr><td>E10</td><td>unknown</td><td>真实用户回放</td><td>缺少 3 个真实新环境任务的行为数据。</td><td>Coverage debt</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="validation">
+        <h2>验证计划</h2>
+        <h3>最快学习路径</h3>
+        <ol>
+          <li>选一个真实问题样例：用户提供 2-3 个外部资料文件，要求 agent 分析并给解决方案。</li>
+          <li>在不实现完整 capsule 的情况下，先用文档约定手动跑一遍：input、analysis、recommendation、validation、handoff。</li>
+          <li>记录迷路点：资料放置、报告路径、ledger 记录粒度、验证命令、最终交付是否需要临时解释。</li>
+          <li>若迷路点集中在同一个“任务回合对象”缺失上，再设计最小 Task Capsule。</li>
+        </ol>
+        <table>
+          <tr><th>Pass signal</th><td>新用户无需额外问路径；agent 交付后能从一个 task capsule 回放证据、决策、验证和风险。</td></tr>
+          <tr><th>Fail signal</th><td>用户仍主要靠聊天上下文理解任务状态，或 capsule 只是把已有 <code>control/tasks</code> 换名。</td></tr>
+          <tr><th>Proxy 风险</th><td>目录更多、文档更长、报告更漂亮都可能不提升问题解决成功率。必须用回放完整性和路径决策减少来验证。</td></tr>
+        </table>
+      </section>
+
+      <section id="defer">
+        <h2>拒绝与延后</h2>
+        <table>
+          <thead><tr><th>想法</th><th>原因</th><th>路由</th></tr></thead>
+          <tbody>
+            <tr><td>复制热门开源仓库目录结构</td><td>用户价值不可见，容易让 seed 变重；外部参照应校准 expectation，不应变成模仿。</td><td>drop</td></tr>
+            <tr><td>默认开启完整 governance</td><td>当前 README 已正确把 governance 设为 optional；默认开启会增加新项目负担。</td><td>defer</td></tr>
+            <tr><td>自动上传外部资料或联网分析</td><td>触碰安全与成本边界；项目安全规则明确需要 env + explicit authorization。</td><td>drop</td></tr>
+            <tr><td>做大型 dashboard</td><td>没有 UI/用户反馈证据，且可能把轻量 scaffold 推向平台化。</td><td>blocked_by_evidence</td></tr>
+          </tbody>
+        </table>
+        <h3>Do-not-do list</h3>
+        <ul>
+          <li>不要把内部整洁当成用户价值。</li>
+          <li>不要把所有报告都写进 <code>control/ledger.md</code>，ledger 应记录 durable facts，细证据应有任务级归档。</li>
+          <li>不要默认生成大量目录；按任务复杂度渐进出现。</li>
+          <li>不要声称 category-shift；当前外部校准和真实用户回放不足。</li>
+        </ul>
+      </section>
+
+      <section id="feedback">
+        <h2>评审导出</h2>
+        <p>本报告使用最小 self-contained review controls。状态和评论会尽量存入浏览器 localStorage；如果不可用，仍可手动复制导出内容。</p>
+        <div class="button-row">
+          <button type="button" onclick="exportFeedback()">导出评审 Markdown</button>
+          <button type="button" onclick="clearFeedback()">清空本地评审</button>
+        </div>
+        <pre id="export-box" aria-live="polite">尚未导出。</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const reportId = "user_value_architect_report_20260628_0925";
+    function key(cardId, field) { return `${reportId}:${cardId}:${field}`; }
+    function loadReviewState() {
+      document.querySelectorAll("[data-card-id]").forEach(card => {
+        const id = card.getAttribute("data-card-id");
+        card.querySelectorAll("[data-field]").forEach(input => {
+          const field = input.getAttribute("data-field");
+          try {
+            const value = localStorage.getItem(key(id, field));
+            if (value !== null) input.value = value;
+          } catch (error) {}
+          input.addEventListener("input", () => {
+            try { localStorage.setItem(key(id, field), input.value); } catch (error) {}
+          });
+        });
+      });
+    }
+    function exportFeedback() {
+      const lines = [`# Review feedback for ${reportId}`, ""];
+      document.querySelectorAll("[data-card-id]").forEach(card => {
+        const id = card.getAttribute("data-card-id");
+        const status = card.querySelector('[data-field="status"]')?.value || "";
+        const comment = card.querySelector('[data-field="comment"]')?.value || "";
+        lines.push(`## ${id}`, "", `- status: ${status}`, `- comment: ${comment || "(empty)"}`, "");
+      });
+      const text = lines.join("\n");
+      document.getElementById("export-box").textContent = text;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+    }
+    function clearFeedback() {
+      document.querySelectorAll("[data-card-id]").forEach(card => {
+        const id = card.getAttribute("data-card-id");
+        card.querySelectorAll("[data-field]").forEach(input => {
+          const field = input.getAttribute("data-field");
+          try { localStorage.removeItem(key(id, field)); } catch (error) {}
+          if (input.tagName === "TEXTAREA") input.value = "";
+          if (input.tagName === "SELECT") input.selectedIndex = 0;
+        });
+      });
+      document.getElementById("export-box").textContent = "已清空。";
+    }
+    loadReviewState();
+  </script>
+</body>
+</html>

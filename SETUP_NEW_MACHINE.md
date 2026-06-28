@@ -24,6 +24,27 @@ clean-checkpoint gate.
 After initialization, review `control/init_manifest.md` first. It lists the
 files updated automatically and the remaining project-specific edits to make.
 
+## Run a Problem-Solving Round
+
+After setup, use this path when you want an agent to solve a real project
+problem from external material:
+
+1. Put user-provided material in `work/in/<task-slug>/` when it should be kept
+   with the project, or reference its existing repository path.
+2. Have the agent read `AGENTS.md`, `control/state.md`, relevant recent records
+   in `control/ledger.md`, and the task input before proposing changes.
+3. Store durable analysis reports in `reports/<topic>/`. Store final
+   deliverables that should not be committed in `work/out/`.
+4. Append only durable facts to `control/ledger.md`: requests, decisions, risks,
+   issues, sessions, and artifact links.
+5. Verify with `python3 tools/project.py check` plus the smallest task-specific
+   tests that prove the result. Use `py -3` equivalents on Windows.
+6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only
+   when work spans multiple packages, worktrees, agents, or handoff sessions.
+7. Finish with this round's results, modified/new files, risk points, and
+   concrete next steps. If tracked files changed, close with a local checkpoint
+   commit unless the blocker is explicitly documented.
+
 ## Claude Code New-Session Defaults
 
 For the smoothest Claude Code path, use Claude Code v2.1.140 or newer, then set

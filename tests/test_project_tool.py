@@ -25,6 +25,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
         module.GitChange("??", "control/ledger.md"),
         module.GitChange("??", ".codex/config.example.toml"),
         module.GitChange(" M", "SETUP_NEW_MACHINE.md"),
+        module.GitChange("??", "reports/user-value-architect/report.html"),
         module.GitChange("??", ".env"),
         module.GitChange("??", "work/tmp/scratch.txt"),
         module.GitChange("??", "work/out/result.png"),
@@ -36,6 +37,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
         "control/ledger.md",
         ".codex/config.example.toml",
         "SETUP_NEW_MACHINE.md",
+        "reports/user-value-architect/report.html",
     ]
     assert [change.path for change in rejected] == [".env", "work/tmp/scratch.txt", "work/out/result.png"]
 
@@ -108,6 +110,7 @@ def test_init_project_copy_no_git(tmp_path):
     assert "PostToolUse" in hooks["hooks"]
     assert "Stop" in hooks["hooks"]
     assert (target / "work" / "in" / ".gitkeep").exists()
+    assert (target / "reports" / ".gitkeep").exists()
 
 
 def test_init_activates_windows_claude_and_codex_hooks(tmp_path):
@@ -190,6 +193,9 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "py -3 tools/project.py check" in readme
     assert "py -3 tools/project.py configure-claude" in readme
     assert "governance init --profile sustained" in readme
+    assert "Run a Problem-Solving Round" in readme
+    assert "reports/<topic>/" in readme
+    assert not (target / "reports" / "user-value-architect").exists()
 
 
 def test_seed_docs_include_windows_setup_commands():
@@ -203,6 +209,8 @@ def test_seed_docs_include_windows_setup_commands():
         assert "tools/project.py configure-claude" in text
         assert "governance init --profile sustained" in text
         assert "Governance Lifecycle" in text
+        assert "Run a Problem-Solving Round" in text
+        assert "reports/<topic>/" in text
         assert "v2.1.140" in text
         assert "dontAsk" not in text
         assert "bypassPermissions" not in text
@@ -287,12 +295,11 @@ def test_init_updates_contract_state_and_ledger(tmp_path):
     assert (target / "control" / "init_manifest.md").exists()
 
 
-def test_no_legacy_directories_in_template():
+def test_no_legacy_directories_except_reports_in_template():
     legacy_dirs = [
         "codex",
         "revision",
         "journal",
-        "reports",
         "data",
         "source_material",
         "optional_packs",
@@ -301,6 +308,7 @@ def test_no_legacy_directories_in_template():
     ]
     for relative in legacy_dirs:
         assert not (ROOT / relative).exists(), f"legacy directory remains: {relative}"
+    assert (ROOT / "reports").is_dir()
 
 
 def test_gemini_adapter_is_not_part_of_template():

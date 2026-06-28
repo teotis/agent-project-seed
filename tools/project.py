@@ -32,7 +32,7 @@ REQUIRED_FILES = [
     ".gitignore",
 ]
 
-REQUIRED_DIRS = ["control", "work/in", "work/out", "work/tmp", "tools", "src"]
+REQUIRED_DIRS = ["control", "reports", "work/in", "work/out", "work/tmp", "tools", "src"]
 PROJECT_FACING_FILES = [
     "README.md",
     "AGENTS.md",
@@ -67,6 +67,7 @@ ALLOWED_PREFIXES = (
     ".claude/",
     "agent-assets/",
     "control/",
+    "reports/",
     "tools/",
     "src/",
     "tests/",
@@ -547,6 +548,7 @@ def init_project(args: argparse.Namespace) -> int:
     update_state(args.name, package_name)
     update_readme(args.name, package_name)
     reset_init_ledger(args.name, package_name)
+    reset_reports_dir()
     write_init_manifest(args.name, package_name, platform_name)
     activate_platform_configs(platform_name)
     if not args.no_git:
@@ -684,6 +686,7 @@ A newly initialized agent-assisted project.
 - Shared agent rules: `AGENTS.md`
 - Current state snapshot: `control/state.md`
 - Long-term project ledger: `control/ledger.md`
+- Durable analysis reports: `reports/`
 - Project-level Claude Code hooks: `.claude/settings.json` enables the status panel and guarded local checkpoint commits
 
 ## First Actions
@@ -696,6 +699,18 @@ A newly initialized agent-assisted project.
 6. Optional for Claude Code: run `python3 tools/project.py configure-claude` to make new sessions use auto permission review after updating Claude Code to v2.1.140 or newer.
 7. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
 8. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
+
+## Run a Problem-Solving Round
+
+Use this path when a user brings external material and wants an agent to analyze a problem, propose a solution, make the change, verify it, and hand off cleanly.
+
+1. Put user-provided material in `work/in/<task-slug>/` when it should be kept with the project, or reference its existing repository path.
+2. Have the agent read `AGENTS.md`, `control/state.md`, relevant recent records in `control/ledger.md`, and the task input before proposing changes.
+3. Store durable analysis reports in `reports/<topic>/`. Store final deliverables that should not be committed in `work/out/`.
+4. Append only durable facts to `control/ledger.md`: requests, decisions, risks, issues, sessions, and artifact links.
+5. Verify with `python3 tools/project.py check` plus the smallest task-specific tests that prove the result. Use `py -3` equivalents on Windows.
+6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only when work spans multiple packages, worktrees, agents, or handoff sessions.
+7. Finish with this round's results, modified/new files, risk points, and concrete next steps. If tracked files changed, close with a local checkpoint commit unless the blocker is explicitly documented.
 
 ## Useful Commands
 
@@ -757,6 +772,20 @@ def reset_init_ledger(project_name: str, package_name: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def reset_reports_dir() -> None:
+    """Clear seed analysis reports from a newly initialized project."""
+    reports = ROOT / "reports"
+    reports.mkdir(exist_ok=True)
+    for child in reports.iterdir():
+        if child.name == ".gitkeep":
+            continue
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    (reports / ".gitkeep").write_text("", encoding="utf-8")
+
+
 def write_init_manifest(project_name: str, package_name: str, platform_name: str) -> None:
     path = ROOT / "control" / "init_manifest.md"
     content = f"""# Initialization Manifest
@@ -774,6 +803,7 @@ def write_init_manifest(project_name: str, package_name: str, platform_name: str
 - control/state.md
 - control/ledger.md
 - control/init_manifest.md
+- reports/.gitkeep
 - src/{package_name}/
 - .claude/settings.json
 - .codex/hooks.json

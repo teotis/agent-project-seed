@@ -104,6 +104,7 @@ py -3 -m pytest
 control/contract.md → deleted (content merged here)
 control/ledger.md   — Unified record ledger
 control/state.md    — Current state snapshot
+reports/            — Durable analysis reports and review artifacts
 work/in/            — Input materials
 work/out/           — Final artifacts and manifest
 work/tmp/           — Temporary files, not committed

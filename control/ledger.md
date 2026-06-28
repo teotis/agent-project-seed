@@ -473,3 +473,62 @@ links:
 - README.md
 - SETUP_NEW_MACHINE.md
 - tests/test_project_tool.py
+
+## 2026-06-28T09:25:00 - User value architecture scan for problem-solving flow
+
+type: artifact
+status: closed
+tags: user-value-architect, architecture, workflow, external-reference
+
+summary:
+- Produced an analysis-only User Value Architect report for the seed's new-environment problem-solving workflow and external open-source calibration concern.
+- Primary recommendation: validate a lightweight Task Capsule / problem-solving round object before adding heavier project structure.
+
+details:
+- The report distinguishes high-ceiling candidates from small high-certainty improvements.
+- No product code, tests, configuration, runtime behavior, or Git history was modified as part of the analysis.
+- Coverage debt remains: no visual/UI artifacts and no real new-user task replay were available.
+
+links:
+- reports/user-value-architect/user_value_architect_report_20260628_0925.html
+
+## 2026-06-28T09:50:00 - Implement problem-solving round documentation
+
+type: session
+status: closed
+tags: documentation, workflow, reports, validation
+
+summary:
+- Implemented UVA-02 by adding a "Run a Problem-Solving Round" path to the seed setup docs and initialized-project README template.
+- Made `reports/` an explicit durable analysis report directory while keeping `work/out/` for final outputs that should not be committed.
+- Updated initialization to clear seed analysis reports from newly initialized projects and leave `reports/.gitkeep`.
+
+details:
+- Updated tests to verify the problem-solving round appears both in seed docs and initialized project docs.
+- Updated safe-commit allowlist so durable reports can be checkpointed intentionally.
+- Verified with `python3 tools/project.py check` and `python3 -m pytest`.
+
+links:
+- README.md
+- SETUP_NEW_MACHINE.md
+- tools/project.py
+- tests/test_project_tool.py
+- reports/user-value-architect/user_value_architect_report_20260628_0925.html
+
+## 2026-06-28T09:35:00 - Accept user value architecture candidates
+
+type: decision
+status: closed
+tags: user-value-architect, architecture, workflow, review
+
+summary:
+- Accepted UVA-01 Task Capsule / problem-solving round object as the primary architecture direction to explore.
+- Accepted UVA-02 new-environment problem-solving flow documentation as the fastest validation slice.
+- Accepted UVA-03 external reference ledger/radar as a strategic calibration mechanism.
+
+details:
+- Acceptance covers the recommendations in the analysis report, not implementation completion.
+- Recommended sequencing: validate UVA-02 first, use its results to decide the minimal boundary for UVA-01, and keep UVA-03 lightweight so external references calibrate decisions without driving shallow feature copying.
+
+links:
+- reports/user-value-architect/user_value_architect_report_20260628_0925.html
