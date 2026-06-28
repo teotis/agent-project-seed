@@ -258,6 +258,25 @@ links:
 - tests/test_project_tool.py
 - https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md
 
+## 2026-06-28T08:46:44 - Check governance and domain queue findings
+
+type: session
+status: closed
+tags: governance, template, study-helper-finding
+
+summary:
+- Checked whether reported rule-governance accumulation and study-helper domain queue findings apply to this seed template.
+- The study-helper `learning_items.csv` / `action_queue` / domain findings do not map to this repository's data model.
+- The rule-governance concern does apply as a template risk; `governance init` already exists, and its generated review table now covers agent adapters, hooks, and the portable skill manifest in addition to `AGENTS.md`.
+
+details:
+- Do not add `control/governance.md` to the seed by default; copied projects should still opt in only when durable rules, scripts, reports, or agent workflows need lifecycle review.
+- Keep future rule additions small and prefer tests, hooks, scripts, or skills when enforcement is more appropriate than another instruction.
+
+links:
+- tools/project.py
+- tests/test_project_tool.py
+
 ## 2026-06-25T06:17:01 - Add opt-in governance lifecycle
 
 type: decision

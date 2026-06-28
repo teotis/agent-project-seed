@@ -683,6 +683,10 @@ def test_governance_init_creates_optional_lifecycle_doc(tmp_path):
     assert "`Pilot`" in doc
     assert "`Defer`" in doc
     assert "`Retire`" in doc
+    assert "`CLAUDE.md`" in doc
+    assert "`.codex/hooks.json`" in doc
+    assert "`.claude/settings.json`" in doc
+    assert "`agent-assets/user-skills/manifest.json`" in doc
     assert "This file is advisory" in doc
 
     check = subprocess.run(

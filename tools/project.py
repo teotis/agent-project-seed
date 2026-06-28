@@ -1064,6 +1064,10 @@ a compact lifecycle review surface.
 | Item | Type | State | Protects / value | Trigger | Cost | Owner | Review when | Retire or downgrade when | Replacement |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `AGENTS.md` | rule | Protect | Shared project invariants for agents | Every agent session | Rule churn if overused | project owner | A rule is added or contradicted | A rule is better enforced by a test, hook, or script | n/a |
+| `CLAUDE.md` | adapter | Protect | Claude Code points back to shared rules | Claude Code sessions | Duplicate-rule drift | project owner | `AGENTS.md` changes | Adapter can be generated or is no longer used | `tools/project.py sync-agents` |
+| `.codex/hooks.json` | hook | Protect | Codex status and clean-checkpoint gates | Codex sessions | Hook noise or stale paths | project owner | Hook behavior changes | The invariant is covered by another hook or test | `.codex/hooks/*.py` |
+| `.claude/settings.json` | hook | Protect | Claude status and checkpoint helpers | Claude Code sessions | Tool-specific config drift | project owner | Claude hook behavior changes | Claude support is removed or generated elsewhere | `.claude/settings.example.json` |
+| `agent-assets/user-skills/manifest.json` | skill bundle | Pilot | Portable skills for new environments | Environment bootstrap | Bundle bloat and overlapping skills | project owner | Skills are added, overlap, or go stale | A skill is unused, duplicated, or superseded | `tools/project.py list-user-skills` |
 
 ## Review Prompts
 
