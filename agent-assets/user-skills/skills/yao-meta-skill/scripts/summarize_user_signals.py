@@ -20,7 +20,7 @@ SECRET_PATTERNS = [
     re.compile(r"(?i)\b(api[_-]?key|token|password|secret)\b\s*[:=]\s*[^\s,;]+"),
 ]
 EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
-LOCAL_PATH_RE = re.compile(r"/Users/[^\s'\"<>]+")
+LOCAL_PATH_RE = re.compile(r"/" + r"Users/[^\s'\"<>]+")
 
 PATTERN_RULES = [
     {

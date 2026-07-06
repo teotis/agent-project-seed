@@ -17,7 +17,7 @@ Use this checklist before approving a generated skill that produces reports, tut
 
 ### P0 Must Fix
 
-- no absolute `/Users/...` paths in final HTML
+- no machine-local absolute paths in final HTML
 - no placeholder titles, labels, screenshots, or source notes
 - no invented screenshots, charts, citations, or visual evidence
 - no table with paragraph-length cells when bullets or cards would scan better

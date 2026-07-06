@@ -46,7 +46,7 @@
     },
     {
       "id": 3,
-      "prompt": "我只想让你分析一下，不要改任何代码。项目在 /Volumes/Extreme_SSD/project/teotis_skill。",
+      "prompt": "我只想让你分析一下，不要改任何代码。项目在 /Users/example-user/projects/legacy-system。",
       "expected_output": "Operates strictly in Diagnostic Mode, explores the project structure, produces a report with fact ledger and recommendations, and explicitly states that no code has been modified.",
       "files": [],
       "assertions": [

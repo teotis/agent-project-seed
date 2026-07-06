@@ -121,7 +121,7 @@
       "prompt": "把这份大型相机项目架构分析转成一个真正帮助理解的 HTML。原文包含模块分层、依赖关系、按下快门的运行时路径，以及自动闪光灯、调色盘、夜景、人像、Live Photo 等功能如何跨层协作。不要只把文章切成卡片。",
       "expected_output": "Generates a comprehension-first architecture explainer. The opening establishes the core mental model and an overview map; runtime behavior uses a labeled dynamic flow; feature variants use an aligned cross-layer comparison; source details remain traceable through evidence references and an appendix. Review controls are secondary and collapsed by default.",
       "files": [
-        "/Users/dingren/.claude/projects/-Volumes-Extreme-SSD-project-open-camera/c6d59524-d3cc-4983-ad01-dcd09f19fc0c.jsonl"
+        "/Users/example-user/.claude/projects/example-open-camera/architecture-session.jsonl"
       ],
       "assertions": [
         {
