@@ -112,8 +112,11 @@ Rules:
 
 - No primary item may be `omitted`.
 - Every `omitted` item needs a reason.
+- Every machine-readable ledger item that represents a claim, relationship, flow, comparison, risk, or uncertainty needs a `disposition`.
 - Summaries may combine details, but the ledger must retain the mapping.
 - A source list without claim-to-source mapping is not traceability.
+
+The ledger is not just documentation prose: `validate_html.py --profile comprehension` parses the JSON in `id="coverage-ledger"` and rejects primary omissions, omitted items without reasons, missing dispositions, and invalid JSON.
 
 ## 5. Compression Rules
 
@@ -153,3 +156,5 @@ Before rendering, answer without looking at the source:
 7. Where can the reader verify each major claim?
 
 If the answers are weak, HTML will only make weak analysis more polished.
+
+The thesis must be a conclusion, not a decorative title. It should explain the governing model, consequence, or decision-useful finding in one sentence. If deleting the thesis would leave the opening viewport with only the page topic, continue analyzing before rendering.

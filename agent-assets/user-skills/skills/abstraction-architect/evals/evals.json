@@ -20,7 +20,7 @@
           "text": "Does not modify code or production configuration."
         },
         {
-          "text": "Produces an interactive HTML architecture report by default; only adds a Markdown source report when the user explicitly requests one or the environment cannot generate HTML, in which case the HTML limitation must be stated."
+          "text": "Defaults to a one-screen structural decision and only produces an interactive HTML architecture report when the Report Upgrade Gate is met; Markdown source is produced only on explicit request or selected HTML failure."
         }
       ]
     },
@@ -70,7 +70,7 @@
     {
       "id": 4,
       "prompt": "帮我做一下这个项目的架构审查，看看有没有深层的结构性问题。",
-      "expected_output": "Performs a Full Architecture Analysis (Deep, user-invoked default) with structural pressure map, evidence ledger, candidate proposals with Admissibility Gate classification, rejected/deferred abstractions section, and an interactive HTML report; Markdown source is produced only on explicit request or HTML failure.",
+      "expected_output": "Performs a Full Architecture Analysis (Deep, user-invoked default) with structural pressure map, evidence ledger, candidate proposals with Admissibility Gate classification, rejected/deferred abstractions section, and a one-screen structural decision; produces interactive HTML only if the Report Upgrade Gate is met, and Markdown source only on explicit request or selected HTML failure.",
       "files": [],
       "assertions": [
         {
@@ -156,7 +156,7 @@
     {
       "id": 8,
       "prompt": "我们的 CI、多 agent 执行和人工审批流程状态散落在 YAML、数据库、日志、Slack checklist 和最终报告里，经常出现某处显示完成、另一处还在等待。请用 abstraction-architect 不要只建议拆 orchestrator，而要找更深的结构。",
-      "expected_output": "Performs a process-spatialization analysis: identifies the canonical execution object behind scattered runtime artifacts, treats YAML/database/log/checklist/report as projections of that object, checks projection consistency and gluing conditions, and defines deformation tests for adding new states, gates, or execution environments.",
+      "expected_output": "First confirms local deletion and boundary repair are insufficient, then performs a process-spatialization analysis: identifies the execution object behind scattered runtime artifacts, treats YAML/database/log/checklist/report as projections of that object, checks projection consistency and gluing conditions, and defines deformation tests for adding new states, gates, or execution environments.",
       "files": [],
       "assertions": [
         {
@@ -176,6 +176,9 @@
         },
         {
           "text": "Still applies evidence, counterexamples, complexity deletion, transition seam, and disproof signals instead of recommending an abstract meta-model by taste."
+        },
+        {
+          "text": "Confirms local deletion and boundary repair are insufficient before escalating to process spatialization."
         }
       ]
     },
@@ -383,6 +386,29 @@
         },
         {
           "text": "Allows unproven, defer, or local deletion wins when the evidence cannot distinguish candidates."
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "我们有两个抽象候选：A 能统一 5 个状态投影但迁移很大；B 只是引入一个稳定 IR 和投影检查，先覆盖报告、ledger、审批 checklist 三个 hot path。请用 abstraction-architect 判断哪个更值得推荐，不要把清晰例子、工具收益、跨领域连接做成绝对门槛。",
+      "expected_output": "Compares both candidates through candidate competition. It gives any recommended structural direction a proof route with family proof, difference proof, preservation proof, future deformation proof, and falsifier. It uses abstraction fitness as non-gating decision support, including clear examples, tool yield, cross-context links, practical sufficiency, hot-path value, and tiny complete loop. It explicitly considers whether a stable IR or projection registry is more appropriate than a final domain model, and keeps any candidate unproven when the proof route or evidence is insufficient.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Includes a candidate proof route before recommending a structural rewrite, canonical model, IR, or projection registry."
+        },
+        {
+          "text": "Treats clear examples, tool yield, cross-context links, practical sufficiency, hot-path value, and tiny complete loop as scoring criteria rather than absolute gates."
+        },
+        {
+          "text": "Explicitly asks whether the pressure calls for a stable IR, projection registry, or transformation protocol rather than a final domain model."
+        },
+        {
+          "text": "Favors the candidate with better practical sufficiency, hot-path value, and tiny complete loop when evidence supports it, instead of choosing the more general abstraction by elegance."
+        },
+        {
+          "text": "Keeps noisy score details in proposal cards or supporting detail rather than making the default answer a score spreadsheet."
         }
       ]
     }

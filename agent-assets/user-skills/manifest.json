@@ -1,236 +1,207 @@
 {
-  "version": 2,
-  "description": "Portable user-installed skill set for bootstrapping Codex and Claude environments.",
+  "version": 3,
+  "description": "Portable, current-snapshot skill set for bootstrapping Codex and Claude environments without making every specialist workflow a default dependency.",
   "layout": "skills/<skill-name>",
   "profiles": {
-    "recommended": "Default workflow and engineering skills for a fresh environment.",
-    "all": "Every skill bundled by this seed."
+    "recommended": "Small cross-platform engineering core; install this for normal new projects.",
+    "all": "Current curated snapshot, including specialist and explicit-use workflows."
   },
   "skills": [
     {
       "name": "clean-checkpoint-first",
       "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "done-claim-gate",
       "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "diagnosing-bugs",
       "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
+    },
+    {
+      "name": "implement",
+      "profile": "recommended",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "tdd",
+      "profile": "recommended",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "code-review",
+      "profile": "recommended",
+      "source": "current-snapshot"
     },
     {
       "name": "codebase-design",
       "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
-      "name": "domain-modeling",
+      "name": "research",
       "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
-      "name": "engineering-memory",
+      "name": "handoff",
       "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "writing-great-skills",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "yao-meta-skill",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "agent-task-planner",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "agent-orchestration-planner",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "package-issue",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "bulk-issue-triage",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "triage",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "to-prd",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "to-issues",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "prototype",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "playwright",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "html-response",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "reviewable-html-report",
-      "profile": "recommended",
-      "source": "local"
-    },
-    {
-      "name": "improve-codebase-architecture",
-      "profile": "recommended",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "abstraction-architect",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "renewal-architect",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "user-value-architect",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "product-sense-refiner",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "complexity-sweep",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "deep-flow-sweep",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "grill-me",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "grill-with-docs",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "grilling",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
     },
     {
       "name": "ingest-dialogue",
       "profile": "all",
-      "source": "local"
+      "source": "current-snapshot"
+    },
+    {
+      "name": "domain-modeling",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "engineering-memory",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "html-response",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "reviewable-html-report",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "prototype",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "playwright",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "improve-codebase-architecture",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "flow-realization-review",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "package-issue",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "agent-task-planner",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "agent-orchestration-planner",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "yao-meta-skill",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "public-release-sweep",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "resolving-merge-conflicts",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "setup-pre-commit",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "setup-matt-pocock-skills",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "ask-matt",
+      "profile": "all",
+      "source": "current-snapshot"
+    },
+    {
+      "name": "loop-me",
+      "profile": "all",
+      "source": "current-snapshot"
     },
     {
       "name": "brainstorming",
       "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "dispatching-parallel-agents",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "executing-plans",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "finishing-a-development-branch",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "receiving-code-review",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "requesting-code-review",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "subagent-driven-development",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "systematic-debugging",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "test-driven-development",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "using-git-worktrees",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "using-superpowers",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "verification-before-completion",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "writing-plans",
-      "profile": "all",
-      "source": "superpowers"
-    },
-    {
-      "name": "writing-skills",
-      "profile": "all",
-      "source": "superpowers"
+      "source": "current-snapshot"
     }
   ],
   "notes": [
-    "Skills are stored in one flat directory; profile and source metadata live in this manifest.",
-    "The install target only selects the user skill directory to install into.",
-    "Heavy local preview, report, evidence, fixture, and cache artifacts are intentionally excluded from this seed package."
+    "Skills are stored in one flat directory; profile and provenance metadata live in this manifest.",
+    "The recommended profile is intentionally small; specialist workflows are opt-in through --profile all.",
+    "This snapshot was refreshed against the locally installed Codex and Claude skills on 2026-07-10; it excludes platform runtimes, account-specific connectors, and retired Superpowers aliases. The remaining brainstorming skill is explicit-use only.",
+    "Run tools/project.py audit-user-skills after installation to make local drift visible before using --force."
   ]
 }

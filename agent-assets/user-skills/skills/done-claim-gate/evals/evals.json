@@ -80,6 +80,123 @@
           "text": "Downgrades the completion level when realization evidence is absent, even if tests and commits exist."
         }
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "用户说“把这个宽泛的产品方向落成一个可复用的 CLI 导出流程，后续其他脚本会消费输出”。agent 需要自行决定输出结构、错误提示、兼容边界和验收证据，且仓库里已有旧导出模板可能被继续使用。",
+      "expected_output": "识别为非例行需求落地风险，至少运行 pre-delivery lens；若准备声明完成，则运行 completion claim gate。检查用户/下游依赖、解释空间、旧模板替代风险、真实导出路径和可消费证据，而不是只用测试通过或文件生成证明完成。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Requires non-routine landing risk rather than any user-visible artifact as the trigger."
+        },
+        {
+          "text": "Recognizes high interpretation space and downstream dependency as automatic-trigger conditions."
+        },
+        {
+          "text": "Checks whether an old template or fallback is substituting for the intended workflow."
+        },
+        {
+          "text": "Requires evidence from the real export path and downstream-consumable output."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "用户说“把 README 里的按钮名称 A 改成 B，然后告诉我改了哪些文件”。这是一次明确机械小改，没有外部契约变化，也没有用户表达不满。",
+      "expected_output": "不应自动触发 done-claim-gate；直接执行并简短汇报即可。只有用户显式要求用户视角检查或完成门禁时，才运行本 skill。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not trigger merely because the agent will send a final summary."
+        },
+        {
+          "text": "Classifies exact text replacement or low-impact copy edits as non-triggering routine/mechanical work."
+        },
+        {
+          "text": "Allows explicit user invocation to override the default non-trigger behavior."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "用户给出明确的导出契约：输出必须是 JSON Lines，字段包含 id/title/resolved_at，时区 UTC，下游 ETL 脚本会消费。仓库里已有旧导出实现走 CSV 模板。agent 需要跨多路径落地：改导出器、保证下游兼容、处理时区转换。",
+      "expected_output": "识别为非例行需求落地风险（明确但复杂落地）：interpretation-or-complexity 的复杂落地分支成立，path-substitution-risk 成立。至少运行 pre-delivery lens；若准备声明完成，运行 completion claim gate。检查旧 CSV 模板是否仍被使用、真实 JSON Lines 导出路径、下游可消费证据，而非只用测试通过或文件生成证明完成。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recognizes explicit-but-complex landing (migration, export contract, cross-path) as a trigger, not only vague goals; 'explicitly specified' does not mean automatically non-triggering when the landing is complex."
+        },
+        {
+          "text": "Identifies old CSV template or old export path as a path-substitution risk."
+        },
+        {
+          "text": "Also recognizes the baseline AND clause holds (non-routine_landing, interpretation-or-complexity, user-or-downstream_dependency all true), not relying solely on the path-substitution override."
+        },
+        {
+          "text": "Requires evidence from the real JSON Lines export path and downstream-consumable output."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "用户说「把首页欢迎语调得更友好一点，现在太生硬」。这是宽泛方向但低影响：无下游脚本消费、无外部契约变化、无发布包风险、用户未表达不满。",
+      "expected_output": "不自动触发 done-claim-gate。虽是宽泛方向，但 user-or-downstream_dependency 不成立（低影响文案润色），baseline risk 三项不全。直接执行润色并简短汇报即可；只有用户显式要求用户视角检查或完成门禁时才运行本 skill。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not trigger merely because the goal is vague; requires user-or-downstream dependency."
+        },
+        {
+          "text": "Classifies low-impact copy polish as non-triggering even when the direction is broad."
+        },
+        {
+          "text": "Allows explicit user invocation to override the default non-trigger behavior."
+        },
+        {
+          "text": "Distinguishes vague-but-low-impact from vague-with-downstream-dependency."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "一个高风险导出契约任务即将 final。pre-delivery lens 五维里发现真实导出路径仍走旧模板，且下游可消费证据缺失；agent 想把它判为“小偏差，不影响完成声明”，然后回复“已完成”。",
+      "expected_output": "必须把路径真实性和目标触达判为 must-upgrade，进入 completion claim gate 或先修正真实路径；不能把旧模板路径和缺失下游证据降级为普通摘要，也不能使用 complete/已完成口径。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Requires an explicit upgrade decision for pre-delivery lens deviations."
+        },
+        {
+          "text": "Treats old template/fallback use in the final path as a must-upgrade path-authenticity deviation."
+        },
+        {
+          "text": "Treats missing downstream-consumable evidence for a downstream contract as affecting the completion claim."
+        },
+        {
+          "text": "Prevents saying complete when must-upgrade deviations remain unresolved."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "用户只说“做个更好用的报告导出”。agent 从单一上下文推断出目标是“给 CI 消费的 JSON 报告”，没有其他用户信号或确认；实现后准备把目标来源标为可靠推断并宣称 complete。",
+      "expected_output": "目标来源必须标为 agent 推断，除非至少 2 个独立用户信号支持且无反证；完成声明上限为 engineering-complete，不能用 reliable inference 绕过 complete 限制。若该目标会改变实现方向，应询问一个阻塞问题或把缺口写入 completion claim gate。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Requires at least two independent user signals before classifying a goal as reliable inference."
+        },
+        {
+          "text": "Classifies a single unsupported inferred downstream use as agent inference."
+        },
+        {
+          "text": "Caps completion wording at engineering-complete for agent-inferred goals."
+        },
+        {
+          "text": "Asks a blocking question or records a gap when the inferred goal changes implementation direction."
+        }
+      ]
     }
   ]
 }

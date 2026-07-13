@@ -1,7 +1,7 @@
 interface:
   display_name: "Abstraction Architect"
   short_description: "为结构性架构压力提供 evidence-grounded candidate 与升降级路径"
-  default_prompt: "使用 $abstraction-architect 做结构性架构分析；默认用中文交付 pressure map、candidate competition、admissibility 判定、HTML 评审面和最终回复；agent active 自启用只做低预算轻量诊断、coverage debt 和 handoff 建议，用户显式调用才进入正式 Deep，Exhaustive 仅在用户明确要求时进入。"
+  default_prompt: "使用 $abstraction-architect 做结构性架构分析；默认用中文先交付一屏三分流结论（local deletion wins / boundary repair wins / structural candidate worth testing）、pressure map、candidate competition 和 admissibility 判定，保留必要技术术语、代码/命令/文件名、架构术语和原文证据；只有满足 Report Upgrade Gate 时才生成 HTML 评审面。agent active 自启用只做低预算轻量诊断、coverage debt 和 handoff 建议，用户显式调用才进入 Deep，Exhaustive 仅在用户明确要求时进入。"
 
 policy:
   allow_implicit_invocation: true

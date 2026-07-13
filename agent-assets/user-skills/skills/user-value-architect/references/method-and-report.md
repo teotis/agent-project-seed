@@ -567,7 +567,7 @@ HTML report (default formal deliverable):
 - Must include reviewable units for recommendation cards and high-risk decisions: `review-controls`, stable `data-card-id`, status/comment controls, and feedback export. If local persistence is used, wrap localStorage in fallback-safe code.
 - May add visual filtering, candidate cards, evidence expanders, and review controls.
 - Must not introduce conclusions missing from the underlying analysis or Markdown source when one is produced.
-- Use `reviewable-html-report/references/report_base.md` when building an interactive review surface. If it is unavailable, fall back to self-contained static HTML with a TOC, stable section IDs, evidence appendix, Mermaid source fallback, and a non-persistent feedback area.
+- 先读取 `../reviewable-html-report/SKILL.md` and use `../reviewable-html-report/references/report_base.md` when building an interactive review surface. If it is unavailable, fall back to self-contained static HTML with a TOC, stable section IDs, evidence appendix, Mermaid source fallback, and a non-persistent feedback area.
 - Open the report only when the user requests a preview or the environment explicitly supports interactive preview without CI, SSH, or headless side effects.
 
 ## Task Package Guidance

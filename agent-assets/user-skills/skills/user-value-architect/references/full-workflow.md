@@ -2,7 +2,7 @@
 
 本 reference 保留完整执行手册、candidate model、gate、报告结构、chat-only schema 和完成标准。主入口见 `../SKILL.md`。
 
-路由语义以主入口为准：本文件中的 `route-to`、联合 handoff 或 agent active 只表示轻量上下文中的 Standard 入口或生成建议；正在运行的 architect、sweep、Deep 或 Exhaustive workflow 不得自动启动另一个重型 skill。
+路由语义以主入口为准：本文件中的 `route-to`、联合 handoff 或 agent active 只能表示轻量上下文中的建议或交接说明；未被用户点名时不得自动启动本重型 skill。正在运行的 architect、sweep、Deep 或 Exhaustive workflow 不得自动启动另一个重型 skill。
 
 ## Mission
 
@@ -20,13 +20,13 @@
 
 ## 默认执行强度与询问门槛
 
-本 skill 同时支持用户显式调用与 agent active 自启用。默认深度由调用来源决定：
+本 skill 仅支持用户显式调用。默认深度由用户请求决定：
 
 - **用户显式调用**（用户点名本 skill、提出用户价值/体验跃迁/上限分析诉求、或同义触发词）：默认 **Deep Value Analysis**，覆盖核心证据面、structural value mechanism、persona critique、rejected ideas，并产出正式 HTML 评审面。
-- **Agent active 自启用**（其他 agent / skill 在判断 user-value 信号成立后主动调用本 skill）：默认 **Standard / Value Scan**，覆盖目标、成功路径、候选 gate、最小验证与最高上限方向，但不强制做完整 anti-satisficing、competitive ceiling 或多轮证据浪潮；可在最终回复中提示「升级到 Deep / Exhaustive 需要用户确认」。
+- **Agent active 禁止**：其他 agent / skill 判断 user-value 信号成立时，只输出最小价值观察、coverage debt 或 handoff 建议，等待用户点名 `$user-value-architect`；不得进入 Standard / Value Scan 或生成正式报告。
 - **Exhaustive Value Analysis**：仅在用户明确要求「极致 / 全覆盖 / 充分发挥模型能力 / 多模态全面核查」时进入；不是默认值。
 
-无论用户显式调用还是 agent active 自启用，调用即视为授权执行本 skill 在当前环境和既有安全边界内的对应原生工作流。在所选深度的 envelope 内**默认全力执行**：覆盖该深度对应的全部核心证据面、必修工作流和正式 HTML 报告；只有用户明确要求降级、缩小范围或聚焦时，才进一步降低预算、跳过适用证据面或收窄对象。
+用户显式调用即视为授权执行本 skill 在当前环境和既有安全边界内的对应原生工作流。在所选深度的 envelope 内**默认全力执行**：覆盖该深度对应的全部核心证据面、必修工作流和正式 HTML 报告；只有用户明确要求降级、缩小范围或聚焦时，才进一步降低预算、跳过适用证据面或收窄对象。
 
 可从当前 workspace、用户消息、文件、截图、页面或已有上下文合理推断的 scope、target、persona、budget 和输出形态，直接推断并记录，不要询问用户。信息不足但仍能继续时，将其写入 `assumptions / unknowns / coverage debt`，并继续完成其余可执行工作。
 
@@ -74,7 +74,7 @@ Do not use it as the primary skill when:
 
 | Mode | Trigger | Output | Code changes |
 |---|---|---|---|
-| Value Scan (Standard) | Agent active 自启用默认；或用户给出宽泛目标但未要求高预算 | Reviewable HTML 评审面，包含候选地图、证据缺口、最高上限方向，并提供路径/URL | No |
+| Value Scan (Standard) | 用户显式要求快速价值扫描、给出宽泛目标但未要求高预算 | Reviewable HTML 评审面，包含候选地图、证据缺口、最高上限方向，并提供路径/URL | No |
 | Full Value Analysis (Deep) | 用户显式调用默认 | Reviewable HTML 评审面，覆盖完整证据面、structural value mechanism、persona critique、rejected ideas，并提供路径/URL | No |
 | Exhaustive Value Analysis | token 预算充足、用户明确要求充分发挥模型能力或全面核查工程 | Reviewable HTML 评审面，包含多证据面核查、persona critique、anti-satisficing、competitive ceiling、stop ledger，并提供路径/URL | No |
 | Validation Handoff | 用户接受某个候选 | 验证计划、rubric、任务包或下游技能路由 | No |
@@ -84,7 +84,7 @@ Do not use it as the primary skill when:
 
 ## Budget Envelopes
 
-默认值由调用来源决定：用户显式调用默认 **Deep**；agent active 自启用默认 **Normal / Value Scan**；只有用户明确要求 Exhaustive、极致、全覆盖、充分发挥模型能力时才进入 Exhaustive。预算决定最低证据面，不是装饰性标签。
+默认值由用户请求决定：用户显式调用默认 **Deep**；用户明确要求快速扫描时可进入 **Normal / Value Scan**；只有用户明确要求 Exhaustive、极致、全覆盖、充分发挥模型能力时才进入 Exhaustive。预算决定最低证据面，不是装饰性标签。
 
 | Envelope | Trigger | Required depth |
 |---|---|---|
@@ -98,13 +98,14 @@ Do not use it as the primary skill when:
 
 1. **用户感知优先**：建议必须改变用户体验、感受、信任、效率、结果质量或目标达成概率。
 2. **上限优先，不止达标**：30% 是 high-ceiling recommendations 的入场线；继续寻找 2x、3x 或数量级机会，同时保留 small high-certainty improvements，不用伪量化把它们说大。
-3. **删除用户负担优先于优化内部形状**：优先找能删除等待、困惑、步骤、决策、失败、重复输入、低信任的改变。
-4. **功能、设计和长期能力同等合法**：只要能传导到用户价值，建议可以是功能、交互、内容、默认体验、反馈闭环、信任机制、数据能力、个性化、agent 记忆或长期系统能力。
-5. **证据和想象并存但分层**：大胆探索上限，但把 observed evidence、inference、hypothesis 和 unknowns 分开。
-6. **不可感知内部优化出局**：维护性、代码美感、架构优雅、agent 便利性、CI 效率不能单独成为推荐理由。
-7. **反证比口号重要**：每个高上限候选都要说明怎么证明它错了、过早了或用户不在乎。
-8. **外部坐标校准上限**：当同类产品、相邻领域或公开案例会塑造用户期待时，不做 external reference scan 就不要声称 category-shift、switching reason 或 3x+ 上限。
-9. **结构性价值优先于功能罗列**：高杠杆推荐必须说明它删除哪一类反复出现的用户负担、失败路径、手工翻译、低信任或决策成本，而不是只新增一个功能点。
+3. **Human Terminal Fit 优先**：用户是注意力、记忆、上下文保持、判断力、操作耐心和信任预算都有限的终端。好候选应让入口更简洁、默认路径更直观、能力更可达。
+4. **删除用户负担优先于优化内部形状**：优先找能删除等待、困惑、步骤、决策、失败、重复输入、低信任的改变，尤其是把多步操作、多次判断或多轮上下文重建压成一个可靠动作。
+5. **功能、设计和长期能力同等合法**：只要能传导到用户价值，建议可以是功能、交互、内容、默认体验、反馈闭环、信任机制、数据能力、个性化、agent 记忆或长期系统能力。
+6. **证据和想象并存但分层**：大胆探索上限，但把 observed evidence、inference、hypothesis 和 unknowns 分开。
+7. **不可感知内部优化出局**：维护性、代码美感、架构优雅、agent 便利性、CI 效率不能单独成为推荐理由。
+8. **反证比口号重要**：每个高上限候选都要说明怎么证明它错了、过早了或用户不在乎。
+9. **外部坐标校准上限**：当同类产品、相邻领域或公开案例会塑造用户期待时，不做 external reference scan 就不要声称 category-shift、switching reason 或 3x+ 上限。
+10. **结构性价值优先于功能罗列**：高杠杆推荐必须说明它删除哪一类反复出现的用户负担、失败路径、手工翻译、低信任或决策成本，而不是只新增一个功能点。
 
 ## Workflow
 
@@ -264,6 +265,7 @@ Deep/Exhaustive 报告在进入推荐前必须完成项目沉浸。不要把“�
 必须回答：
 
 - 用户真正稀缺的资源是什么：时间、注意力、判断力、信任、恢复能力、结果质量、长期复利，还是某种无法靠普通工具获得的能力？
+- 当前路径如何消耗人类终端资源：入口发现、记忆负担、操作数、判断数、上下文重建、手工恢复和信任预算分别卡在哪里？
 - 项目的独特资产是什么：领域知识、历史报告、工作流深度、用户偏好、数据/上下文、可审阅交付、自动化基础设施、公开/私有边界、生态位置？
 - 当前最大价值泄漏点是什么：发现成本、设置成本、等待成本、判断成本、信任成本、迁移成本、复用成本、输出不可行动，还是失败恢复成本？
 - 哪些方向会放大项目独特资产，哪些只是任何同类项目都适用的通用优化？
@@ -276,6 +278,7 @@ Deep/Exhaustive 报告在进入推荐前必须完成项目沉浸。不要把“�
 
 - 用户真正反复要完成的 job / outcome 是什么，当前系统是否把它拆成了过多工具、命令、报告、选择或人工判断？
 - 哪一类用户负担在多个路径中重复出现：setup、等待、检查、解释、修正、恢复、确认、上下文重建、结果转译、信任建立？
+- 哪些入口、默认路径或操作序列迫使用户记规则、做选择、重复判断或手工衔接结果？
 - 有没有一个更合适的 interaction object、task object、decision surface、feedback loop、memory/context layer 或 trust surface，可以让这些负担成为同一结构的自然投影？
 - 哪些例外应该被新机制吸收，哪些是真实差异必须保留，哪些只是弱相似的 false alarm？
 - 这个机制能删除整类用户步骤或失败路径，还是只改善一个局部点？
@@ -288,6 +291,8 @@ Deep/Exhaustive 报告在进入推荐前必须完成项目沉浸。不要把“�
 
 - 用户会在哪里明确感知到变好？
 - 用户会更快、更稳、更轻松、更有信心，还是获得更好结果？
+- 入口是否更简洁，默认路径是否更符合直觉，关键目标需要的操作数、判断数、上下文重建和恢复成本是否减少？
+- 强能力是否进入用户可达路径，还是仍藏在需要记忆规则、阅读长说明或手工串联的内部机制里？
 - 改善属于功能、设计、流程、默认体验、反馈、信任还是长期能力？
 - 为什么它不只是轻微 polish？
 - 它相对外部参照是 table stakes、parity、switching reason，还是 category-shift？
@@ -308,6 +313,7 @@ Gate 结果必须保留分轨：高上限推荐需要说明 30%+ floor 和 ceili
 - **2-5 specific artifacts**：点名当前项目中 2-5 个具体文件、页面、报告、命令、截图、脚本、测试、issue 或输出作为证据；不要只写“代码/文档/用户路径”。
 - **Current experience slice**：用 3-6 步描述用户现在如何经历这个问题，必须能回连到 evidence IDs。
 - **After experience slice**：用 3-6 步描述改后用户会怎样具体感到更省力、更可信或更能完成事。
+- **Human Terminal Fit delta**：说明入口、默认路径、操作数、判断数、上下文重建、恢复成本和能力可达性如何变化；若没有变化，不得把它包装成体验跃迁。
 - **First validation slice**：给出第一个可验证切片，范围小到可以先学习价值信号，而不是先建设完整平台。
 - **Genericity check**：如果这条建议换到任何同类项目都适用，必须说明本项目的特殊证据和独特杠杆；说不清时降级。
 - **Counterexample**：说明什么观察会证明它只是听起来高级、实际用户不在乎或价值不如更小方案。
@@ -320,6 +326,7 @@ Gate 结果必须保留分轨：高上限推荐需要说明 30%+ floor 和 ceili
 
 - 如果不受当前实现限制，用户理想体验是什么？
 - 哪个改变能删除整段用户负担，而不是改善一个步骤？
+- 哪个改变能让用户少记规则、少做选择、少执行操作，并让强能力默认可达？
 - 能否从“帮用户操作”升级到“替用户达成结果”？
 - 能否从“一次性功能”升级到“持续学习用户偏好、上下文和目标”？
 - 如果竞争产品也做了常规优化，什么能力仍让用户明显感到不同？

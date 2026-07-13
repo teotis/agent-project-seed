@@ -266,6 +266,11 @@ for the next round without granting unapproved implementation authority.
 Every interactive HTML report must include a clickable section index. Use stable,
 human-readable IDs so links survive copy/paste and exported review notes.
 
+Use either a sidebar or a compact top bar. A sticky top TOC must not occupy more
+than 60% of the opening viewport or freeze a large title box over the first
+screen. If the TOC needs more than two rows, prefer a collapsible control,
+sidebar mode, or a non-sticky fallback on narrow screens.
+
 ```html
 <nav class="toc" aria-label="Section index">
   <a href="#executive-summary">Executive Summary</a>
@@ -294,6 +299,9 @@ human-readable IDs so links survive copy/paste and exported review notes.
   z-index: 10;
   background: var(--toc-bg, #0f172a);
   padding: 10px 0;
+  max-height: min(28vh, 180px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .toc a {
   border-radius: 4px;
@@ -308,6 +316,12 @@ human-readable IDs so links survive copy/paste and exported review notes.
 }
 section[id] {
   scroll-margin-top: 72px;
+}
+@media (max-width: 720px) {
+  .toc {
+    position: static;
+    max-height: none;
+  }
 }
 ```
 

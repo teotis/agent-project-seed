@@ -208,7 +208,7 @@ class ComprehensionProfileTest(unittest.TestCase):
         html = BASE_HEAD + """
         <body data-document-id="architecture-v2">
           <a class="skip-link" href="#main">Skip</a>
-          <header data-comprehension-role="thesis" data-source-ref="claim-1"><h1>Architecture explainer</h1></header>
+          <header data-comprehension-role="thesis" data-source-ref="claim-1"><h1>The UI, API, and state layers form one request path, so evidence should follow that path from action to persistence.</h1></header>
           <nav class="lens-nav" data-comprehension-role="section-index">
             <a href="#overview">Overview</a>
             <a href="#runtime">Runtime path</a>
@@ -247,7 +247,7 @@ class ComprehensionProfileTest(unittest.TestCase):
         html = BASE_HEAD + """
         <body>
           <a class="skip-link" href="#main">Skip</a>
-          <header data-comprehension-role="thesis" data-source-ref="claim-1"><h1>Concept explainer</h1></header>
+          <header data-comprehension-role="thesis" data-source-ref="claim-1"><h1>The concept is easiest to understand as a three-step chain where A enables B and B constrains C.</h1></header>
           <nav class="toc" data-comprehension-role="section-index">
             <a href="#overview">Overview</a>
             <a href="#model">Model</a>
@@ -274,6 +274,77 @@ class ComprehensionProfileTest(unittest.TestCase):
         """
         result = run_validator(html, "--profile", "comprehension")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_rejects_decorative_thesis_that_repeats_title(self) -> None:
+        html = BASE_HEAD + """
+        <body>
+          <a class="skip-link" href="#main">Skip</a>
+          <header data-comprehension-role="thesis" data-source-ref="claim-1">
+            <h1>Architecture explainer</h1>
+          </header>
+          <nav class="toc" data-comprehension-role="section-index">
+            <a href="#overview">Overview</a>
+            <a href="#model">Model</a>
+            <a href="#evidence">Evidence</a>
+          </nav>
+          <main id="main">
+            <section id="overview">
+              <figure data-visual-purpose="concept-map" data-source-ref="claim-1" data-visual-question="How do the ideas relate?" data-visual-relationships="A enables B; B constrains C">
+                <svg role="img"><title>Concept map</title><desc>Three related ideas.</desc></svg>
+                <figcaption>Overview</figcaption>
+              </figure>
+            </section>
+            <section id="model"><h2>Model</h2></section>
+            <section id="evidence">
+              <script type="application/json" id="coverage-ledger">
+                {"claims":[{"id":"claim-1","importance":"primary","disposition":"visible","location":"#overview"}]}
+              </script>
+              <details data-comprehension-role="evidence-appendix">
+                <summary>Evidence appendix</summary><p>Source details.</p>
+              </details>
+            </section>
+          </main>
+        </body></html>
+        """
+        result = run_validator(html, "--profile", "comprehension")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("thesis looks decorative", result.stdout)
+
+    def test_rejects_primary_coverage_omission_and_missing_omitted_reason(self) -> None:
+        html = BASE_HEAD + """
+        <body>
+          <a class="skip-link" href="#main">Skip</a>
+          <header data-comprehension-role="thesis" data-source-ref="claim-1">
+            <h1>The request path is governed by one ownership boundary, so runtime evidence must follow that boundary.</h1>
+          </header>
+          <nav class="toc" data-comprehension-role="section-index">
+            <a href="#overview">Overview</a>
+            <a href="#model">Model</a>
+            <a href="#evidence">Evidence</a>
+          </nav>
+          <main id="main">
+            <section id="overview">
+              <figure data-visual-purpose="concept-map" data-source-ref="claim-1" data-visual-question="How do the ideas relate?" data-visual-relationships="A enables B; B constrains C">
+                <svg role="img"><title>Concept map</title><desc>Three related ideas.</desc></svg>
+                <figcaption>Overview</figcaption>
+              </figure>
+            </section>
+            <section id="model"><h2>Model</h2></section>
+            <section id="evidence">
+              <script type="application/json" id="coverage-ledger">
+                {"claims":[{"id":"claim-1","importance":"primary","disposition":"omitted","location":"#overview"}]}
+              </script>
+              <details data-comprehension-role="evidence-appendix">
+                <summary>Evidence appendix</summary><p>Source details.</p>
+              </details>
+            </section>
+          </main>
+        </body></html>
+        """
+        result = run_validator(html, "--profile", "comprehension")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("primary coverage item is omitted: claim-1", result.stdout)
+        self.assertIn("omitted coverage item lacks reason: claim-1", result.stdout)
 
 
 if __name__ == "__main__":

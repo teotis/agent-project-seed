@@ -341,6 +341,8 @@ When a structured package block exists, run:
 rtk python3 scripts/task_package_validator.py <report-or-package-file>
 ```
 
+This validator is a repo-local deterministic gate, not a hard dependency of a standalone skill copy. If the skill is copied without the repository `scripts/` directory or the script is unavailable, keep the Task Package Contract fields, Falsification Ledger, Outcome Replay, Constraint Survival Test, and Behavior Preservation Vector in the report, mark deterministic package validation as `missing evidence` / package contract gap, and require manual structural review before handoff or orchestration.
+
 ### 7. Produce Simplification Task Packages And Escalation Briefs
 
 Do not edit project files. Convert findings into precise simplification packages.
@@ -518,7 +520,7 @@ A complexity sweep is complete only when:
 - **Markdown is the source report**: generate `complexity_sweep_report_{YYYYMMDD}_{HHMM}.md` for formal sweeps. It must contain the sweep summary, structure map, findings, task packages, verification ledger, external/deferred checks, and escalation briefs in an agent-readable shape.
 - **HTML is the review surface**: generate `complexity_sweep_report_{YYYYMMDD}_{HHMM}.html` from the same finding IDs, severity labels, evidence, and task package IDs for every formal sweep. It must include a clickable section index with stable section IDs, and should include clickable finding-to-code navigation, color-coded severity, collapsible sections for each level, and complexity metric visualizations.
 - **No split conclusions**: HTML can filter, visualize, and collect feedback, but Markdown remains the factual source for other agents.
-- **Package validation**: when simplification packages are emitted as YAML/JSON or fenced structured blocks, run `rtk python3 scripts/task_package_validator.py <markdown-report>` and report failures as package contract gaps.
+- **Package validation**: when simplification packages are emitted as YAML/JSON or fenced structured blocks, run `rtk python3 scripts/task_package_validator.py <markdown-report>` and report failures as package contract gaps. If the repo-local validator is unavailable, mark deterministic validation as `missing evidence`, preserve the structured contract fields, and require manual structural review before handoff.
 - **HTML preview**: provide the report path and clickable `file://` URL by default. Active browser opening is optional preview behavior only when the user asks or the environment is clearly GUI-capable.
 - **Fallback**: if HTML cannot be generated or opened, still deliver Markdown and state the limitation.
 

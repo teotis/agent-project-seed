@@ -25,6 +25,7 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
         module.GitChange("??", "control/ledger.md"),
         module.GitChange("??", ".codex/config.example.toml"),
         module.GitChange(" M", "SETUP_NEW_MACHINE.md"),
+        module.GitChange(" M", "README.zh.html"),
         module.GitChange("??", "reports/user-value-architect/report.html"),
         module.GitChange("??", ".env"),
         module.GitChange("??", "work/tmp/scratch.txt"),
@@ -37,9 +38,73 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
         "control/ledger.md",
         ".codex/config.example.toml",
         "SETUP_NEW_MACHINE.md",
+        "README.zh.html",
         "reports/user-value-architect/report.html",
     ]
     assert [change.path for change in rejected] == [".env", "work/tmp/scratch.txt", "work/out/result.png"]
+
+
+def test_commit_keeps_already_staged_deletions_out_of_git_add(tmp_path):
+    target = tmp_path / "repo"
+    (target / "tools").mkdir(parents=True)
+    shutil.copy2(ROOT / "tools" / "project.py", target / "tools" / "project.py")
+    (target / "AGENTS.md").write_text("# Test Rules\n", encoding="utf-8")
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "add", "AGENTS.md", "tools/project.py"], cwd=target, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "seed"],
+        cwd=target,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subprocess.run(["git", "rm", "AGENTS.md"], cwd=target, check=True, capture_output=True, text=True)
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "commit", "--message", "test: remove rules"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert not (target / "AGENTS.md").exists()
+
+
+def test_safe_commit_rejects_high_confidence_secret_before_staging(tmp_path):
+    target = tmp_path / "repo"
+    (target / "tools").mkdir(parents=True)
+    (target / "src").mkdir()
+    shutil.copy2(ROOT / "tools" / "project.py", target / "tools" / "project.py")
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "add", "tools/project.py"], cwd=target, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-m", "seed"],
+        cwd=target,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    secret_assignment = '"api_' + 'key": "latest-production-credential-value-1234567890"\n'
+    (target / "src" / "leak.js").write_text("x" * 100_001 + "\n" + secret_assignment, encoding="utf-8")
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "commit", "--message", "test: reject secret"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert "secret" in completed.stderr.lower()
+    assert "src/leak.js" in completed.stderr
+    assert subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=target,
+        check=False,
+    ).returncode == 0
 
 
 def test_check_and_sync_agents_are_healthy():
@@ -104,7 +169,7 @@ def test_init_project_copy_no_git(tmp_path):
     assert "UserPromptSubmit" in claude_settings["hooks"]
     assert "Stop" in claude_settings["hooks"]
     stop_command = claude_settings["hooks"]["Stop"][0]["hooks"][0]["command"]
-    assert "tools/project.py commit" in stop_command
+    assert ".codex/hooks/clean_checkpoint_first.py stop" in stop_command
     hooks = json.loads((target / ".codex" / "hooks.json").read_text(encoding="utf-8"))
     assert "SessionStart" in hooks["hooks"]
     assert "PostToolUse" in hooks["hooks"]
@@ -121,7 +186,7 @@ def test_init_activates_windows_claude_and_codex_hooks(tmp_path):
     manifest = (target / "control" / "init_manifest.md").read_text(encoding="utf-8")
 
     assert "py -3 .claude/hooks/panel_hook.py" in claude_settings
-    assert "py -3 tools/project.py commit" in claude_settings
+    assert "py -3 .codex/hooks/clean_checkpoint_first.py stop" in claude_settings
     assert "py -3 .codex/hooks/panel_hook.py" in codex_hooks
     assert "py -3 .codex/hooks/clean_checkpoint_first.py stop" in codex_hooks
     assert "python3" not in claude_settings
@@ -195,7 +260,22 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "governance init --profile sustained" in readme
     assert "Run a Problem-Solving Round" in readme
     assert "reports/<topic>/" in readme
+    html = (target / "README.zh.html").read_text(encoding="utf-8")
+    assert "<title>Customer Portal</title>" in html
+    assert "Agent Project Seed" not in html
+    assert "Work Packet" in html
     assert not (target / "reports" / "user-value-architect").exists()
+
+
+def test_init_chinese_html_escapes_project_name_and_updates_package_path(tmp_path):
+    target = _copy_and_init(tmp_path, name="Research & Review <Lab>", package="research_review")
+
+    html = (target / "README.zh.html").read_text(encoding="utf-8")
+
+    assert "<title>Research &amp; Review &lt;Lab&gt;</title>" in html
+    assert "<h1>Research &amp; Review &lt;Lab&gt;</h1>" in html
+    assert ">research_review/</span>" in html
+    assert ">base_scaffold/</span>" not in html
 
 
 def test_seed_docs_include_windows_setup_commands():
@@ -210,10 +290,13 @@ def test_seed_docs_include_windows_setup_commands():
         assert "governance init --profile sustained" in text
         assert "Governance Lifecycle" in text
         assert "Run a Problem-Solving Round" in text
-        assert "reports/<topic>/" in text
         assert "v2.1.140" in text
         assert "dontAsk" not in text
         assert "bypassPermissions" not in text
+    assert "reports/<topic>/" in readme
+    assert "authoritative adaptive contract" in readme
+    assert "follow the adaptive contract in `AGENTS.md`" in setup
+    assert "1. Put user-provided material" not in setup
     assert "Copy-Item" in readme
     assert "Copy-Item" in setup
 
@@ -227,10 +310,32 @@ def test_windows_agent_config_examples_avoid_unix_python_launcher():
     assert '"py"' in codex_config
     assert '"-3"' in codex_config
     assert "py -3 .claude/hooks/panel_hook.py" in claude_settings
-    assert "py -3 tools/project.py commit" in claude_settings
+    assert "py -3 .codex/hooks/clean_checkpoint_first.py stop" in claude_settings
     assert "python3" not in codex_hooks
     assert "python3" not in codex_config
     assert "python3" not in claude_settings
+
+
+def test_claude_permissions_keep_mutating_git_commands_out_of_default_allowlist():
+    settings_paths = [
+        ROOT / ".claude" / "settings.json",
+        ROOT / ".claude" / "settings.example.json",
+        ROOT / ".claude" / "settings.windows.example.json",
+    ]
+    forbidden = {
+        "Bash(git add *)",
+        "Bash(git commit *)",
+        "Bash(git branch *)",
+        "Bash(git stash *)",
+        "Bash(git worktree *)",
+        "Bash(git rm *)",
+    }
+
+    for path in settings_paths:
+        allow = set(json.loads(path.read_text(encoding="utf-8"))["permissions"]["allow"])
+        assert allow.isdisjoint(forbidden), path
+        assert "Bash(git status *)" in allow
+        assert any("tools/project.py commit" in entry for entry in allow)
 
 
 def test_initialized_project_check_rejects_seed_residue(tmp_path):
@@ -295,6 +400,152 @@ def test_init_updates_contract_state_and_ledger(tmp_path):
     assert (target / "control" / "init_manifest.md").exists()
 
 
+def test_goal_driven_init_generates_project_intent_and_delivery_receipt(tmp_path):
+    target = tmp_path / "copied_project"
+    ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
+    shutil.copytree(ROOT, target, ignore=ignore)
+    (target / "brief.md").write_text(
+        """# Product Brief
+
+## Target User
+
+Independent researchers
+
+## Core Problem
+
+They lose the context behind decisions between research sessions.
+
+## Project Goals
+
+- Preserve decision context with each research artifact.
+- Make the next research action obvious.
+
+## Non-goals
+
+- Replace a full research database.
+
+## Acceptance Criteria
+
+- A researcher can recover a decision and its evidence in one view.
+- The next research action is recorded with every handoff.
+""",
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "init",
+            "--name",
+            "Research Memory",
+            "--package-name",
+            "research_memory",
+            "--brief",
+            "brief.md",
+            "--no-git",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+    assert "**Status**: Ready — goal defined" in agents
+    assert "**Target user**: Independent researchers" in agents
+    assert "Preserve decision context with each research artifact." in agents
+    assert "Replace a full research database." in agents
+
+    state = (target / "control" / "state.md").read_text(encoding="utf-8")
+    assert "Core problem: They lose the context behind decisions" in state
+    assert "Status: Ready — goal defined" in state
+
+    receipt = (target / "control" / "delivery_receipt.md").read_text(encoding="utf-8")
+    assert "## User Goal" in receipt
+    assert "Independent researchers" in receipt
+    assert "- [ ] A researcher can recover a decision and its evidence in one view." in receipt
+
+    ledger = (target / "control" / "ledger.md").read_text(encoding="utf-8")
+    assert "Target user: Independent researchers." in ledger
+    assert "Core problem: They lose the context behind decisions between research sessions." in ledger
+
+    panel = subprocess.run(
+        [sys.executable, "tools/panel.py", "--mode", "entry"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert panel.returncode == 0, panel.stdout + panel.stderr
+    assert "目标: Independent researchers: Preserve decision context with each research artifact." in panel.stdout
+    assert panel.stdout.index("目标:") < panel.stdout.index("Git:")
+
+
+def test_interactive_init_collects_missing_goal_fields(tmp_path):
+    target = tmp_path / "copied_project"
+    ignore = shutil.ignore_patterns(".git", ".pytest_cache", "__pycache__", "*.egg-info")
+    shutil.copytree(ROOT, target, ignore=ignore)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "init",
+            "--name",
+            "Learning Notes",
+            "--package-name",
+            "learning_notes",
+            "--interactive",
+            "--no-git",
+        ],
+        cwd=target,
+        input="Students\nThey forget why notes matter.\nRecover study context quickly.\nA student can find the reason behind a note.\n",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+    assert "**Target user**: Students" in agents
+    assert "**Core problem**: They forget why notes matter." in agents
+    assert "Recover study context quickly." in agents
+    assert "A student can find the reason behind a note." in agents
+
+
+def test_parse_brief_accepts_chinese_headings(tmp_path):
+    module = load_project_tool()
+    brief = tmp_path / "brief.md"
+    brief.write_text(
+        """## 目标用户
+研究人员
+
+## 核心问题
+他们会遗失研究决策的上下文。
+
+## 项目目标
+- 保留每个决策的证据。
+
+## 非目标
+- 不替代研究数据库。
+
+## 验收标准
+- 可在一个视图中恢复决策与证据。
+""",
+        encoding="utf-8",
+    )
+
+    parsed = module.parse_brief(brief)
+
+    assert parsed["target_user"] == ["研究人员"]
+    assert parsed["core_problem"] == ["他们会遗失研究决策的上下文。"]
+    assert parsed["goals"] == ["保留每个决策的证据。"]
+    assert parsed["non_goals"] == ["不替代研究数据库。"]
+    assert parsed["acceptance_criteria"] == ["可在一个视图中恢复决策与证据。"]
+
+
 def test_no_legacy_directories_except_reports_in_template():
     legacy_dirs = [
         "codex",
@@ -319,11 +570,59 @@ def test_gemini_adapter_is_not_part_of_template():
     assert "GEMINI.md" not in module.ALLOWED_PREFIXES
 
 
+def test_shared_agent_contract_uses_adaptive_rule_layers():
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+
+    for heading in (
+        "## Hard invariants",
+        "## Mode contracts",
+        "## User value priors",
+        "## Adaptive heuristics",
+        "## Examples and resources",
+    ):
+        assert heading in agents
+    assert "Every task completion must include" not in agents
+    assert "Read `control/state.md` when" in agents
+    assert "Do not push unless the user explicitly requests it" in agents
+
+
+def test_chinese_html_covers_current_public_capabilities():
+    module = load_project_tool()
+    result = module.Result()
+
+    module.check_readme_zh_contract(result)
+
+    assert result.issues == []
+    html = (ROOT / "README.zh.html").read_text(encoding="utf-8")
+    for marker in ("Clean Checkpoint", "Work Packet", "Governance Lifecycle", "Portable User Skills"):
+        assert marker in html
+
+
+def test_check_detects_chinese_html_public_capability_drift(tmp_path):
+    target = _copy_and_init(tmp_path)
+    html_path = target / "README.zh.html"
+    html_path.write_text(
+        html_path.read_text(encoding="utf-8").replace("仓库本地保留 38 个 Skill 快照", "仓库本地保留 37 个 Skill 快照"),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 1
+    assert "README.zh.html public capability block drifted" in completed.stdout
+
+
 def test_user_skill_manifest_assets_are_valid():
     module = load_project_tool()
     entries = module.user_skill_entries(["all"])
 
-    assert len(entries) == 44
+    assert len(entries) == 38
     assert (
         "recommended",
         "clean-checkpoint-first",
@@ -331,8 +630,8 @@ def test_user_skill_manifest_assets_are_valid():
     ) in entries
     assert (
         "recommended",
-        "agent-task-planner",
-        ROOT / "agent-assets" / "user-skills" / "skills" / "agent-task-planner",
+        "implement",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "implement",
     ) in entries
     assert (
         "all",
@@ -341,14 +640,14 @@ def test_user_skill_manifest_assets_are_valid():
     ) in entries
     assert (
         "all",
-        "brainstorming",
-        ROOT / "agent-assets" / "user-skills" / "skills" / "brainstorming",
+        "flow-realization-review",
+        ROOT / "agent-assets" / "user-skills" / "skills" / "flow-realization-review",
     ) in entries
 
     result = module.Result()
     module.check_user_skill_assets(result)
     assert result.issues == []
-    assert any("44 skills" in notice for notice in result.notices)
+    assert any("38 skills" in notice for notice in result.notices)
 
 
 def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods():
@@ -395,44 +694,27 @@ def test_agent_task_planner_contract_includes_exit_paths_and_lightweight_methods
     )
 
     assert "## Intake Gate" in skill
-    assert "ask exactly one" in skill
-    assert "question" in skill
-    assert "Default to moving forward with reasonable assumptions" in skill
-    assert "would change package boundaries, acceptance criteria, execution" in skill
+    assert "一次只问一个问题" in skill
+    assert "默认带着合理假设继续推进" in skill
+    assert "会改变拆包边界、验收标准、执行权限或风险等级" in skill
     assert "references/examples.md" in skill
-    assert "## Exit Paths" in skill
     assert "`no-viable-plan`" in skill
     assert "`blocked-with-handoff`" in skill
-    assert "## Language Contract" in skill
-    assert "Follow the user's language" in skill
-    assert "If the user asks in Chinese" in skill
-    assert "Do not let English template text leak into a Chinese-facing plan" in skill
-    assert "始终使用简体中文" not in skill
-    assert "references/standalone-prompt.md" in skill
     assert "## Lightweight Engineering Method" in skill
     assert "Simplicity first" in skill
     assert "Surgical changes" in skill
     assert "Root cause before repair" in skill
-    assert "## Language Contract" in contract
-    assert "Write all user-facing prose and Markdown headings in the user's language" in contract
-    assert "Chinese request" in contract
     assert "status.tsv" in contract
-    assert "<localized: Exit Path>" in contract
     assert "Exit outcome:" in contract
     assert "Complexity / boundary risk:" in contract
     assert "Example 1: Direct Bugfix" in examples
     assert "Example 2: Small Parallel Refactor" in examples
     assert "Example 3: Intake Or Exit" in examples
-    assert "Example 4: Chinese Request, Chinese Plan" in examples
-    assert "你是 Agent Task Planner 的 Chat 版任务规划助手" in standalone_prompt
-    assert "跟随用户语言" in standalone_prompt
-    assert "中文请求下" in standalone_prompt
-    assert "始终使用简体中文" not in standalone_prompt
-    assert "TASK_PLAN.md" in standalone_prompt
-    assert "AGENT_PROMPTS.md" in standalone_prompt
+    assert "Example 4: Raw Claim Needs Validation" in examples
+    assert "Example 5: Generated Translation Files Must Reach Target" in examples
     assert any("onboarding" in item["prompt"] for item in evals["evals"])
     assert any(
-        "user's language" in assertion["text"] or "用户语言" in assertion["text"]
+        "raw claim" in assertion["text"] or "exit" in assertion["text"].lower()
         for item in evals["evals"]
         for assertion in item["assertions"]
     )
@@ -448,7 +730,7 @@ def test_list_and_install_user_skills(tmp_path):
     )
     assert list_result.returncode == 0, list_result.stdout + list_result.stderr
     assert "recommended\tclean-checkpoint-first\tok" in list_result.stdout
-    assert "all\tbrainstorming\tok" not in list_result.stdout
+    assert "all\tflow-realization-review\tok" not in list_result.stdout
 
     install_root = tmp_path / "skills"
     dry_run = subprocess.run(
@@ -482,9 +764,63 @@ def test_list_and_install_user_skills(tmp_path):
         check=False,
     )
     assert installed.returncode == 0, installed.stdout + installed.stderr
-    assert (install_root / "brainstorming" / "SKILL.md").exists()
-    assert (install_root / "writing-skills" / "SKILL.md").exists()
+    assert (install_root / "implement" / "SKILL.md").exists()
+    assert (install_root / "flow-realization-review" / "SKILL.md").exists()
     assert (install_root / "clean-checkpoint-first" / "SKILL.md").exists()
+
+
+def test_audit_user_skills_detects_drift(tmp_path):
+    install_root = tmp_path / "skills"
+    install = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "install-user-skills",
+            "--install-root",
+            str(install_root),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert install.returncode == 0, install.stdout + install.stderr
+
+    synced = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "audit-user-skills",
+            "--install-root",
+            str(install_root),
+            "--strict",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert "recommended\tclean-checkpoint-first\tsynced" in synced.stdout
+
+    target = install_root / "implement" / "SKILL.md"
+    target.write_text(target.read_text(encoding="utf-8") + "\nlocal edit\n", encoding="utf-8")
+    drifted = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "audit-user-skills",
+            "--install-root",
+            str(install_root),
+            "--strict",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert drifted.returncode == 1
+    assert "recommended\timplement\tdrifted" in drifted.stdout
 
 
 def test_configure_claude_sets_user_default_mode(tmp_path):
@@ -622,6 +958,20 @@ def test_task_init_creates_minimal_live_state_control_surface(tmp_path):
     assert task_root.is_dir()
     assert "control/tasks/complex-refactor/status.tsv" in completed.stdout
 
+    brief = (task_root / "brief.md").read_text(encoding="utf-8")
+    assert "## User Goal" in brief
+    assert "## Acceptance Criteria" in brief
+    assert "- [ ]" in brief
+
+    context = task_root / "context.jsonl"
+    assert context.read_text(encoding="utf-8") == ""
+
+    promotion = (task_root / "promotion.md").read_text(encoding="utf-8")
+    assert "Knowledge Promotion Review" in promotion
+    assert "Promote to test / hook / lint" in promotion
+    assert "Keep task-local" in promotion
+    assert "Discard as transient" in promotion
+
     index = (task_root / "INDEX.md").read_text(encoding="utf-8")
     assert "Complex Refactor" in index
     assert "`status.tsv` is the live source of truth" in index
@@ -643,6 +993,363 @@ def test_task_init_creates_minimal_live_state_control_surface(tmp_path):
     package_doc = (task_root / "packages" / "01-contract-characterization.md").read_text(encoding="utf-8")
     assert "# 01-contract-characterization" in package_doc
     assert "Update `../status.tsv` when this package changes state." in package_doc
+
+
+def test_task_context_add_lists_and_check_validates_manifest(tmp_path):
+    target = _copy_and_init(tmp_path, name="Workflow Lab", package="workflow_lab")
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Context Pilot"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    added = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "context",
+            "add",
+            "context-pilot",
+            "--file",
+            "control/state.md",
+            "--reason",
+            "Current project state and next action",
+            "--stage",
+            "implement",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert added.returncode == 0, added.stdout + added.stderr
+    planned = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "context",
+            "add",
+            "context-pilot",
+            "--file",
+            "AGENTS.md",
+            "--reason",
+            "Shared project contract",
+            "--stage",
+            "plan",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert planned.returncode == 0, planned.stdout + planned.stderr
+    checked = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "context",
+            "add",
+            "context-pilot",
+            "--file",
+            "README.md",
+            "--reason",
+            "User-facing workflow contract",
+            "--stage",
+            "check",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+
+    listed = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "context",
+            "list",
+            "context-pilot",
+            "--stage",
+            "implement",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert listed.returncode == 0
+    assert "implement\tcontrol/state.md\tCurrent project state and next action" in listed.stdout
+    assert "AGENTS.md" not in listed.stdout
+
+    handoff = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "context",
+            "list",
+            "context-pilot",
+            "--stage",
+            "handoff",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert handoff.returncode == 0
+    assert "check\tREADME.md\tUser-facing workflow contract" in handoff.stdout
+    assert "control/state.md" not in handoff.stdout
+
+    manifest = target / "control" / "tasks" / "context-pilot" / "context.jsonl"
+    first_entry = json.loads(manifest.read_text(encoding="utf-8").splitlines()[0])
+    assert first_entry == {
+        "file": "control/state.md",
+        "reason": "Current project state and next action",
+        "stage": "implement",
+    }
+
+    check = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert check.returncode == 0, check.stdout + check.stderr
+
+
+def test_task_context_rejects_escape_duplicate_and_invalid_stage(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Safe Context"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    base = [sys.executable, "tools/project.py", "task", "context", "add", "safe-context"]
+
+    escaped = subprocess.run(
+        [*base, "--file", "../outside.md", "--reason", "escape", "--stage", "plan"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert escaped.returncode == 2
+    assert "repo-relative" in escaped.stderr
+
+    invalid_stage = subprocess.run(
+        [*base, "--file", "control/state.md", "--reason", "state", "--stage", "deploy"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert invalid_stage.returncode == 2
+
+    first = subprocess.run(
+        [*base, "--file", "control/state.md", "--reason", "state", "--stage", "plan"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    duplicate = subprocess.run(
+        [*base, "--file", "control/state.md", "--reason", "again", "--stage", "plan"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert first.returncode == 0
+    assert duplicate.returncode == 2
+    assert "duplicate context entry" in duplicate.stderr
+
+
+def test_check_rejects_invalid_task_context_manifest(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Broken Context"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    manifest = target / "control" / "tasks" / "broken-context" / "context.jsonl"
+    manifest.write_text(
+        '{"file":"missing.md","reason":"required","stage":"implement"}\n',
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 1
+    assert "context file does not exist" in completed.stdout
+
+
+def test_check_rejects_missing_task_context_manifest(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Missing Context"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    (target / "control" / "tasks" / "missing-context" / "context.jsonl").unlink()
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 1
+    assert "missing task context manifest" in completed.stdout
+
+
+def test_check_preserves_legacy_live_state_task_without_work_packet_files(tmp_path):
+    target = _copy_and_init(tmp_path)
+    legacy = target / "control" / "tasks" / "legacy-task"
+    legacy.mkdir(parents=True)
+    (legacy / "INDEX.md").write_text("# Legacy Task\n", encoding="utf-8")
+    (legacy / "status.tsv").write_text(
+        "package_id\tstate\n01-main\tpending\n99-finalize\tpending\n",
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def test_check_requires_promotion_classification_for_finalized_task(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Promotion Gate"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    task_root = target / "control" / "tasks" / "promotion-gate"
+    status = task_root / "status.tsv"
+    status.write_text(
+        status.read_text(encoding="utf-8").replace(
+            "99-finalize\tpending\t",
+            "99-finalize\tfinalized\t",
+        ),
+        encoding="utf-8",
+    )
+
+    blocked = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert blocked.returncode == 1
+    assert "finalized task requires a promotion classification" in blocked.stdout
+
+    promotion = task_root / "promotion.md"
+    promotion.write_text(
+        promotion.read_text(encoding="utf-8").replace(
+            "- [ ] Keep task-local",
+            "- [x] Keep task-local",
+        ),
+        encoding="utf-8",
+    )
+    passed = subprocess.run(
+        [sys.executable, "tools/project.py", "check", "--skip-git"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert passed.returncode == 0, passed.stdout + passed.stderr
+
+
+def test_task_activate_current_and_deactivate_are_worktree_scoped(tmp_path):
+    target = _copy_and_init(tmp_path)
+    subprocess.run(["git", "init"], cwd=target, text=True, capture_output=True, check=True)
+    subprocess.run(
+        [sys.executable, "tools/project.py", "task", "init", "--name", "Active Pilot"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    activated = subprocess.run(
+        [
+            sys.executable,
+            "tools/project.py",
+            "task",
+            "activate",
+            "active-pilot",
+            "--phase",
+            "implement",
+            "--next",
+            "Add the context validator",
+        ],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert activated.returncode == 0, activated.stdout + activated.stderr
+
+    current = subprocess.run(
+        [sys.executable, "tools/project.py", "task", "current"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert current.returncode == 0
+    assert "active-pilot\timplement\tAdd the context validator" in current.stdout
+    assert list((target / ".git" / "project-seed" / "active-task").glob("*.json"))
+
+    deactivated = subprocess.run(
+        [sys.executable, "tools/project.py", "task", "deactivate"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert deactivated.returncode == 0
+
+    missing = subprocess.run(
+        [sys.executable, "tools/project.py", "task", "current"],
+        cwd=target,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert missing.returncode == 1
+    assert "No active complex task" in missing.stdout
 
 
 def test_task_init_refuses_to_overwrite_existing_task(tmp_path):
@@ -803,3 +1510,25 @@ def test_safety_check_detects_staged_env(tmp_path):
         module.ROOT = original_root
 
     assert any("sensitive file" in issue for issue in result.issues)
+
+
+def test_safety_check_reads_staged_blob_instead_of_working_tree(tmp_path):
+    target = tmp_path / "staged_secret_project"
+    (target / "src").mkdir(parents=True)
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+    path = target / "src" / "config.js"
+    staged_secret = '"api_' + 'key": "production-credential-value-1234567890"\n'
+    path.write_text(staged_secret, encoding="utf-8")
+    subprocess.run(["git", "add", "src/config.js"], cwd=target, check=True, capture_output=True)
+    path.write_text('"api_key": "placeholder"\n', encoding="utf-8")
+
+    module = load_project_tool()
+    result = module.Result()
+    original_root = module.ROOT
+    try:
+        module.ROOT = target
+        module.check_safety(result)
+    finally:
+        module.ROOT = original_root
+
+    assert any("src/config.js" in issue and "possible secret" in issue for issue in result.issues)

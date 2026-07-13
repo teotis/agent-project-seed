@@ -23,6 +23,24 @@ or the final chat instructions after creating an orchestration kit.
 - `scratch/` is temporary and non-authoritative; it cannot unlock dependencies or satisfy acceptance criteria by itself.
 - If these projections disagree, treat the orchestration as invalid or blocked until repaired; do not infer success from one artifact alone.
 
+## Execution Contract Proof Route
+- Need proof: <why native agents, direct execution, Task Package Contract, ledger-lite, or manual-pack are insufficient>
+- Projection proof: <which artifact owns each information type and how drift is detected>
+- Unlock proof: <why dependency unlock requires scheduler truth and only completed/finalized unlocks>
+- Capability proof: <autonomous / substitute / external-assist classification summary>
+- Landing proof: <how task-level outcomes and fallback paths are decided>
+- Cleanup proof: <evidence required before cleanup and protected resources>
+- Falsifier / downgrade trigger: <what would block or downgrade this kit>
+
+## Orchestration Value Score
+- Durable state need:
+- Dependency unlock value:
+- Recovery value:
+- Integration value:
+- Runner value:
+- Operator burden:
+- Decision: <full kit | ledger-lite/manual-pack | native agents | needs-user-decision>
+
 ## User Entry Points
 - Manual: copy prompts from `launchers/agent-prompts.md` into any agent platform.
 - Script: use the selected runner wrapper for this plan. Codex App / Codex runner plans use `bash launchers/start-codex-app.sh` and JSONL/thread-id inspection. Claude Code plans use `bash launchers/start-claude-code.sh` and `claude agents`.
@@ -83,10 +101,12 @@ Forbidden without explicit user approval:
 - Code dependency policy: <status dependency | merge-to-integration first | downstream bases on upstream branch>
 - Conflict owner: `99-finalize`
 - Mainline merge: local non-force merge after integration verification passes.
+- Analysis/planning artifact landing: reports, plans, task packages, HTML review surfaces, and `FINAL_REPORT.md` are merge-eligible documentation assets by default when they only touch approved docs/reports paths and pass privacy/sensitive-content, format/link, and conflict checks. Do not leave them only on package branches, watches/sessions, temporary worktrees, or worker threads unless this INDEX records a specific isolation reason.
 - Cleanup: delete only recorded local package worktrees/branches after all finalize steps succeed.
 
 ## Landing Strategy
 - Primary landing path: <what must be true for the main plan to count as landed>
+- Mainline documentation landing: <for analysis/planning packages, default to merge durable docs/reports artifacts to mainline after privacy/sensitivity, path, format/link, and conflict checks pass; write "n/a" only for code-only plans>
 - Preapproved fallback paths, in order: <fallback id, trigger, acceptance criteria, verification, and whether it may merge to mainline>
 - Unacceptable degradation: <shortcuts or partial states that must not be shipped>
 - Abort conditions: <conditions that end this orchestration as failed instead of retrying>
@@ -344,7 +364,7 @@ Generate a finalize package, not a passive audit-only prompt.
 5. Check the Capability Preflight section. If an external-assist gate is release-blocking and evidence is absent, stop with "ready for external QA" or "waiting for external gate"; do not claim overall PASS.
 6. Run UX Delta Review for user-visible packages: classify actual visible changes as `expected`, `acceptable-adjacent`, or `decision-required`. Accept `expected` and justified `acceptable-adjacent` deltas with evidence; block, split, downgrade, or request user decision for unresolved `decision-required` deltas.
 7. Check Landing Strategy. Decide task-level outcome before any mainline merge: `landed`, `landed-with-approved-fallback`, `ready-for-external-gate`, `failed-no-merge`, or `failed-with-candidate-independent-fixes`.
-8. Decide whether merging is allowed.
+8. Decide whether merging is allowed. For analysis-only or planning-only artifacts, the default is to merge durable docs/reports outputs to mainline after privacy/sensitive-content screening, path classification, format/link checks, and conflict checks pass; leaving them only on worker branches, watches/sessions, temporary worktrees, or worker threads requires a recorded isolation reason.
 9. Create or update the integration branch.
 10. Merge functional package branches in Merge Strategy order.
 11. Stop and record conflicts without cleaning anything.
@@ -382,8 +402,9 @@ Terminal session rule:
 ### 9. Output Style
 
 After generating the kit, chat output must be immediately actionable and must
-show only the manual path, the selected runner's primary script path, and a
-small command surface.
+show the manual path, both platform script launch commands, and a small command
+surface. Mark the selected runner's wrapper as the primary script path and the
+other wrapper as the alternative runner.
 The runtime still exposes the full recovery command set through
 `orchestrate.sh`; do not turn every recovery ability into default chat output.
 
@@ -416,11 +437,23 @@ The Manual section must say:
 - If an agent platform cannot run local shell commands, the user may manually run `advance`.
 
 For the **Script** path, include complete copy-paste commands for a new macOS Terminal. Commands must use absolute paths and avoid assuming the user's current directory.
-Show one primary wrapper based on the selected runner. Include the other wrapper
-under a short "Alternative runner" note so one app can plan and the other can
-launch the same kit.
+Always include both platform launch commands: one selected-runner primary block
+and one alternative-runner block. The alternative block must include the
+copy-paste launch command for the other platform, not merely mention that the
+wrapper exists, so one app can plan and the other can launch the same kit.
+When Codex is primary, include a separate Claude Code alternative block. When Claude Code is primary, include a separate Codex App / Codex runner alternative block.
+Do not collapse the alternative into prose, omit `cd "<repo-root>"`, or replace
+the other platform command with bare `orchestrate.sh`.
 
-Codex primary command surface:
+Required block labels:
+- **Primary script path (Codex App / Codex runner)**
+- **Alternative runner (Claude Code)**
+- **Primary script path (Claude Code)**
+- **Alternative runner (Codex App / Codex runner)**
+
+Codex primary command surface, used when the selected runner is Codex. The same
+commands are also the **Alternative runner (Codex App / Codex runner)** block
+when Claude Code is primary:
 
 ```bash
 cd "<repo-root>"
@@ -439,7 +472,9 @@ Use concrete package ids in place of `<package-id>`, and strip the
 `codex-thread:` prefix before passing a thread id to
 `codex exec resume <thread-id>`.
 
-Claude primary command surface:
+Claude primary command surface, used when the selected runner is Claude Code.
+The same commands are also the **Alternative runner (Claude Code)** block when
+Codex is primary:
 
 ```bash
 cd "<repo-root>"
@@ -452,13 +487,6 @@ If Codex is selected because the user is working in Codex App, add this note:
 "This script lane uses local `codex exec --json` processes and coordinator
 logs; Codex App native subagents remain available through the Manual path, but
 the generated script does not create App UI subagent threads directly."
-
-Alternative runner examples:
-
-```bash
-bash "<absolute-plan-dir>/launchers/start-codex-app.sh"
-bash "<absolute-plan-dir>/launchers/start-claude-code.sh"
-```
 
 Recovery commands are contextual. Show only the one or two commands that match
 the current state, and name the concrete package ids that may use them:

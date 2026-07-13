@@ -1,17 +1,17 @@
 # New Machine Setup
 
-After cloning this repository, run the initialization command to set up project metadata:
+After cloning this repository, run the initialization command to set up project metadata. A short goal brief is the recommended path:
 
 macOS/Linux:
 
 ```bash
-python3 tools/project.py init --name "Your Project Name"
+python3 tools/project.py init --name "Your Project Name" --brief product-brief.md
 ```
 
 Windows PowerShell:
 
 ```powershell
-py -3 tools/project.py init --name "Your Project Name"
+py -3 tools/project.py init --name "Your Project Name" --brief product-brief.md
 ```
 
 This turns the copied template into a project workspace. It renames the package,
@@ -21,29 +21,23 @@ resets `control/ledger.md` to the new project's first record, writes
 platform, and keeps the project-level Codex hooks ready for the status panel and
 clean-checkpoint gate.
 
+The brief uses Markdown sections named `Target User`, `Core Problem`,
+`Project Goals`, `Non-goals`, and `Acceptance Criteria` (Chinese equivalents
+`目标用户`, `核心问题`, `项目目标`, `非目标`, and `验收标准` also work). A goal-defined
+initialization also creates `control/delivery_receipt.md`; its goal, checkbox
+acceptance criteria, evidence, gaps, and next decision are displayed before Git
+details in the status panel. Use `--interactive` to enter the same four core
+fields at the terminal instead of creating a brief.
+
 After initialization, review `control/init_manifest.md` first. It lists the
 files updated automatically and the remaining project-specific edits to make.
 
 ## Run a Problem-Solving Round
 
-After setup, use this path when you want an agent to solve a real project
-problem from external material:
-
-1. Put user-provided material in `work/in/<task-slug>/` when it should be kept
-   with the project, or reference its existing repository path.
-2. Have the agent read `AGENTS.md`, `control/state.md`, relevant recent records
-   in `control/ledger.md`, and the task input before proposing changes.
-3. Store durable analysis reports in `reports/<topic>/`. Store final
-   deliverables that should not be committed in `work/out/`.
-4. Append only durable facts to `control/ledger.md`: requests, decisions, risks,
-   issues, sessions, and artifact links.
-5. Verify with `python3 tools/project.py check` plus the smallest task-specific
-   tests that prove the result. Use `py -3` equivalents on Windows.
-6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only
-   when work spans multiple packages, worktrees, agents, or handoff sessions.
-7. Finish with this round's results, modified/new files, risk points, and
-   concrete next steps. If tracked files changed, close with a local checkpoint
-   commit unless the blocker is explicitly documented.
+After setup, follow the adaptive contract in `AGENTS.md`. The seed README gives
+the short problem-solving overview; this file stays focused on machine and
+platform setup. In particular, read state and ledger history only when relevant,
+and create a Work Packet only after the task crosses the complexity trigger.
 
 ## Claude Code New-Session Defaults
 
@@ -99,6 +93,7 @@ macOS/Linux:
 ```bash
 python3 tools/project.py install-user-skills --target codex
 python3 tools/project.py install-user-skills --target claude
+python3 tools/project.py audit-user-skills --target all
 ```
 
 Windows PowerShell:
@@ -106,9 +101,12 @@ Windows PowerShell:
 ```powershell
 py -3 tools/project.py install-user-skills --target codex
 py -3 tools/project.py install-user-skills --target claude
+py -3 tools/project.py audit-user-skills --target all
 ```
 
-Install everything bundled by this seed:
+The default profile is deliberately small: it covers normal implementation, diagnosis, tests, review, research, handoff, and safe local checkpoints. It avoids installing heavyweight architecture, planning, or legacy Superpowers aliases into every new project.
+
+Install the specialist snapshot only when a project needs it:
 
 macOS/Linux:
 
@@ -122,25 +120,16 @@ Windows PowerShell:
 py -3 tools/project.py install-user-skills --target all --profile all --force
 ```
 
+Before replacing an existing skill with `--force`, run `audit-user-skills`. It marks each selected skill as `synced`, `drifted`, or `missing`, so a local customization is visible instead of silently overwritten:
+
+```bash
+python3 tools/project.py audit-user-skills --target codex --strict
+python3 tools/project.py audit-user-skills --target claude --strict
+```
+
 The installer intentionally does not migrate private user config such as API
 keys, MCP tokens, model provider credentials, conversation logs, hook state, or
 database files.
-
-## Standard MCP Checks
-
-Context7 is the standard documentation MCP for this seed. It should be present
-in both Codex and Claude user-level configuration when the new environment is
-intended to support library/framework documentation lookup.
-
-Check it after installing or copying user-level agent configuration:
-
-```bash
-codex mcp get context7
-claude mcp get context7
-```
-
-If either check fails, configure MCP in the user's home directory. Do not put
-API keys, MCP tokens, or model provider credentials in this repository.
 
 ## Complex Tasks (Optional)
 
@@ -228,7 +217,8 @@ platform-specific example: Windows uses `py -3`, while macOS/Linux uses
 The project settings include:
 
 - `UserPromptSubmit`: injects a short Chinese project snapshot only on the first prompt of a session, unless a handoff flow explicitly requests `panel_mode=handoff`.
-- `Stop`: runs `tools/project.py commit` to create a guarded local checkpoint commit when allowed changes are present.
+- `Stop`: shares Codex's baseline-aware clean-checkpoint gate and blocks only when the session leaves new tracked dirty changes without a deliberate checkpoint or blocked handoff.
+- `permissions.allow`: keeps Git inspection read-only by default and exposes the guarded `tools/project.py commit` path; raw mutating Git commands continue through normal permission review.
 
 This is the default Claude Code path and does not require user-level hook setup.
 User-level hook/config setup is optional; use it only when you want similar
@@ -300,8 +290,6 @@ python3 tools/panel.py  # Print status panel
 python3 tools/project.py configure-claude
 python3 tools/project.py list-user-skills
 python3 tools/project.py governance init --profile sustained
-codex mcp get context7
-claude mcp get context7
 ```
 
 Windows PowerShell:
@@ -313,6 +301,4 @@ py -3 tools/panel.py
 py -3 tools/project.py configure-claude
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py governance init --profile sustained
-codex mcp get context7
-claude mcp get context7
 ```

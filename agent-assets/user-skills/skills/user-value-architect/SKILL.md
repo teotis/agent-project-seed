@@ -12,10 +12,10 @@ description: >
 
 ## Invocation And Depth
 
-本 skill 支持用户显式调用与 agent active：
+本 skill 仅支持用户显式调用：
 
 - 用户显式调用默认 **Deep Value Analysis**。
-- Agent active 只进入 **Low-Budget Value Scan**，输出最小价值诊断、coverage debt 和 handoff 建议；不得自动升级 Deep 或 Exhaustive。
+- Claude/Codex agent 不得自行 active 启动本 skill；普通任务中发现用户价值信号时，只输出最小价值观察、coverage debt 或 handoff 建议，等待用户点名 `$user-value-architect`。
 - **Exhaustive** 仅在用户明确要求极致、全覆盖、充分发挥模型能力或多模态全面核查时进入。
 - 从 workspace、材料和上下文能推断的 scope、persona、budget 和输出形态直接推断；完全无法识别对象，或下一步需要 implementation、实验、发布、迁移、不可逆操作时才询问。
 
@@ -31,12 +31,18 @@ description: >
 
 ## Value Model
 
+**Two-Track Candidate Model**:
+
 同时维护两条候选轨道：
 
-- **High-ceiling candidates**：30% 是入场线，继续探索 2x、3x 或 category-shift；必须给出 floor、ceiling、path to ceiling、evidence strength 和 disproof test。
-- **Small high-certainty improvements**：低投入、低风险、用户可见、证据确定；标记为 `optimize`、`fast validation bet` 或 `do-now`，不得伪装成高上限押注，也不得自动丢弃。
+- **High-ceiling candidates / high-ceiling candidates**：30% 是入场线，继续探索 2x、3x 或 category-shift；必须给出 floor、ceiling、path to ceiling、evidence strength 和 disproof test。
+- **Small high-certainty improvements / small high-certainty improvements**：低投入、低风险、用户可见、证据确定；标记为 `optimize`、`fast validation bet` 或 `do-now`，不得伪装成高上限押注，也不得自动丢弃。
+
+30% entry line applies to high-ceiling recommendations；small high-certainty improvements do not need to pretend to be ceiling bets. do not inflate 小改进的 floor/ceiling；do not automatically drop 它们。
 
 高杠杆方向必须说明它删除哪一类反复出现的用户负担、失败路径、手工翻译、低信任或决策成本。用户不可感知的内部整洁不能单独成为推荐。
+
+**Human Terminal Fit（人类终端适配性）** 是默认价值镜头：用户的注意力、记忆、上下文保持、判断力、操作耐心和信任预算都有限。候选不仅要问“用户能否感知”，还要问入口是否更简洁、默认路径是否更直观、完成目标需要的操作/判断/上下文重建是否减少，以及强能力是否真的进入用户可达路径。
 
 ## Model Adaptation Contract
 
@@ -47,6 +53,15 @@ description: >
 - **Creative extension lane**：当模型发现 workflow、trust、default experience、feedback loop 或长期能力上的新价值机制时，应临时命名该 mechanism，记录 user-visible moment、Evidence IDs、current/after slice、disproof test、counterexample 和 floor/ceiling；只要通过 gate，就可以成为候选，即使它不在 reference 的示例方向里。
 
 每次正式分析都做一次 **skill value check**：本 skill 是否比普通体验建议新增了用户路径证据、项目特有 leverage、候选分级、反例、验证切片或高上限探索。若没有，降级为 Value Scan、chat-only 结论或建议不用 full workflow。
+
+## Formal Contract Snapshot
+
+- 正式报告写入 authoritative workspace 的 `reports/user-value-architect/`，不要写到 `.claude/worktrees/`、临时 package branch 或 agent 子线程里长期滞留。报告命名保留 `reports/user-value-architect/user_value_architect_report_{YYYYMMDD}_{HHMM}.md` 与 `reports/user-value-architect/user_value_architect_report_{YYYYMMDD}_{HHMM}.html`。
+- 私有版正式报告的可见正文、标题、表格字段和 HTML UI 文案默认使用中文；英文只保留在必要的技能名、文件名、代码标识符、指标名和行业术语中。
+- HTML 评审面优先先读取 `../reviewable-html-report/SKILL.md` 和 `../reviewable-html-report/references/report_base.md`，保留 review-controls、data-card-id 和 feedback export。
+- Deep/Exhaustive 必须先完成 Project Immersion Protocol：Asset inventory、User-visible surface inventory、three concrete user paths 和 evidence gaps；证据不足时标记 `blocked_by_evidence`。
+- 推荐必须通过 Fact Map Before Advice、Value Theory / Project-Specific Leverage、Specificity Gate、No Naked Recommendations 和 Advice Atomicity Contract；每个推荐需要 2-5 specific artifacts、Evidence IDs、Current experience slice、After experience slice，并说明为什么不是“任何同类项目都适用”的泛化建议。
+- 输出压缩遵守 Decision-First Output、Evidence Compression Gate、Main Narrative Cap、One-Screen Handoff Capsule 和 Delete-The-Scaffold Rule；recommendation permission 不足时降级为 hypothesis、validate-first、defer 或 handoff。
 
 ## Required References
 
@@ -79,7 +94,7 @@ Fact Map 是 recommendation permission 的前置层，不是主报告默认叙�
 
 ### 3. Establish Value Theory
 
-说明用户真正稀缺的资源、项目独特资产、最大价值泄漏和 project-specific leverage。说不清独特杠杆时，只能输出探索性候选，不能把通用自动化、dashboard、记忆或“智能路由”包装成最高上限。
+说明用户真正稀缺的资源、项目独特资产、最大价值泄漏和 project-specific leverage；同时显式判断当前体验如何消耗用户这个有限终端的注意力、记忆、操作耐心、判断力和信任预算。说不清独特杠杆时，只能输出探索性候选，不能把通用自动化、dashboard、记忆或“智能路由”包装成最高上限。
 
 ### 4. Gather Evidence And External Coordinates
 
@@ -87,7 +102,7 @@ Fact Map 是 recommendation permission 的前置层，不是主报告默认叙�
 
 ### 5. Map User Success
 
-追踪 trigger、setup、first value、core loop、failure/recovery、trust formation 和 long-term compounding，定位等待、困惑、重复操作、认知负担、低信任和结果不确定性。
+追踪 trigger、setup、first value、core loop、failure/recovery、trust formation 和 long-term compounding，定位等待、困惑、重复操作、认知负担、低信任和结果不确定性。对关键路径估算用户要做的操作数、判断数、上下文重建次数和手工恢复点；能把 10 个操作压成 1 个可靠动作的候选，优先进入高杠杆竞争。
 
 ### 6. Generate And Gate Candidates
 
@@ -97,6 +112,7 @@ Fact Map 是 recommendation permission 的前置层，不是主报告默认叙�
 - user-visible moment；
 - Current experience slice；
 - After experience slice；
+- Human Terminal Fit delta（入口、默认路径、操作数、判断数、上下文重建、恢复成本和能力可达性的变化）；
 - structural value mechanism；
 - First validation / disproof slice；
 - rejected alternative 与 counterexample。
@@ -164,6 +180,7 @@ reports/user-value-architect/user_value_architect_report_{YYYYMMDD}_{HHMM}.md
 - 用户、场景、目标、成功信号和 scope assumption 明确；
 - Deep/Exhaustive 已完成 Fact Map 与 Project Immersion，或明确降级；
 - Value Theory 能解释 project-specific leverage；
+- Human Terminal Fit 已纳入价值判断：入口、默认路径、操作负担、认知负担和能力可达性没有被内部机制叙事吞掉；
 - high-ceiling 与 small high-certainty 两轨均得到诚实处理；
 - 每个推荐通过 User-Perceived Value Gate、Specificity Gate 和 Advice Atomicity；
 - 外部期待影响 ceiling 时已校准，或明确 unavailable；

@@ -1,65 +1,77 @@
 # Task Plan Contract
 
-Use this contract when creating a lightweight task pack for `agent-task-planner`.
-The goal is enough structure to start safely, not a full scheduler.
-
-## Language Contract
-
-Write all user-facing prose and Markdown headings in the user's language. For a
-Chinese request, use Simplified Chinese for the plan body, package explanations,
-agent prompt prose, handoff notes, risks, and next steps. For an English request,
-use English.
-
-Keep file names, paths, commands, code symbols, package IDs, lane values, exit
-outcome values, `status.tsv` headers, and status enums stable. `status.tsv` is
-coordination memory, not a user-reading report, so its headers and state values
-stay English.
-
-The Markdown section labels below are semantic labels. Localize them when the
-user's language is not English.
+创建 `agent-task-planner` 轻量 task pack 时使用本合同。目标是让任务能安全开始，而不是生成完整 scheduler。
 
 ## TASK_PLAN.md
 
 ```markdown
-# <localized task title> - <localized task plan label>
+# <Task Title> - Task Plan
 
-## <localized: Goal>
-<one concrete outcome>
+## Goal
+<一个具体结果>
 
-## <localized: Current Truth>
+## Current Truth
 - Repo:
 - Branch:
 - Dirty state:
 - Relevant files/docs inspected:
 - Existing related plan or status:
 
-## <localized: Lane Decision>
-- Selected lane: `direct | single-agent | small-parallel | manual-pack | upgrade`
+## Lane Decision
+- Selected lane: `direct | single-agent | small-parallel | native-agent-controls | ledger-lite | manual-pack | upgrade`
 - Why this lane:
 - Why not full orchestration:
 - Upgrade trigger if conditions change:
 
-## <localized: Exit Path>
+## Exit Path
 - Exit outcome: `none | no-viable-plan | needs-user-decision | blocked-with-handoff | defer | upgrade-required`
 - Evidence checked:
 - Why continuing would be unsafe or wasteful:
 - Smallest useful next action:
 
 ## Fix-Worthiness
+- Raw claim:
+- Claim disposition: `validated | reported-only | downgraded | deferred | rejected`
+- Problem-specific checks derived:
+- Current evidence:
+- Counter-evidence checked:
 - User impact:
 - Evidence strength:
 - Repair value: `fix-now | worth-fixing-needs-evidence | needs-user-decision | defer | no-fix`
+- Feasibility: `agent-fixable | needs-discovery | blocked-external | not-feasible`
+- Solution fit:
+- Solution risks checked:
 - Main uncertainty:
 - Complexity / boundary risk:
 
-## <localized: Packages>
-| ID | Title | Owner | Depends On | Allowed Paths | Verification | State |
-|---|---|---|---|---|---|---|
-| 01-... | ... | main-thread/agent/manual | none | ... | ... | ready |
+## Plan / Package Proof Route
+- Claim proof:
+- Worth proof:
+- Feasibility proof:
+- Solution-fit proof:
+- Verification proof:
+- Integration proof:
+- Falsifier / downgrade trigger:
 
-## <localized: Execution Notes>
+## Plan Fitness
+- Startability:
+- Evidence strength:
+- Scope containment:
+- Verification strength:
+- Integration visibility:
+- Cognitive load:
+- Recovery clarity:
+- Decision:
+
+## Packages
+| ID | Title | Owner | Depends On | Allowed Paths | Verification | Integration Target | State |
+|---|---|---|---|---|---|---|---|
+| 01-... | ... | main-thread/agent/manual | none | ... | ... | main/current target branch | ready |
+
+## Execution Notes
 - Branch/worktree strategy:
 - Checkpoint rule:
+- Integration visibility rule:
 - External gates:
 - Explicit non-goals:
 - Stop conditions:
@@ -67,9 +79,7 @@ user's language is not English.
 
 ## AGENT_PROMPTS.md
 
-Each prompt should be short enough for a weaker model to follow. Write prompt
-prose in the user's language while preserving file names, paths, commands, and
-machine field names.
+每个 prompt 都应该短到较弱模型也能照着执行。
 
 ```markdown
 # Agent Prompts
@@ -91,6 +101,7 @@ Forbidden without approval:
 
 Acceptance:
 - <criteria>
+- If this package creates translated, generated, exported, or reviewable user-facing files, those files are visible on the integration target branch, or the blocker and merge command are recorded.
 
 Verification:
 - <command>
@@ -98,19 +109,19 @@ Verification:
 Before finishing:
 - write changed files, verification result, risks, and blocker if any to HANDOFF.md
 - leave a local checkpoint commit when authorized by the repo rules
+- if working on a branch/worktree, merge or prepare the package so required artifacts are visible on the agreed integration target; do not claim delivery from an isolated branch alone
 ```
 
 ## status.tsv
 
-Use a tiny status table. It is coordination memory, not scheduler truth. Keep
-headers and state values in English.
+使用极小 status table。它是 coordination memory，不是 scheduler truth。
 
 ```text
-id	title	owner	state	branch_or_worktree	verification	next
-01-example	Example package	agent	ready	agent/example	pytest tests/example	continue
+id	title	owner	state	branch_or_worktree	integration_target	verification	next
+01-example	Example package	agent	ready	agent/example	main	pytest tests/example	continue
 ```
 
-Allowed states:
+允许状态：
 
 - `pending`
 - `ready`
@@ -124,31 +135,36 @@ Allowed states:
 ```markdown
 # Handoff
 
-## <localized: Results>
+## Results
 - ...
 
-## <localized: Modified Or New Files>
+## Modified Or New Files
 - ...
 
-## <localized: Verification>
+## Integration Visibility
+- Target branch:
+- Visible on target: yes/no/not applicable
+- If no, blocker and next merge step:
+
+## Verification
 - `<command>`: pass/fail/not run
 
-## <localized: Risks>
+## Risks
 - No new risks found.
 
-## <localized: Next Steps>
+## Next Steps
 - <concrete next action>
 ```
 
-If there are no risks, write `No new risks found.` exactly.
+如果没有风险，必须原样写 `No new risks found.`。
 
 ## Escalation Checklist
 
-Escalate to `agent-orchestration-planner` when any of these becomes necessary:
+出现以下情况时升级到 `agent-orchestration-planner`：
 
-- persistent DAG state is needed across sessions;
-- packages unlock downstream work automatically;
-- retry/finalize/cleanup must be scripted;
-- each package requires its own worktree plus final merge control;
-- multiple runner wrappers are part of the value;
-- one artifact claiming success must be cross-checked against scheduler state.
+- 需要跨 session 的 persistent DAG state；
+- package 会自动 unlock downstream work；
+- retry/finalize/cleanup 必须脚本化；
+- 每个 package 需要独立 worktree，并且需要 final merge control；
+- multiple runner wrappers 是任务价值的一部分；
+- 某个 artifact 声称成功时，必须和 scheduler state 交叉校验。

@@ -10,4 +10,4 @@ Claude Code-specific notes:
 - Keep this file short and Claude-specific.
 - Do not duplicate shared project rules here.
 - When a repeated mistake is discovered, suggest whether it should become a hook, test, lint rule, or CI check instead of adding another reminder here.
-- You can configure `.claude/settings.json` Stop hook to call `tools/project.py commit`.
+- The project-level Claude Stop hook uses the same baseline-aware clean-checkpoint gate as Codex; agents create the local commit deliberately after review.

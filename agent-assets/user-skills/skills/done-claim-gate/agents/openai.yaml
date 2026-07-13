@@ -1,7 +1,7 @@
 interface:
   display_name: "Done Claim Gate"
-  short_description: "在目标和方案已定时，用证据矩阵防止把局部实现误报成交付完成"
-  default_prompt: "使用 $done-claim-gate 用中文做低预算完成声明门槛判断：先提取用户目标、已定方案、实现映射和验收证据，再判断当前只能宣称 complete、engineering-complete、partial、blocked 还是 not-complete；不得自动扩展为重型分析或重新设计方案。"
+  short_description: "非例行需求落地风险门禁：宽泛目标要求落地、agent 需补全关键判断、产物影响用户/下游时，用 pre-delivery lens 或 completion claim gate 防止工程 proxy 冒充完成"
+  default_prompt: "使用 $done-claim-gate 用中文判断是否存在非例行需求落地风险；默认用中文输出判断、风险说明、缺口账本和最终回复，保留必要技术术语、代码/命令/文件名、状态字段和原文证据。风险信号包括：宽泛目标要求落地、agent 需自行补全关键判断、产物影响用户/下游，或有旧路径/模板替代、近期纠偏、高影响交付风险。成立时按时机选模式：交付前用 pre-delivery lens（清零+五维+根因分类）；高风险完成声明或用户质疑时用 completion claim gate（Delivery Contract+Gap Ledger+完成等级）。例行模板、明确机械小改、低影响文案、状态汇报、普通 final 摘要不自动触发。"
 
 policy:
   allow_implicit_invocation: true

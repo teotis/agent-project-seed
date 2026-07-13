@@ -11,13 +11,10 @@
           "text": "Chooses direct or single-agent unless durable scheduling is specifically needed."
         },
         {
-          "text": "Includes goal/current truth/fix-worthiness, allowed paths, verification, checkpoint rule, and Simplified Chinese output when the user asks in 简体中文."
+          "text": "Includes goal, current truth, fix-worthiness, raw-claim disposition, allowed paths, verification, integration target, and checkpoint rule."
         },
         {
           "text": "Does not generate orchestrate.sh, 99-finalize, or signed scheduler state."
-        },
-        {
-          "text": "Follows the user's language: for this Chinese prompt, user-facing prose and Markdown headings are in Simplified Chinese while paths, commands, lane values, and status enums remain stable."
         }
       ]
     },
@@ -89,6 +86,148 @@
         },
         {
           "text": "Does not create implementation packages from vague wording alone."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "我说多 agent，但其实只是两个互不依赖的小文档修正。我想能看一下进度，不需要 DAG、重试、自动合并或 runner wrapper。",
+      "expected_output": "Uses the planner route gate instead of escalating. Chooses small-parallel or native-agent-controls, explains that full orchestration is not justified, and keeps any status.tsv as coordination memory rather than scheduler truth.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not route to agent-orchestration-planner merely because the user said multi agent."
+        },
+        {
+          "text": "Chooses small-parallel or native-agent-controls and names why a project-owned scheduler is unnecessary."
+        },
+        {
+          "text": "Does not generate orchestrate.sh, 99-finalize, runner wrappers, or signed scheduler state."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "我需要一组可审计任务包和轻量状态记录，人工推进就行；不需要自动 launch、tail call、cleanup 或最终合并 main。",
+      "expected_output": "Chooses the ledger-lite lane. Produces durable package docs, owner/verification/checkpoint fields, and a lightweight status ledger, while explicitly declining full orchestration because automatic dispatch and finalize are not needed.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Chooses ledger-lite rather than full orchestration."
+        },
+        {
+          "text": "Includes durable package docs, verification, owner, checkpoint, integration target, and lightweight status tracking."
+        },
+        {
+          "text": "Explains that status is coordination memory, not scheduler truth."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "这次任务有三波依赖，后续包必须等上游 commit 验证后才能启动，失败要自动 retry，最后要统一 merge 和 cleanup。",
+      "expected_output": "Chooses upgrade-required and routes to agent-orchestration-planner because the task needs project-owned DAG scheduling, scheduler truth, retry/finalize automation, and merge/cleanup control.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names the full orchestration capabilities required: DAG scheduling, scheduler truth, retry/finalize automation, merge, and cleanup."
+        },
+        {
+          "text": "Does not pretend ledger-lite or native agent controls are enough."
+        },
+        {
+          "text": "Routes to agent-orchestration-planner."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "用户反馈导出页面坏了。先别问太多，帮我拆一个修复包给 agent。",
+      "expected_output": "Treats the user report as a raw claim. Checks current repo evidence and counter-evidence before creating implementation packages; if the failing path is not verified, creates only a validation/discovery package or chooses an explicit exit path.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Records raw claim disposition such as validated, reported-only, downgraded, deferred, or rejected."
+        },
+        {
+          "text": "Checks current evidence and counter-evidence before marking any package ready for implementation."
+        },
+        {
+          "text": "Does not create a ready repair package when the issue is only user-reported and lacks a current failing path."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "开一个 agent 分支补 public-en 翻译文件，做完后这些翻译文件必须在 main 上能看到。",
+      "expected_output": "Creates a task pack or prompt with an explicit integration target of main, and defines completion as translated/generated files being visible on that target branch or a blocked handoff recording the merge blocker and next step.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Names main or the user-specified branch as the integration target."
+        },
+        {
+          "text": "Requires generated or translated files to be merged or prepared for visibility on the integration target before claiming delivery."
+        },
+        {
+          "text": "Records branch, blocker, and next merge step if the files remain only on an agent/worktree branch."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "我只举了几个可能的问题检查角度。请用 $agent-task-planner 给一个支付失败修复需求拆包，但不要只照我举过的角度，要自己根据 repo 证据和候选方案判断还可能错在哪里。",
+      "expected_output": "Derives problem-specific validation and solution-fit checks from the current repo evidence, claim type, affected surface, and candidate repair path. Treats user-provided angles as seed examples, not an exhaustive checklist.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Records problem-specific checks derived for this task instead of relying only on a fixed checklist."
+        },
+        {
+          "text": "Checks whether the candidate solution addresses the root cause and whether it creates scope, product, verification, or adjacent-workflow risks."
+        },
+        {
+          "text": "Does not mark implementation packages ready until the raw claim and proposed solution both pass the derived validation gates."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "用户说导出报告错了，我想让一个 agent 直接修。请用 $agent-task-planner 判断能不能生成 ready package：要说明 claim/worth/feasibility/solution-fit/verification/integration 的证明路线，也用非绝对评分帮我选 direct、single-agent 还是 discovery。",
+      "expected_output": "Runs a Plan/Package Proof Route before marking any package ready. It proves or downgrades the claim, repair worth, feasibility, solution fit, verification signal, and integration visibility, names a falsifier that would downgrade the package, and uses Plan Fitness as non-gating routing support rather than a noisy score table.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Includes claim proof, worth proof, feasibility proof, solution-fit proof, verification proof, integration proof, and a falsifier or downgrade trigger."
+        },
+        {
+          "text": "Does not create a ready implementation package when any proof route item is missing or only reported by the user."
+        },
+        {
+          "text": "Uses Plan Fitness dimensions such as startability, evidence strength, scope containment, verification strength, integration visibility, cognitive load, and recovery clarity to support lane/package choice."
+        },
+        {
+          "text": "Keeps the user-facing output decision-oriented rather than dumping a score spreadsheet."
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "这个需求本来有三波强依赖，应该上重型 orchestration；但当前环境没有安装 agent-orchestration-planner，也不能跑 runner。请用 $agent-task-planner 先给一个可执行包，宁可包大一点，也别让 agent 执行到一半才发现依赖。",
+      "expected_output": "Chooses an upgrade-unavailable fallback instead of pretending full orchestration is available. It creates a dependency-closed coarse package, ledger-lite, or manual-pack that keeps tightly coupled work together, records the missing orchestration capability, and preserves verification and handoff boundaries.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recognizes that full orchestration would normally be justified by multi-wave dependencies, recovery, or integration control."
+        },
+        {
+          "text": "Does not split strongly dependent work into fake-independent packages just to keep packages small."
+        },
+        {
+          "text": "Uses a dependency-closed coarse package, ledger-lite, manual-pack, or blocked handoff when agent-orchestration-planner or runner support is unavailable."
+        },
+        {
+          "text": "Records the missing control-plane capability and the condition under which the plan should be upgraded later."
         }
       ]
     }

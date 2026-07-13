@@ -4,12 +4,6 @@
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git branch *)",
-      "Bash(git stash *)",
-      "Bash(git worktree *)",
-      "Bash(git rm *)",
       "Bash(git show *)",
 
       "Bash(py -3 tools/project.py commit *)",
@@ -34,9 +28,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "py -3 tools/project.py commit --message \"chore: checkpoint agent work\"",
+            "command": "py -3 .codex/hooks/clean_checkpoint_first.py stop",
             "timeout": 30,
-            "statusMessage": "生成本地 checkpoint commit..."
+            "statusMessage": "检查 clean-checkpoint 状态..."
           }
         ]
       }

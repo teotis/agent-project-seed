@@ -1,0 +1,22 @@
+{
+  "name": "flow-realization-review",
+  "version": "0.3.0",
+  "owner": "Teotis Skill",
+  "updated_at": "2026-07-06",
+  "status": "experimental",
+  "maturity_tier": "production",
+  "lifecycle_stage": "production",
+  "context_budget_tier": "production",
+  "review_cadence": "quarterly",
+  "target_platforms": [
+    "openai",
+    "claude",
+    "generic",
+    "agent-skills-compatible"
+  ],
+  "factory_components": [
+    "agents",
+    "references",
+    "evals"
+  ]
+}

@@ -9,8 +9,10 @@ This is a fast structural/safety check, not a conformance or security certificat
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
+from html import unescape
 from pathlib import Path
 
 REQUIRED_PATTERNS = {
@@ -39,6 +41,32 @@ RELATIONSHIP_VISUAL_PURPOSES = {
     "architecture-map",
     "dependency-map",
 }
+
+
+def text_content(html_fragment: str) -> str:
+    without_scripts = re.sub(
+        r"<(?:script|style)\b.*?</(?:script|style)>",
+        " ",
+        html_fragment,
+        flags=re.I | re.S,
+    )
+    without_tags = re.sub(r"<[^>]+>", " ", without_scripts)
+    return " ".join(unescape(without_tags).split())
+
+
+def normalized_phrase(value: str) -> str:
+    return re.sub(r"\W+", "", value, flags=re.I).lower()
+
+
+def iter_coverage_items(value: object):
+    if isinstance(value, dict):
+        if "disposition" in value or "importance" in value or "id" in value:
+            yield value
+        for child in value.values():
+            yield from iter_coverage_items(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from iter_coverage_items(child)
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -107,6 +135,50 @@ def main() -> int:
             flags=re.I,
         ):
             errors.append("thesis lacks source reference")
+        if thesis_match:
+            thesis_tag = re.match(r"<([a-z][\w:-]*)\b", thesis_match.group(0), flags=re.I)
+            thesis_text = ""
+            if thesis_tag:
+                thesis_block = re.search(
+                    re.escape(thesis_match.group(0)) + r"(.*?)</" + thesis_tag.group(1) + r"\s*>",
+                    text,
+                    flags=re.I | re.S,
+                )
+                if thesis_block:
+                    thesis_text = text_content(thesis_block.group(1))
+            title_match = re.search(r"<title\b[^>]*>(.*?)</title>", text, flags=re.I | re.S)
+            title_text = text_content(title_match.group(1)) if title_match else ""
+            thesis_words = re.findall(r"[\w'-]+", thesis_text)
+            looks_like_title = (
+                title_text
+                and normalized_phrase(thesis_text)
+                and normalized_phrase(thesis_text) == normalized_phrase(title_text)
+            )
+            if looks_like_title or (len(thesis_text) < 60 and len(thesis_words) < 8):
+                errors.append("thesis looks decorative instead of a conclusion")
+
+        ledger_match = re.search(
+            r'<script\b[^>]*id\s*=\s*["\']coverage-ledger["\'][^>]*>(.*?)</script>',
+            text,
+            flags=re.I | re.S,
+        )
+        if ledger_match:
+            ledger_text = text_content(ledger_match.group(1))
+            try:
+                ledger = json.loads(ledger_text)
+            except json.JSONDecodeError as exc:
+                errors.append(f"coverage ledger is not valid JSON: {exc.msg}")
+            else:
+                for item in iter_coverage_items(ledger):
+                    item_id = str(item.get("id") or "<unknown>")
+                    disposition = str(item.get("disposition") or "").strip().lower()
+                    importance = str(item.get("importance") or "").strip().lower()
+                    if not disposition:
+                        errors.append(f"coverage item lacks disposition: {item_id}")
+                    if disposition == "omitted" and not str(item.get("reason") or "").strip():
+                        errors.append(f"omitted coverage item lacks reason: {item_id}")
+                    if importance == "primary" and disposition == "omitted":
+                        errors.append(f"primary coverage item is omitted: {item_id}")
 
         index_match = re.search(
             r'<nav\b[^>]*(?:data-comprehension-role\s*=\s*["\']section-index["\']'

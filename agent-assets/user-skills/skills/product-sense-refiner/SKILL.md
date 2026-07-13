@@ -20,6 +20,8 @@ The core move is:
 
 Use this skill when a solution is reasonable but still feels generic, over-mechanized, too internally focused, too verbose by default, or not sharp enough for the user's real choice.
 
+Product sense also means **Human Terminal Fit**：用户的注意力、记忆、上下文保持、判断力、操作耐心和信任预算都有限。强能力必须通过简洁入口、直观默认路径和少操作成本变得可达，否则只是内部能力。
+
 ## When To Use
 
 Use this skill when:
@@ -65,7 +67,20 @@ Confidence: high
 
 If the default answer is not useful, the internal model is probably solving the wrong problem.
 
-### 3. Separate Fact, Judgment, And Expression
+### 3. Run Human Terminal Fit Check
+
+Before adding mechanisms, check whether the design fits a limited human terminal:
+
+- **Entry**：Can the user find the right entry without remembering hidden rules?
+- **Default path**：Does the default action follow the user's likely intent?
+- **Operation count**：How many clicks, commands, choices, confirmations, or manual transfers are required?
+- **Context load**：What must the user keep in working memory between steps?
+- **Recovery**：When the path fails, can the user understand and recover without re-reading the system?
+- **Capability reachability**：Is the strongest capability reachable from the default path, or buried in detail mode?
+
+Prefer removing a step, decision, or context reconstruction over adding explanatory text. Keep power-user controls available when needed, but do not make them the normal route to first value.
+
+### 4. Separate Fact, Judgment, And Expression
 
 Classify every major piece of the design:
 
@@ -77,7 +92,7 @@ Classify every major piece of the design:
 
 Do not leak all judgments into default expression. Do not treat expression as evidence.
 
-### 4. Pressure-Test Extreme Archetypes
+### 5. Pressure-Test Extreme Archetypes
 
 Test the design against cases that expose product weakness:
 
@@ -92,7 +107,7 @@ Test the design against cases that expose product weakness:
 
 Ask: would the current default answer mislead the user?
 
-### 5. Find Reward Misalignment
+### 6. Find Reward Misalignment
 
 Identify what the system might accidentally reward:
 
@@ -107,7 +122,7 @@ Identify what the system might accidentally reward:
 
 For each misalignment, decide whether to remove the metric, cap it, make it internal-only, or expose it with caveats.
 
-### 6. Decide What Stays Internal
+### 7. Decide What Stays Internal
 
 Good product design often hides complexity by default while preserving auditability.
 
@@ -120,7 +135,7 @@ Mark each detail as:
 
 The default answer should usually contain only the minimum needed for the user's next decision.
 
-### 7. Turn Descriptions Into Recommendations
+### 8. Turn Descriptions Into Recommendations
 
 Replace vague praise with fit guidance.
 
@@ -140,6 +155,9 @@ Use these questions to find better optimizations:
 
 - What will the user do after reading this output?
 - What is the shortest answer that still changes the user's decision?
+- What is the fewest operations that can honestly complete the user's intent?
+- Which choices or instructions exist only because the system exposed its internals?
+- Is the strongest capability available on the default path?
 - What should be hidden by default but retained for audit?
 - Which metric would encourage bad behavior?
 - What result would be great but non-standard?
@@ -159,6 +177,9 @@ When using this skill, return a concise refinement report:
 
 ## Default Answer
 <recommended default output shape or example>
+
+## Human Terminal Fit
+<entry, default path, operation count, context load, recovery, capability reachability>
 
 ## Keep
 <parts of the current design that serve the user decision>
@@ -185,6 +206,8 @@ For small tasks, compress the sections but preserve the logic: decision, default
 
 - Starting from available mechanisms instead of the user's decision.
 - Treating a detailed internal model as a good default output.
+- Explaining complexity instead of removing steps, choices, or context reconstruction.
+- Hiding the strongest capability behind a non-obvious advanced path.
 - Adding more dimensions when the real fix is removing a misleading metric.
 - Forcing a total order when the honest result is incomparable.
 - Scoring cost, effort, or process just because they are measurable.
@@ -197,6 +220,7 @@ Before finishing, verify:
 
 - The user decision is explicit.
 - The default answer is short and actionable.
+- Entry, default path, operation count, context load, recovery, and capability reachability have been checked.
 - Fact, judgment, and expression are separated.
 - At least one extreme archetype was pressure-tested.
 - Misaligned incentives were removed, capped, or made internal-only.

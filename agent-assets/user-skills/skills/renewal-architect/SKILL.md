@@ -48,14 +48,14 @@ description: >
 
 ## 默认执行强度与询问门槛
 
-本 skill 同时支持用户显式调用与 agent active 自启用。默认深度由调用来源决定：
+本 skill 仅支持用户显式调用。默认深度由用户请求决定：
 
 - **用户显式调用**（用户点名本 skill、提出 renewal/legacy/migration/技术债诊断诉求、或同义触发词）：默认 **Deep** Diagnostic Mode，覆盖完整 fact ledger、十二 lenses、adoption economics 与正式 HTML 报告。
-- **Agent active 自启用**（普通任务上下文中直接出现清晰 renewal 信号，且没有另一个重型分析 workflow 正在运行）：只进入 **Low-Budget Diagnostic Scan**，覆盖最小 fact ledger、dominant constraint 假设、coverage debt 和 handoff 建议；升级到 Deep 需要用户显式确认。
+- **Agent active 禁止**：普通任务上下文中即使出现清晰 renewal 信号，也只输出最小 renewal 观察、coverage debt 或 evidence-backed handoff 建议，等待用户点名 `$renewal-architect`。
 - **Cross-heavy route**：正在运行的 architect、sweep、Deep 或 Exhaustive workflow 不得自动启动本 skill，只能提交 evidence-backed handoff，等待用户授权。
 - **Exhaustive**：仅在用户明确要求「极致 / 全覆盖 / 大水漫灌」时进入；不是默认值。
 
-用户显式调用即视为授权执行本 skill 在当前环境和既有安全边界内的正式原生工作流。agent active 自启用只授权低预算轻量诊断，不自动产出完整正式报告，不自动升级 Deep/Exhaustive；需要完整 renewal decision report 或更深证据面时，先提交 handoff 建议并等待用户确认。
+用户显式调用即视为授权执行本 skill 在当前环境和既有安全边界内的正式原生工作流。未被用户显式调用时，不自动产出完整正式报告，不自动升级 Deep/Exhaustive；需要完整 renewal decision report 或更深证据面时，先提交 handoff 建议并等待用户确认。
 
 可从当前 workspace、用户消息、文件和已有上下文合理推断的 scope、target、mode、约束和非破坏性执行方式，直接推断并记录，不要询问用户。信息不足但仍能继续时，将其写入 `assumptions / unknowns / coverage debt`，并继续完成其余可执行工作。
 

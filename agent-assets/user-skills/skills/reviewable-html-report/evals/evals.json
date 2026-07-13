@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "请把刚才的架构分析结果转成一个可交互评审的 HTML 报告，要包含 Mermaid 图和评审卡。",
-      "expected_output": "Generates a self-contained HTML report with Mermaid topology diagrams, review cards with star ratings and comment fields, collapsible sections, local feedback persistence, and exportable review notes. The report does not modify the domain analysis — it only provides the presentation layer.",
+      "expected_output": "Recognizes that the user explicitly requested an interactive review artifact, passes the Report Upgrade Gate, and generates a self-contained HTML report with Mermaid topology diagrams, review cards with star ratings and comment fields, collapsible sections, local feedback persistence, and exportable review notes. The report does not modify the domain analysis — it only provides the presentation layer.",
       "files": [],
       "assertions": [
         {
@@ -27,7 +27,7 @@
     {
       "id": 2,
       "prompt": "我有一个纯文本的 bug 报告，帮我在终端里直接回复就行，不需要 HTML。",
-      "expected_output": "Recognizes that a simple bug report does not need interactive HTML. Replies in plain text without invoking reviewable-html-report. May suggest html-response only if the user later wants a comprehension-first visual explanation.",
+      "expected_output": "Recognizes that the Report Upgrade Gate is not met because the user requested plain terminal output and no HTML. Replies in plain text without invoking reviewable-html-report. May suggest html-response only if the user later wants a comprehension-first visual explanation.",
       "files": [],
       "assertions": [
         {

@@ -2,6 +2,7 @@
 name: agent-orchestration-planner
 description: >
   用于用户明确要求的中大型多 agent 工程落地，且需要项目内持久 DAG、任务尾部推进、worktree/分支管理、状态账本、重试恢复、Codex/Claude runner 选择或自动收口合并。
+  即使输入来自用户、sweep、handoff 或轻量 planner，也要独立完成 raw claim 准确性、反证、值得执行、可行性和方案贴合判断，避免把未经证实的问题包装成 DAG。
   Use for explicit multi-agent execution that needs a project-owned DAG, durable coordinator state, branch/worktree control, Codex/Claude runner selection, recovery, and finalize workflows.
 whenToUse: >
   仅当用户明确要求 orchestration control plane、状态账本、DAG 调度、worktree/分支管理、失败恢复、自动收口，或要求把多 agent 结果可靠落地到同一工程时使用。
@@ -59,9 +60,12 @@ Orchestration kit 是 **tail-driven execution contract**。package agents 做自
 - Functional package prompt 不复制全局 merge、fallback selection、cleanup 或 task-level outcome 逻辑；这些由 `99-finalize` 和 INDEX 承担。
 - Background executor 默认静默执行，不输出进度叙述、任务复述或中间总结；过程事实写入工具结果，最终证据一次性写入 coordinator artifacts。
 - Runtime 继续保留完整命令与恢复能力；用户聊天只暴露当前可执行的最小命令面。
+- Analysis-only 和 planning-only packages 产出的长期报告、计划、任务包、HTML review surface、`FINAL_REPORT.md` 与 coordinator summary 默认视为可合入主开发线的文档资产。`99-finalize` 应在基础自检、敏感内容排查、路径归类和冲突检查通过后，把它们合入 mainline 并在主/coordinator thread 汇总；不得把它们长期留在 package branch、watch/session 或 worker thread，除非 INDEX 明确声明隔离原因。
 - 对用户可见行为、布局、文案、工作流或视觉输出，package 使用 **User-Visible Delta Ledger**：允许必要的小邻近调整，但必须记录目标外可见变化，并把主流程、第一屏构图、导航模型、发布承诺或 explicit non-goal 的变化归为 `decision-required`，交给用户决策、拆包、降级或已批准 fallback，而不是伪装成普通 bugfix。
 
 上游 sweep、handoff 或用户方案提供结构化包时，先按 `docs/contracts/task-package-contract.md` 的 **Task Package Contract** 归一化，再生成 graph、package docs 和 prompts。每个 functional package 必须保留 **Falsification Ledger** 和 **Outcome Replay**：前者防止把弱证据、风格偏好或过期历史包装成执行项；后者记录 landed/blocked/false-positive/capability-gap 等结果，供后续 eval 和技能规则回放。
+
+即使上游已经做过 task planning，本 skill 也必须独立执行一次 orchestration 级别的 claim validation。重型控制面会放大错误问题的成本：一个未经证实的 raw claim 进入 DAG 后，可能错误解锁下游、制造无意义 worktree、或让 finalize 合并局部伪成果。不要把 `agent-task-planner` 的判断当成不可复核的事实；它可以作为 seed evidence，但 orchestration planner 必须能自己说明哪些 claim 被验证、降级、拒绝或只允许进入 discovery package。
 
 ## Model Adaptation Boundaries
 
@@ -73,11 +77,23 @@ Orchestration kit 是 **tail-driven execution contract**。package agents 做自
 
 生成 kit 前做一次 **orchestration value test**：项目是否真的需要版本化 DAG、持久状态账本、worktree/branch 策略、失败恢复和最终集成判断。若只需要并发执行、状态查看或少量独立任务，降级到官方平台能力、轻量 task package 或直接执行。
 
+如果用户诉求落在中间态，例如需要可审计任务包、owner、verification、checkpoint 和轻量状态记录，但不需要自动 launch、tail-call advancement、`99-finalize`、runner wrapper、自动 merge 或 cleanup，则不要生成完整 orchestration kit。改用 `agent-task-planner` 的 `ledger-lite` / `manual-pack` lane，或把已有 Task Package Contract 保持为手动执行包。
+
+Full kit 只有在至少一个轻量 lane 无法满足时才成立：项目自有 DAG 会驱动 dispatch、scheduler truth 要跨 session 解锁 downstream、失败恢复需要 retry/doctor/fingerprint、或最终集成需要 per-package worktree、integration branch、自动 finalize/cleanup。若理由只是“多 agent”“任务很多”“想看进度”，优先原生平台并发或轻量任务包。
+
+生成 full kit 前必须给出 **Execution Contract Proof Route**：need proof、projection proof、unlock proof、capability proof、landing proof、cleanup proof 和 falsifier。若证明路线无法闭合，不得生成完整 orchestration kit；应降级到 `agent-task-planner` 的 `ledger-lite` / `manual-pack`、平台原生 agents，或先问一个阻塞决策。
+
+在 Execution Contract Proof Route 前先完成 **Claim Readiness Proof**：claim proof、counter-evidence、fix-worthiness、feasibility、solution-fit、verification signal、integration visibility 和 falsifier。它回答“这些包是否应该进入 DAG”；Execution Contract Proof Route 回答“这些包是否需要 full kit”。两者都必须闭合，才允许生成完整 orchestration kit。
+
+同时用非绝对的 **Orchestration Value Score** 支撑 orchestration value test：durable state need、dependency unlock value、recovery value、integration value、runner value、operator burden。它帮助判断 full kit 是否比原生平台/轻量包更有用户价值，但不替代 hard invariants，也不能为了分数制造重型控制面。
+
 如果输入或生成的 package docs 包含 YAML/JSON/fenced structured package block，运行：
 
 ```bash
 rtk python3 scripts/task_package_validator.py <package-or-index-file>
 ```
+
+该 validator 是本仓库 `scripts/` 下的 repo-local deterministic gate，不是 standalone skill 包的硬依赖。若单独复制本 skill 或当前环境没有该脚本，仍保留 Task Package Contract 字段、Falsification Ledger 和 Outcome Replay，但必须把 deterministic package validation 标为 `missing evidence` / package contract gap；在 delegated execution 或 graph generation 前做人工结构审查，不得把“脚本不可用”当作验证通过。
 
 把一次 orchestration 看成一个 execution contract 的多个 projections：
 
@@ -152,13 +168,20 @@ Codex/runtime observations 映射如下：
 - 搜索项目文档指定的 planning home，例如 `docs/plans/`、`codex/agent_plans/`，或 AGENTS/CLAUDE/project docs 命名的路径。
 - 检查足够本地上下文，把工作拆成具体 packages。
 - 检查当前 git status。
+- 把用户、sweep、handoff、测试反馈、截图、日志或已有 package docs 中的问题描述先视为 `raw claim`；根据当前 repo、证据来源、影响面和候选方案，现场生成会推翻 claim 或推翻方案的检查角度。
+- 独立完成 claim validation：检查当前证据、反证、值得执行、agent 可行性、方案贴合、验证信号和集成可见性；如果只能引用上游转述，标记 `reported-only`，不得把实现包标成 ready。
+- 对未被验证但可能有价值的问题，只生成 discovery / validation package；对被反证、低价值、不可行或缺少外部门禁的问题，降级为 rejected / deferred / blocked，而不是放进 functional DAG。
 - 确保每个 functional package 都有 package id、allowed/forbidden paths、dependencies、acceptance criteria、verification commands、expected evidence、branch/worktree policy、unlock conditions。
 - 确保每个 imported package 保留 **Task Package Contract** 字段、**Falsification Ledger** 和 **Outcome Replay** stub；缺字段时先修 package，不要靠 agent prompts 临场解释。
+- 每个 functional package 的 **Falsification Ledger** 必须包含 claim disposition（`validated`、`reported-only`、`downgraded`、`deferred`、`rejected`）、反证检查、solution-fit risk 和会阻止进入 DAG 的 falsifier。
+- 运行 Execution Contract Proof Route，并记录为什么 full kit 相比平台原生并发、Task Package Contract、ledger-lite 或 direct execution 更合适。
+- 使用 Orchestration Value Score 辅助判断 full kit 是否值得：durable state、dependency unlock、recovery、integration、runner、operator burden。
 - 对会改变用户可见行为、布局、文案、工作流或视觉输出的 package，补齐 **User-Visible Delta Ledger**；不要对纯内部包强制增加这层负担。
 - 运行 capability preflight：把每个 package 或 gate 分类为 `autonomous`、`agent-verifiable substitute` 或 `external-assist`。
 - 默认只生成 agent 可自行完成的任务包；`external-assist` 只能作为非阻塞补充证据、release gate 或用户已明确批准的 manual gate 出现。
 - 如果判断 real-device QA、真人视觉验收、外部审批、凭证输入等 `external-assist` 对目标必不可少、不可忽略且没有 agent-verifiable substitute，必须在制造输出任务包前中断流程，向用户说明不可替代原因、影响面和可选决策，等待用户批准 gate、改 scope 或放弃该 orchestration；不要先生成一个会被真人任务卡住的 kit。
 - 启动前定义 landing strategy：primary path、preapproved fallbacks、explicit non-goals、abort conditions、independent merge candidates。
+- 对只新增或更新长期分析/规划文档的 package，landing strategy 默认应声明 `mainline-documentation-landing`：通过隐私/敏感内容检查、路径归类、格式/链接自检和冲突检查后自动合入 mainline。不要因为它来自独立 agent 或 worktree 就默认留在分支里。
 
 详细 projection、capability、landing/failure planning 规则见 `references/planning_contract.md`。
 
@@ -224,6 +247,7 @@ scratch-path <package-id>
 - `doctor --environment` 必须暴露 runner-specific preflight 事实；Codex runner 至少输出 CLI version、`codex exec` 是否支持 approval policy flag、sandbox/approval 配置、Codex home 和 home writability。
 - Runner selection 必须跨 tail calls 持久化：首次显式 `ORCHESTRATION_RUNNER=<runner>` 启动时记录到 coordinator `status/runner`；后续没有环境变量的 `advance`、`retry`、`finalize` 使用该记录。不要依赖 Claude/Codex 工具子进程继承 shell 环境，否则 Codex package 的裸 `advance` 会回退到默认 Claude runner。
 - `99-finalize` 只在全部 functional packages 为 `completed` 后运行；随后验证 evidence、保守 merge、报告结果；只有成功后调用 `cleanup --mainline <branch>`。cleanup 未完成时不得 `mark-state 99-finalize finalized`。
+- 对 analysis-only / planning-only 产物，`99-finalize` 的默认动作是合入 mainline 并把结论带回主 coordinator thread；仅在敏感内容、未批准发布、路径越界、验证失败、冲突或用户明确隔离时保留分支并记录 blocker。
 - `99-finalize` 更新每个 package 的 **Outcome Replay**：landed、partial、blocked、failed-no-merge、false-positive 或 external gate，并把可复用教训写入 `FINAL_REPORT.md`。
 - `start-codex-app.sh` 和 `start-claude-code.sh` 必须是 thin wrappers：默认执行 `doctor --environment`、`start`、`status`，其余 orchestration 子命令透传给 `orchestrate.sh`，且不得复制调度、状态或 finalize 逻辑。
 
@@ -235,18 +259,21 @@ scratch-path <package-id>
 - Mainline branch、integration branch、max parallel agents。
 - First wave packages 和 final package `99-finalize`。
 - Manual path：从 `launchers/agent-prompts.md` 复制 prompts。
-- Script path：按 selected runner 只展示一个主启动脚本。Codex 主路径展示 `bash <plan>/launchers/start-codex-app.sh`、JSONL/thread-id inspection；Claude 主路径展示 `bash <plan>/launchers/start-claude-code.sh` 和 `claude agents`。命令必须使用绝对路径。
+- Script path：按 selected runner 只展示一个主启动脚本，同时给出另一个平台的完整 alternative runner 命令，避免把两套 runner 都伪装成默认路径。
+- Script path：必须同时展示 Codex App 和 Claude Code 两个平台的可复制启动命令。按 selected runner 标注一个主路径：Codex 主路径展示 `bash <plan>/launchers/start-codex-app.sh`、JSONL/thread-id inspection；Claude 主路径展示 `bash <plan>/launchers/start-claude-code.sh` 和 `claude agents`。另一个平台作为 alternative runner 同样给出完整启动命令，不要只口头提到。命令必须使用绝对路径。
 - 恢复命令按当前状态按需展示：只在 `blocked`、`stale`、`invalid`、runner/environment failure、日志诊断或 shell-less manual advancement 实际发生时，给出唯一相关命令和具体 package id。
 - `advance`、`finalize`、`cleanup`、`verify-finalize` 和 `scratch-path` 属于自动 tail flow、finalizer 或 authoring surface，默认不向用户倾倒。
 - External-assist gates、owners、是否阻塞 release、需要的 exact evidence。
 - Landing strategy summary。
 
-当 Codex 是 selected runner 时，主命令必须是 `start-codex-app.sh`，并把 evidence 描述为 JSONL logs 加 recorded thread/process identifiers，而不是 Claude Agents View。保留 `start-claude-code.sh` alternative，但不要把两套命令都伪装成默认；明确哪条是本次主路径，哪条是可选替代。
+当 Codex 是 selected runner 时，主命令必须是 `start-codex-app.sh`，并把 evidence 描述为 JSONL logs 加 recorded thread/process identifiers，而不是 Claude Agents View；同时给出 Claude Code 的 `start-claude-code.sh` 启动命令作为可选替代。当 Claude 是 selected runner 时反向处理：Claude 命令是主路径，Codex App/Codex runner 命令仍作为可选替代输出。不要把两套命令都伪装成默认；明确哪条是本次主路径，哪条是可选替代。
 
 ## Guardrails
 
 - 用户未明确要求 orchestration 时，不要使用本 skill。
+- 不要把用户报告、sweep 结论、handoff package、截图或日志转述直接当成已验证事实；先做 orchestration 级 claim validation，再决定进入 DAG、discovery、defer、reject 或 blocked。
 - 只有独立并发、启动审计、session 状态、日志或停止需求时，不要生成自定义 manifest/runtime；使用 Claude Code Agent View / Dynamic Workflows，或 Codex App/CLI 原生 subagent workflow。
+- 需要 durable package docs 和轻量状态记录，但不需要自动调度和收口时，不要生成 full kit；改用 `agent-task-planner` 的 `ledger-lite` 或 `manual-pack`。
 - 不要根据 PATH 上可用 CLI 自动切换 runner；可以根据用户明确选择或当前宿主平台选择主路径。Codex App 场景下选择 Codex runner 时，必须展示 `start-codex-app.sh`；Claude Code 场景展示 `start-claude-code.sh`。不要把裸 `orchestrate.sh start` 当作新 kit 的主启动入口。
 - 不要把 `orchestrate.sh` 设计成 long-running watcher。
 - 不要在 package prompts 里复制 scheduling logic；prompts 只调用 `advance`。
@@ -270,4 +297,4 @@ scratch-path <package-id>
 
 ## 与轻量手动执行的关系
 
-用户只需要 1-3 个手动执行事项时，不生成完整 orchestration kit；直接用 `docs/contracts/task-package-contract.md` 写清 package、验收标准和验证命令。用户要求 multi-agent orchestration control plane、状态账本、DAG、失败恢复或自动收口时，使用 `agent-orchestration-planner`。
+用户只需要 1-3 个手动执行事项时，不生成完整 orchestration kit；直接用 `docs/contracts/task-package-contract.md` 写清 package、验收标准和验证命令。用户需要 durable package docs、owner/verification/checkpoint 和人工推进状态时，优先交给 `agent-task-planner` 的 `ledger-lite` / `manual-pack` lane。用户要求 multi-agent orchestration control plane、状态账本驱动 dispatch、DAG、失败恢复、runner wrappers、自动收口或 cleanup 时，才使用 `agent-orchestration-planner`。

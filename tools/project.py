@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
 import os
@@ -10,6 +11,7 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from html import escape
 from pathlib import Path
 
 
@@ -19,6 +21,7 @@ REQUIRED_FILES = [
     "control/state.md",
     "AGENTS.md",
     "CLAUDE.md",
+    "README.zh.html",
     ".codex/config.example.toml",
     ".codex/config.windows.example.toml",
     ".codex/hooks.json",
@@ -35,10 +38,12 @@ REQUIRED_FILES = [
 REQUIRED_DIRS = ["control", "reports", "work/in", "work/out", "work/tmp", "tools", "src"]
 PROJECT_FACING_FILES = [
     "README.md",
+    "README.zh.html",
     "AGENTS.md",
     "control/state.md",
     "control/ledger.md",
     "control/init_manifest.md",
+    "control/delivery_receipt.md",
 ]
 SEED_RESIDUE_PATTERNS = [
     "Agent Project Seed",
@@ -58,6 +63,7 @@ ALLOWED_PREFIXES = (
     "AGENTS.md",
     "CLAUDE.md",
     "README.md",
+    "README.zh.html",
     "SETUP_NEW_MACHINE.md",
     "Makefile",
     "pyproject.toml",
@@ -78,11 +84,41 @@ ALLOWED_PREFIXES = (
 
 REJECT_PREFIXES = (".env", "work/tmp/", ".pytest_cache/", "__pycache__/")
 
-TEXT_SUFFIXES = {".md", ".py", ".toml", ".txt", ".json", ".example", ".gitignore", ".yml", ".yaml"}
+TEXT_SUFFIXES = {
+    ".md",
+    ".py",
+    ".toml",
+    ".txt",
+    ".json",
+    ".jsonl",
+    ".tsv",
+    ".csv",
+    ".example",
+    ".gitignore",
+    ".yml",
+    ".yaml",
+}
 USER_SKILLS_ROOT = ROOT / "agent-assets" / "user-skills"
 USER_SKILLS_DIR = USER_SKILLS_ROOT / "skills"
 USER_SKILL_PROFILES = ("recommended", "all")
 GOVERNANCE_PROFILES = ("one-off", "lightweight", "sustained")
+TASK_CONTEXT_STAGES = ("plan", "implement", "check")
+TASK_PHASES = ("plan", "implement", "check", "handoff")
+README_ZH_CAPABILITY_ROWS = (
+    '<tr><td>状态面板</td><td>中文展示进入/交接快照：优先呈现用户目标、验收进度、证据、缺口与下一决策；随后才是 Git、open 记录和风险</td></tr>',
+    '<tr><td>安全提交</td><td>基于路径白名单和高置信 secret 扫描的提交命令，在 staging 前拒绝敏感内容</td></tr>',
+    '<tr><td>Clean Checkpoint</td><td>只针对当前会话新增的 tracked 改动执行 Stop gate，保留用户已有脏改动并支持明确 blocked handoff</td></tr>',
+    '<tr><td>统一账本</td><td>请求、决策、会话、风险、问题和产物共用一种结构化记录格式</td></tr>',
+    '<tr><td>健康检查</td><td>验证必需文件、入口文件同步、hooks、gitkeep、包导入和平台垃圾文件</td></tr>',
+    '<tr><td>Agent 同步</td><td>从共享规则重新生成 <code>CLAUDE.md</code></td></tr>',
+    '<tr><td>Work Packet</td><td>仅在跨包、worktree、Agent 或交接会话的复杂任务中启用 curated context、live state 和知识提升复核</td></tr>',
+    '<tr><td>Governance Lifecycle</td><td>面向长期项目的可选规则生命周期评审面，不会默认增加 hook 或强制流程</td></tr>',
+    '<tr><td>Portable User Skills</td><td>仓库本地保留 38 个 Skill 快照；默认推荐小型工程核心，专家能力显式启用</td></tr>',
+    '<tr><td>工具包</td><td>Python 辅助模块：路径管理、原子写入、环境变量加载、API 门控、Record/Ledger/Manifest/QC、Review 页面</td></tr>',
+    '<tr><td>多 Agent 入口</td><td>各工具专属文件统一指向同一份共享合约</td></tr>',
+)
+README_ZH_CAPABILITIES_BEGIN = "<!-- BEGIN MANAGED CAPABILITIES -->"
+README_ZH_CAPABILITIES_END = "<!-- END MANAGED CAPABILITIES -->"
 
 
 @dataclass
@@ -100,6 +136,36 @@ class Result:
 class GitChange:
     status: str
     path: str
+
+
+@dataclass(frozen=True)
+class ProjectIntent:
+    target_user: str = ""
+    core_problem: str = ""
+    goals: tuple[str, ...] = ()
+    non_goals: tuple[str, ...] = ()
+    acceptance_criteria: tuple[str, ...] = ()
+
+    @property
+    def goal_defined(self) -> bool:
+        return bool(self.target_user and self.core_problem and self.goals)
+
+
+BRIEF_SECTION_FIELDS = {
+    "target user": "target_user",
+    "目标用户": "target_user",
+    "core problem": "core_problem",
+    "核心问题": "core_problem",
+    "project goals": "goals",
+    "goals": "goals",
+    "项目目标": "goals",
+    "non-goals": "non_goals",
+    "non goals": "non_goals",
+    "非目标": "non_goals",
+    "acceptance criteria": "acceptance_criteria",
+    "验收标准": "acceptance_criteria",
+    "验收条件": "acceptance_criteria",
+}
 
 
 def slugify_project(name: str) -> str:
@@ -120,6 +186,87 @@ def task_slug_from_name(name: str) -> str:
     return slugify_project(name).replace("_", "-")
 
 
+def clean_intent_value(value: str) -> str:
+    return re.sub(r"\s+", " ", value.strip().lstrip("- ").strip())
+
+
+def parse_brief(path: Path) -> dict[str, list[str]]:
+    """Read a small Markdown brief without adding a parser dependency."""
+    values: dict[str, list[str]] = {
+        "target_user": [],
+        "core_problem": [],
+        "goals": [],
+        "non_goals": [],
+        "acceptance_criteria": [],
+    }
+    current_field: str | None = None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", raw_line)
+        if heading:
+            current_field = BRIEF_SECTION_FIELDS.get(heading.group(1).strip().casefold())
+            continue
+        if current_field is None:
+            continue
+        value = clean_intent_value(raw_line)
+        if value:
+            values[current_field].append(value)
+    return values
+
+
+def prompt_for_missing_intent(intent: ProjectIntent) -> ProjectIntent:
+    """Collect the four smallest pieces of information for a useful first task."""
+    target_user = intent.target_user or input("Target user: ").strip()
+    core_problem = intent.core_problem or input("Core problem: ").strip()
+    goals = intent.goals or tuple(filter(None, [input("Primary project goal: ").strip()]))
+    acceptance = intent.acceptance_criteria or tuple(
+        filter(None, [input("First acceptance criterion: ").strip()])
+    )
+    return ProjectIntent(
+        target_user=target_user,
+        core_problem=core_problem,
+        goals=goals,
+        non_goals=intent.non_goals,
+        acceptance_criteria=acceptance,
+    )
+
+
+def resolve_project_intent(args: argparse.Namespace) -> ProjectIntent:
+    brief: dict[str, list[str]] = {
+        "target_user": [],
+        "core_problem": [],
+        "goals": [],
+        "non_goals": [],
+        "acceptance_criteria": [],
+    }
+    if args.brief:
+        path = Path(args.brief)
+        if not path.is_absolute():
+            path = ROOT / path
+        if not path.is_file():
+            raise FileNotFoundError(f"brief file not found: {args.brief}")
+        brief = parse_brief(path)
+
+    def cli_or_brief(value: str | None, key: str) -> str:
+        return clean_intent_value(value) if value else " ".join(brief[key])
+
+    def list_cli_or_brief(value: list[str] | None, key: str) -> tuple[str, ...]:
+        source = value if value else brief[key]
+        return tuple(clean_intent_value(item) for item in source if clean_intent_value(item))
+
+    intent = ProjectIntent(
+        target_user=cli_or_brief(args.target_user, "target_user"),
+        core_problem=cli_or_brief(args.core_problem, "core_problem"),
+        goals=list_cli_or_brief(args.goal, "goals"),
+        non_goals=list_cli_or_brief(args.non_goal, "non_goals"),
+        acceptance_criteria=list_cli_or_brief(args.acceptance_criterion, "acceptance_criteria"),
+    )
+    return prompt_for_missing_intent(intent) if args.interactive else intent
+
+
+def markdown_bullets(values: tuple[str, ...], fallback: str) -> str:
+    return "\n".join(f"- {value}" for value in values) if values else f"- {fallback}"
+
+
 def render_claude() -> str:
     return f"""@AGENTS.md
 
@@ -133,7 +280,7 @@ Claude Code-specific notes:
 - Keep this file short and Claude-specific.
 - Do not duplicate shared project rules here.
 - When a repeated mistake is discovered, suggest whether it should become a hook, test, lint rule, or CI check instead of adding another reminder here.
-- You can configure `.claude/settings.json` Stop hook to call `tools/project.py commit`.
+- The project-level Claude Stop hook uses the same baseline-aware clean-checkpoint gate as Codex; agents create the local commit deliberately after review.
 """
 
 
@@ -218,6 +365,30 @@ def check_panel_runs(result: Result) -> None:
         result.warnings.append("tools/panel.py timed out after 10s")
     except Exception as exc:
         result.warnings.append(f"tools/panel.py error: {exc}")
+
+
+def render_readme_zh_capability_rows() -> str:
+    return "\n".join(f"    {row}" for row in README_ZH_CAPABILITY_ROWS)
+
+
+def check_readme_zh_contract(result: Result) -> None:
+    path = ROOT / "README.zh.html"
+    if not path.is_file():
+        result.issues.append("missing README.zh.html")
+        return
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    pattern = re.compile(
+        re.escape(README_ZH_CAPABILITIES_BEGIN) + r"\n(?P<body>.*?)\n\s*" + re.escape(README_ZH_CAPABILITIES_END),
+        re.DOTALL,
+    )
+    match = pattern.search(text)
+    if match is None:
+        result.issues.append("README.zh.html is missing the managed public capability block")
+        return
+    if match.group("body").strip() != render_readme_zh_capability_rows().strip():
+        result.issues.append("README.zh.html public capability block drifted from tools/project.py")
+        return
+    result.notices.append("Chinese HTML public capability block is synced")
 
 
 def check_init_status_consistency(result: Result) -> None:
@@ -369,7 +540,16 @@ def check_user_skill_assets(result: Result) -> None:
         result.issues.append(f"duplicate portable user skills: {', '.join(duplicates)}")
     if missing:
         result.issues.append(f"missing portable user skill files: {', '.join(missing[:10])}")
-    if entries and not duplicates and not missing:
+    expected_names = set(seen)
+    actual_names = {
+        path.name
+        for path in USER_SKILLS_DIR.iterdir()
+        if path.is_dir() and (path / "SKILL.md").is_file()
+    }
+    unlisted = sorted(actual_names - expected_names)
+    if unlisted:
+        result.issues.append(f"unlisted portable user skills: {', '.join(unlisted)}")
+    if entries and not duplicates and not missing and not unlisted:
         result.notices.append(f"portable user skill assets present ({len(entries)} skills)")
 
 
@@ -379,6 +559,143 @@ def check_work_dirs_have_gitkeep(result: Result) -> None:
         gitkeep = ROOT / subdir / ".gitkeep"
         if not gitkeep.exists():
             result.warnings.append(f"missing {subdir}/.gitkeep (dir may not survive git clone)")
+
+
+def task_root_for_slug(slug: str) -> Path:
+    return ROOT / "control" / "tasks" / slug
+
+
+def validate_context_file_path(value: object) -> tuple[Path | None, str | None]:
+    if not isinstance(value, str) or not value.strip():
+        return None, "context file must be a non-empty repo-relative path"
+    relative = Path(value.strip())
+    if relative.is_absolute() or ".." in relative.parts:
+        return None, f"context file must be repo-relative without '..': {value}"
+    target = (ROOT / relative).resolve()
+    try:
+        target.relative_to(ROOT.resolve())
+    except ValueError:
+        return None, f"context file escapes repository root: {value}"
+    if not target.is_file():
+        return None, f"context file does not exist: {relative.as_posix()}"
+    if not is_text_file(target):
+        return None, f"context file must be a supported text file: {relative.as_posix()}"
+    return target, None
+
+
+def load_task_context_entries(task_root: Path) -> tuple[list[dict[str, str]], list[str]]:
+    manifest = task_root / "context.jsonl"
+    if not manifest.is_file():
+        return [], [f"missing task context manifest: {manifest.relative_to(ROOT)}"]
+    entries: list[dict[str, str]] = []
+    errors: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    for line_number, raw_line in enumerate(manifest.read_text(encoding="utf-8").splitlines(), start=1):
+        if not raw_line.strip():
+            continue
+        location = f"{manifest.relative_to(ROOT)}:{line_number}"
+        try:
+            item = json.loads(raw_line)
+        except json.JSONDecodeError as exc:
+            errors.append(f"{location}: invalid JSON: {exc.msg}")
+            continue
+        if not isinstance(item, dict):
+            errors.append(f"{location}: context entry must be a JSON object")
+            continue
+        file_value = item.get("file")
+        reason = item.get("reason")
+        stage = item.get("stage")
+        _, path_error = validate_context_file_path(file_value)
+        if path_error:
+            errors.append(f"{location}: {path_error}")
+        if not isinstance(reason, str) or not reason.strip():
+            errors.append(f"{location}: reason must be a non-empty string")
+        if stage not in TASK_CONTEXT_STAGES:
+            errors.append(
+                f"{location}: stage must be one of {', '.join(TASK_CONTEXT_STAGES)}"
+            )
+        if isinstance(file_value, str) and isinstance(stage, str):
+            key = (Path(file_value).as_posix(), stage)
+            if key in seen:
+                errors.append(f"{location}: duplicate context entry for {key[0]} at stage {stage}")
+            seen.add(key)
+        if not path_error and isinstance(reason, str) and reason.strip() and stage in TASK_CONTEXT_STAGES:
+            entries.append(
+                {
+                    "file": Path(str(file_value)).as_posix(),
+                    "reason": reason.strip(),
+                    "stage": str(stage),
+                }
+            )
+    return entries, errors
+
+
+def task_packet_dirs() -> list[Path]:
+    tasks_root = ROOT / "control" / "tasks"
+    if not tasks_root.is_dir():
+        return []
+    return sorted(
+        path
+        for path in tasks_root.iterdir()
+        if path.is_dir()
+        and any(
+            (path / marker).is_file()
+            for marker in ("brief.md", "context.jsonl", "promotion.md")
+        )
+    )
+
+
+def check_task_contexts(result: Result) -> None:
+    packets = task_packet_dirs()
+    for task_root in packets:
+        _, errors = load_task_context_entries(task_root)
+        result.issues.extend(errors)
+    if packets and not any("context" in issue for issue in result.issues):
+        result.notices.append(f"complex task context manifests valid ({len(packets)})")
+
+
+def task_finalize_state(task_root: Path) -> str:
+    status = task_root / "status.tsv"
+    if not status.is_file():
+        return ""
+    lines = status.read_text(encoding="utf-8").splitlines()
+    if not lines:
+        return ""
+    header = lines[0].split("\t")
+    try:
+        package_index = header.index("package_id")
+        state_index = header.index("state")
+    except ValueError:
+        return ""
+    for line in lines[1:]:
+        values = line.split("\t")
+        if len(values) > max(package_index, state_index) and values[package_index] == "99-finalize":
+            return values[state_index].strip()
+    return ""
+
+
+def promotion_is_classified(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    in_classification = False
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", raw_line)
+        if heading:
+            in_classification = heading.group(1).strip().casefold() == "classification"
+            continue
+        if in_classification and re.match(r"^\s*-\s*\[[xX]\]\s+", raw_line):
+            return True
+    return False
+
+
+def check_task_promotions(result: Result) -> None:
+    for task_root in task_packet_dirs():
+        if task_finalize_state(task_root) != "finalized":
+            continue
+        if not promotion_is_classified(task_root / "promotion.md"):
+            result.issues.append(
+                f"finalized task requires a promotion classification: {task_root.relative_to(ROOT)}/promotion.md"
+            )
 
 
 def check_no_platform_junk_tracked(result: Result) -> None:
@@ -398,11 +715,115 @@ def check_no_platform_junk_tracked(result: Result) -> None:
 
 
 SECRET_PATTERNS = [
-    re.compile(r"PRIVATE KEY"),
-    re.compile(r"password\s*=\s*['\"]", re.IGNORECASE),
-    re.compile(r"secret\s*=\s*['\"]", re.IGNORECASE),
-    re.compile(r"api[_-]?key\s*=\s*['\"][A-Za-z0-9]", re.IGNORECASE),
+    ("private key", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----")),
+    (
+        "credential assignment",
+        re.compile(
+            r"['\"]?\b(?:api[_-]?key|secret|password|token)\b['\"]?\s*[:=]\s*['\"](?P<value>[^'\"\r\n]{8,})['\"]",
+            re.IGNORECASE,
+        ),
+    ),
+    ("OpenAI-style token", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
+    ("GitHub token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b")),
+    ("AWS access key", re.compile(r"\bAKIA[A-Z0-9]{16}\b")),
 ]
+SECRET_PLACEHOLDER_VALUES = {
+    "placeholder",
+    "example",
+    "dummy",
+    "test",
+    "replace_me",
+    "replace-me",
+    "changeme",
+    "change_me",
+    "change-me",
+    "your_api_key",
+    "your-api-key",
+    "insert_key_here",
+    "test_api_key_placeholder",
+}
+SECRET_SCAN_CHUNK_SIZE = 64 * 1024
+SECRET_SCAN_OVERLAP = 4096
+
+
+def is_explicit_secret_placeholder(value: str) -> bool:
+    normalized = value.strip().casefold()
+    return (
+        normalized in SECRET_PLACEHOLDER_VALUES
+        or normalized.startswith("${") and normalized.endswith("}")
+        or normalized.startswith("<") and normalized.endswith(">")
+    )
+
+
+def secret_finding_from_chunks(path: str, chunks) -> str | None:
+    overlap = b""
+    first_chunk = True
+    for chunk in chunks:
+        if first_chunk:
+            first_chunk = False
+            if b"\x00" in chunk[:8192]:
+                return None
+        sample = overlap + chunk
+        text = sample.decode("utf-8", errors="ignore")
+        for label, pattern in SECRET_PATTERNS:
+            for match in pattern.finditer(text):
+                value = match.groupdict().get("value", "")
+                if value and is_explicit_secret_placeholder(value):
+                    continue
+                return f"possible secret ({label}) in selected file: {path}"
+        overlap = sample[-SECRET_SCAN_OVERLAP:]
+    return None
+
+
+def secret_findings(paths: list[str]) -> list[str]:
+    findings: list[str] = []
+    for path in paths:
+        if path == ".env" or path.endswith("/.env"):
+            findings.append(f"sensitive file selected for commit: {path}")
+            continue
+        target = ROOT / path
+        if not target.is_file():
+            continue
+        try:
+            with target.open("rb") as handle:
+                finding = secret_finding_from_chunks(
+                    path,
+                    iter(lambda: handle.read(SECRET_SCAN_CHUNK_SIZE), b""),
+                )
+        except OSError:
+            continue
+        if finding:
+            findings.append(finding)
+    return findings
+
+
+def staged_secret_findings(paths: list[str]) -> list[str]:
+    findings: list[str] = []
+    for path in paths:
+        exists = run_git(["cat-file", "-e", f":{path}"])
+        if exists.returncode != 0:
+            continue
+        if path == ".env" or path.endswith("/.env"):
+            findings.append(f"sensitive file staged for commit: {path}")
+            continue
+        process = subprocess.Popen(
+            ["git", "show", f":{path}"],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        assert process.stdout is not None
+        finding = secret_finding_from_chunks(
+            path,
+            iter(lambda: process.stdout.read(SECRET_SCAN_CHUNK_SIZE), b""),
+        )
+        if process.poll() is None:
+            process.terminate()
+        process.stdout.close()
+        process.wait()
+        if finding:
+            findings.append(finding)
+    return findings
 
 
 def check_safety(result: Result) -> None:
@@ -413,24 +834,7 @@ def check_safety(result: Result) -> None:
     if completed.returncode != 0:
         return
     staged = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
-    for path in staged:
-        if path == ".env" or path.endswith("/.env"):
-            result.issues.append(f"sensitive file staged for commit: {path}")
-            continue
-        target = ROOT / path
-        if not target.is_file() or target.stat().st_size > 100_000:
-            continue
-        suffix = target.suffix.lower()
-        if suffix not in TEXT_SUFFIXES:
-            continue
-        try:
-            text = target.read_text(encoding="utf-8", errors="ignore")
-        except Exception:
-            continue
-        for pattern in SECRET_PATTERNS:
-            if pattern.search(text):
-                result.warnings.append(f"possible secret in staged file: {path}")
-                break
+    result.issues.extend(staged_secret_findings(staged))
 
 
 def print_result(result: Result, quiet: bool) -> None:
@@ -456,12 +860,15 @@ def check(args: argparse.Namespace) -> int:
     check_agent_sync(result)
     check_package_import(result)
     check_panel_runs(result)
+    check_readme_zh_contract(result)
     check_init_status_consistency(result)
     check_seed_residue(result)
     check_claude_hook_files(result)
     check_codex_hook_files(result)
     check_user_skill_assets(result)
     check_work_dirs_have_gitkeep(result)
+    check_task_contexts(result)
+    check_task_promotions(result)
     if not args.skip_git:
         check_git(result)
         check_no_platform_junk_tracked(result)
@@ -540,23 +947,34 @@ def run_git_init(project_name: str) -> None:
 
 
 def init_project(args: argparse.Namespace) -> int:
+    try:
+        intent = resolve_project_intent(args)
+    except (FileNotFoundError, OSError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     package_name = args.package_name or package_name_from_project(args.name)
     platform_name = active_platform(args.platform)
     replace_text(args.name, package_name)
     rename_package(package_name)
-    update_contract(args.name)
-    update_state(args.name, package_name)
-    update_readme(args.name, package_name)
-    reset_init_ledger(args.name, package_name)
+    update_contract(args.name, intent)
+    update_state(args.name, package_name, intent)
+    update_readme(args.name, package_name, intent)
+    update_readme_zh(args.name, package_name)
+    reset_init_ledger(args.name, package_name, intent)
     reset_reports_dir()
-    write_init_manifest(args.name, package_name, platform_name)
+    write_delivery_receipt(intent)
+    write_init_manifest(args.name, package_name, platform_name, intent)
     activate_platform_configs(platform_name)
     if not args.no_git:
         run_git_init(args.name)
     print(f"Initialized {args.name} with package {package_name}.")
+    if intent.goal_defined:
+        print("Project goal, user, and acceptance criteria were written to control/delivery_receipt.md.")
+    elif args.brief or args.interactive or args.target_user or args.core_problem or args.goal:
+        print("Project intent is incomplete; add a target user, core problem, and at least one project goal.")
     print(
         "Project-level Claude Code settings are active in .claude/settings.json "
-        "(status panel + guarded local checkpoint commit)."
+        "(status panel + clean-checkpoint Stop gate)."
     )
     print(f"Activated project hook/config files for platform: {platform_name}.")
     print(
@@ -606,26 +1024,40 @@ def now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
-def update_contract(project_name: str) -> None:
+def update_contract(project_name: str, intent: ProjectIntent) -> None:
     """Update AGENTS.md with initialized project-facing template."""
     path = ROOT / "AGENTS.md"
     if not path.exists():
         return
     text = path.read_text(encoding="utf-8")
-    new_intent = (
-        f"**Project**: {project_name}\n"
-        f"**Status**: Initialized, goals pending\n"
-        f"\n"
-        f"Edit this section to specify:\n"
-        f"- Project goals\n"
-        f"- Non-goals\n"
-        f"- Acceptance criteria\n"
-    )
-    # Match existing **Project**/**Status** block and everything until next ## section
-    if "**Project**:" in text and "**Status**:" in text:
+    if intent.goal_defined:
+        new_intent = (
+            f"**Project**: {project_name}\n"
+            f"**Status**: Ready — goal defined\n"
+            f"**Target user**: {intent.target_user}\n"
+            f"**Core problem**: {intent.core_problem}\n"
+            f"\n"
+            f"### Project Goals\n\n{markdown_bullets(intent.goals, 'No project goal recorded.')}\n"
+            f"\n### Non-goals\n\n{markdown_bullets(intent.non_goals, 'No non-goals recorded.')}\n"
+            f"\n### Acceptance Criteria\n\n{markdown_bullets(intent.acceptance_criteria, 'No acceptance criteria recorded.')}\n"
+        )
+    else:
+        new_intent = (
+            f"**Project**: {project_name}\n"
+            f"**Status**: Initialized, goals pending\n"
+            f"\n"
+            f"Edit this section to specify:\n"
+            f"- Project goals\n"
+            f"- Non-goals\n"
+            f"- Acceptance criteria\n"
+        )
+    if "## Current Intent" in text:
         text = re.sub(
-            r"\*\*Project\*\*:.*?\n\*\*Status\*\*:.*?\n\n.*?(?=\n## |\Z)",
-            new_intent, text, flags=re.DOTALL
+            r"## Current Intent\n\n.*?(?=\n## |\Z)",
+            "## Current Intent\n\n" + new_intent.rstrip() + "\n",
+            text,
+            count=1,
+            flags=re.DOTALL,
         )
     else:
         # No Current Intent block exists; insert before first ## heading
@@ -634,12 +1066,12 @@ def update_contract(project_name: str) -> None:
             f"## Current Intent\n\n{new_intent}\n\\1",
             text, count=1,
         )
-    overview = (
-        "## Project overview\n"
-        "\n"
-        "A newly initialized agent-assisted project. Replace this section with the "
-        "project's real purpose, audience, non-goals, and acceptance criteria after initialization.\n"
+    overview_text = (
+        f"An agent-assisted project for {intent.target_user}. It exists because {intent.core_problem}"
+        if intent.goal_defined
+        else "A newly initialized agent-assisted project. Replace this section with the project's real purpose, audience, non-goals, and acceptance criteria after initialization."
     )
+    overview = f"## Project overview\n\n{overview_text}\n"
     if "## Project overview" in text:
         text = re.sub(
             r"## Project overview\n\n.*?(?=\n## )",
@@ -653,9 +1085,23 @@ def update_contract(project_name: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def update_state(project_name: str, package_name: str) -> None:
+def update_state(project_name: str, package_name: str, intent: ProjectIntent) -> None:
     """Replace state.md with initialized content."""
     path = ROOT / "control" / "state.md"
+    status = "Ready — goal defined" if intent.goal_defined else "Initialized, goals pending"
+    intent_lines = (
+        f"- Target user: {intent.target_user}\n"
+        f"- Core problem: {intent.core_problem}\n"
+        f"- Project goals:\n{markdown_bullets(intent.goals, 'No project goal recorded.')}\n"
+        f"- Acceptance criteria:\n{markdown_bullets(intent.acceptance_criteria, 'No acceptance criteria recorded.')}\n"
+        if intent.goal_defined
+        else ""
+    )
+    next_action = (
+        "- Start the first task against `control/delivery_receipt.md` and update its evidence as work progresses.\n"
+        if intent.goal_defined
+        else "- Edit Current Intent in `AGENTS.md` to specify project goals, non-goals, and acceptance criteria.\n"
+    )
     content = (
         f"# State\n"
         f"\n"
@@ -664,17 +1110,53 @@ def update_state(project_name: str, package_name: str) -> None:
         f"- Project name: {project_name}\n"
         f"- Package name: {package_name}\n"
         f"- Initialized at: {now_iso()}\n"
-        f"- Status: Initialized, goals pending\n"
+        f"- Status: {status}\n"
+        f"{intent_lines}"
         f"\n"
         f"## Next Maintenance Action\n"
         f"\n"
-        f"- Edit Current Intent in `AGENTS.md` to specify project goals, non-goals, and acceptance criteria.\n"
+        f"{next_action}"
     )
     path.write_text(content, encoding="utf-8")
 
 
-def update_readme(project_name: str, package_name: str) -> None:
+def update_readme(project_name: str, package_name: str, intent: ProjectIntent) -> None:
     path = ROOT / "README.md"
+    goal_section = ""
+    if intent.goal_defined:
+        goal_section = f"""## Project Intent
+
+- Target user: {intent.target_user}
+- Core problem: {intent.core_problem}
+
+### Goals
+
+{markdown_bullets(intent.goals, 'No project goal recorded.')}
+
+### Acceptance Criteria
+
+{markdown_bullets(intent.acceptance_criteria, 'No acceptance criteria recorded.')}
+
+The current delivery status lives in `control/delivery_receipt.md`.
+
+"""
+    if intent.goal_defined:
+        first_actions = (
+            "1. Start the first task against the acceptance criteria in `control/delivery_receipt.md`.\n"
+            "2. Update the receipt with verification evidence, remaining gaps, and the user's next decision.\n"
+            "3. Run the health check and task-specific tests before handing off.\n"
+        )
+    else:
+        first_actions = (
+            "1. Edit `AGENTS.md` to define the real project goals, non-goals, and acceptance criteria.\n"
+            "2. Update this README with the product, library, or workflow this repository will actually provide.\n"
+            "3. Run the health check for your platform.\n"
+            "4. Run the tests for your platform.\n"
+            "5. Optional: run `python3 tools/project.py list-user-skills`, install the deliberately small portable skill profile for Codex or Claude, then use `python3 tools/project.py audit-user-skills` before any forced replacement.\n"
+            "6. Optional for Claude Code: run `python3 tools/project.py configure-claude` to make new sessions use auto permission review after updating Claude Code to v2.1.140 or newer.\n"
+            "7. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.\n"
+            "8. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.\n"
+        )
     content = f"""# {project_name}
 
 A newly initialized agent-assisted project.
@@ -687,30 +1169,18 @@ A newly initialized agent-assisted project.
 - Current state snapshot: `control/state.md`
 - Long-term project ledger: `control/ledger.md`
 - Durable analysis reports: `reports/`
-- Project-level Claude Code hooks: `.claude/settings.json` enables the status panel and guarded local checkpoint commits
+- Project-level Claude Code hooks: `.claude/settings.json` enables the status panel and a clean-checkpoint Stop gate
 
+{goal_section}
 ## First Actions
 
-1. Edit `AGENTS.md` to define the real project goals, non-goals, and acceptance criteria.
-2. Update this README with the product, library, or workflow this repository will actually provide.
-3. Run the health check for your platform.
-4. Run the tests for your platform.
-5. Optional: run `python3 tools/project.py list-user-skills` and install the bundled portable skills for Codex or Claude.
-6. Optional for Claude Code: run `python3 tools/project.py configure-claude` to make new sessions use auto permission review after updating Claude Code to v2.1.140 or newer.
-7. Optional: install user-level hooks/config only if you want similar behavior outside this project-level Claude Code setup.
-8. Optional for long-lived projects: run `python3 tools/project.py governance init --profile sustained` to track the lifecycle of durable rules, scripts, reports, and agent workflows.
+{first_actions}
 
 ## Run a Problem-Solving Round
 
-Use this path when a user brings external material and wants an agent to analyze a problem, propose a solution, make the change, verify it, and hand off cleanly.
+`AGENTS.md` contains the authoritative adaptive contract. Read it plus the files directly involved. Consult `control/state.md` and relevant ledger records only when current state or prior decisions constrain the task.
 
-1. Put user-provided material in `work/in/<task-slug>/` when it should be kept with the project, or reference its existing repository path.
-2. Have the agent read `AGENTS.md`, `control/state.md`, relevant recent records in `control/ledger.md`, and the task input before proposing changes.
-3. Store durable analysis reports in `reports/<topic>/`. Store final deliverables that should not be committed in `work/out/`.
-4. Append only durable facts to `control/ledger.md`: requests, decisions, risks, issues, sessions, and artifact links.
-5. Verify with `python3 tools/project.py check` plus the smallest task-specific tests that prove the result. Use `py -3` equivalents on Windows.
-6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only when work spans multiple packages, worktrees, agents, or handoff sessions.
-7. Finish with this round's results, modified/new files, risk points, and concrete next steps. If tracked files changed, close with a local checkpoint commit unless the blocker is explicitly documented.
+Use `reports/<topic>/` for reusable analysis. When tracked files change, run the project check and proportional tests, then close with a guarded local checkpoint or an explicit blocked handoff. Create a Work Packet only for work that crosses dependent packages, worktrees, agents, or handoff sessions.
 
 ## Useful Commands
 
@@ -721,6 +1191,7 @@ python3 tools/panel.py --mode entry
 python3 tools/project.py check
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py audit-user-skills --target codex
 python3 tools/project.py configure-claude
 python3 tools/project.py governance init --profile sustained
 python3 -m pytest
@@ -733,6 +1204,7 @@ py -3 tools/panel.py --mode entry
 py -3 tools/project.py check
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py audit-user-skills --target codex
 py -3 tools/project.py configure-claude
 py -3 tools/project.py governance init --profile sustained
 py -3 -m pytest
@@ -741,9 +1213,56 @@ py -3 -m pytest
     path.write_text(content, encoding="utf-8")
 
 
-def reset_init_ledger(project_name: str, package_name: str) -> None:
+def update_readme_zh(project_name: str, package_name: str) -> None:
+    """Retain the Chinese HTML overview as a project-facing scaffold page."""
+    path = ROOT / "README.zh.html"
+    if not path.is_file():
+        return
+    text = path.read_text(encoding="utf-8")
+    safe_project_name = escape(project_name)
+    safe_package_name = escape(package_name)
+    text = text.replace("<title>Agent Project Seed</title>", f"<title>{safe_project_name}</title>")
+    text = text.replace("<h1>Agent Project Seed</h1>", f"<h1>{safe_project_name}</h1>")
+    text = text.replace(
+        "<p>极简的项目种子，clone 即用，可以方便地按你自己的习惯进行后续开发。</p>",
+        "<p>使用项目本地 Agent 规则、状态面、安全提交和可选复杂任务能力的工作区。</p>",
+    )
+    text = text.replace(
+        "Agent Project Seed &mdash; 多 Agent 协作底座",
+        f"{safe_project_name} &mdash; Agent 协作工作区",
+    )
+    text = text.replace("base_scaffold/", f"{safe_package_name}/")
+    pattern = re.compile(
+        re.escape(README_ZH_CAPABILITIES_BEGIN) + r"\n.*?\n\s*" + re.escape(README_ZH_CAPABILITIES_END),
+        re.DOTALL,
+    )
+    managed_block = (
+        README_ZH_CAPABILITIES_BEGIN
+        + "\n"
+        + render_readme_zh_capability_rows()
+        + "\n    "
+        + README_ZH_CAPABILITIES_END
+    )
+    text = pattern.sub(managed_block, text, count=1)
+    path.write_text(text, encoding="utf-8")
+
+
+def reset_init_ledger(project_name: str, package_name: str, intent: ProjectIntent) -> None:
     """Reset ledger.md to the initialized project's first durable record."""
     path = ROOT / "control" / "ledger.md"
+    intent_details = (
+        f"- Target user: {intent.target_user}.\n"
+        f"- Core problem: {intent.core_problem}\n"
+        f"- Project goals: {'; '.join(intent.goals)}\n"
+        if intent.goal_defined
+        else ""
+    )
+    next_detail = (
+        "- Next: start the first task against `control/delivery_receipt.md` and record evidence there.\n"
+        if intent.goal_defined
+        else "- Next: edit `AGENTS.md` and `README.md` to specify the real project goals and usage.\n"
+    )
+    receipt_link = "- control/delivery_receipt.md\n" if intent.goal_defined else ""
     content = (
         "# Ledger\n"
         "\n"
@@ -761,13 +1280,15 @@ def reset_init_ledger(project_name: str, package_name: str) -> None:
         "\n"
         "details:\n"
         "- Completed: project-facing README rewrite, package rename, settings activation, contract/state update, initialization manifest.\n"
-        "- Next: edit `AGENTS.md` and `README.md` to specify the real project goals and usage.\n"
+        f"{intent_details}"
+        f"{next_detail}"
         "\n"
         "links:\n"
         "- AGENTS.md\n"
         "- README.md\n"
         "- control/state.md\n"
         "- control/init_manifest.md\n"
+        f"{receipt_link}"
     )
     path.write_text(content, encoding="utf-8")
 
@@ -786,8 +1307,54 @@ def reset_reports_dir() -> None:
     (reports / ".gitkeep").write_text("", encoding="utf-8")
 
 
-def write_init_manifest(project_name: str, package_name: str, platform_name: str) -> None:
+def write_delivery_receipt(intent: ProjectIntent) -> None:
+    path = ROOT / "control" / "delivery_receipt.md"
+    if not intent.goal_defined:
+        path.unlink(missing_ok=True)
+        return
+    goal = f"{intent.target_user}: {intent.goals[0]}"
+    acceptance = "\n".join(f"- [ ] {criterion}" for criterion in intent.acceptance_criteria)
+    if not acceptance:
+        acceptance = "- [ ] Add the first verifiable acceptance criterion."
+    content = f"""# Delivery Receipt
+
+Update this file as work progresses. It is the user-facing evidence summary shown first in the status panel.
+
+## User Goal
+
+{goal}
+
+## Context
+
+- Core problem: {intent.core_problem}
+
+## Acceptance Criteria
+
+{acceptance}
+
+## Evidence
+
+- Pending verification.
+
+## Remaining Gaps
+
+- Work has not started.
+
+## User Next Decision
+
+- Start the first task against the acceptance criteria.
+"""
+    path.write_text(content, encoding="utf-8")
+
+
+def write_init_manifest(project_name: str, package_name: str, platform_name: str, intent: ProjectIntent) -> None:
     path = ROOT / "control" / "init_manifest.md"
+    receipt_updated = "- control/delivery_receipt.md\n" if intent.goal_defined else ""
+    review_next = (
+        "- Review the goal, acceptance criteria, and first delivery receipt before starting work.\n"
+        if intent.goal_defined
+        else "- Replace placeholder goals in AGENTS.md.\n- Replace placeholder project description in README.md.\n"
+    )
     content = f"""# Initialization Manifest
 
 - Project name: {project_name}
@@ -802,7 +1369,7 @@ def write_init_manifest(project_name: str, package_name: str, platform_name: str
 - pyproject.toml
 - control/state.md
 - control/ledger.md
-- control/init_manifest.md
+{receipt_updated}- control/init_manifest.md
 - reports/.gitkeep
 - src/{package_name}/
 - .claude/settings.json
@@ -810,9 +1377,7 @@ def write_init_manifest(project_name: str, package_name: str, platform_name: str
 
 ## Review Next
 
-- Replace placeholder goals in AGENTS.md.
-- Replace placeholder project description in README.md.
-- Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
+{review_next}- Project-level Claude Code hooks are active in `.claude/settings.json`; user-level hook/config setup remains optional.
 - Project hook/config files were activated for `{platform_name}`.
 - Optional: run `python3 tools/project.py configure-claude` or Windows `py -3 tools/project.py configure-claude` for smoother new Claude Code sessions after updating Claude Code to v2.1.140 or newer.
 - Add project-specific source code and tests.
@@ -833,7 +1398,7 @@ def parse_status_line(line: str) -> GitChange:
 
 
 def git_changes() -> list[GitChange]:
-    completed = run_git(["status", "--porcelain"])
+    completed = run_git(["status", "--porcelain", "--untracked-files=all"])
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or "git status failed")
     return [parse_status_line(line) for line in completed.stdout.splitlines() if line.strip()]
@@ -876,15 +1441,30 @@ def commit(args: argparse.Namespace) -> int:
         for change in rejected:
             print(f"- {change.status} {change.path}", file=sys.stderr)
         return 2
+    safety_findings = secret_findings([change.path for change in allowed])
+    if safety_findings:
+        print("Refusing safe commit because selected changes may contain sensitive data:", file=sys.stderr)
+        for finding in safety_findings:
+            print(f"- {finding}", file=sys.stderr)
+        return 2
     if args.dry_run:
         print("Allowed changes:")
         for change in allowed:
             print(f"- {change.status} {change.path}")
         return 0
-    add = run_git(["add", "--", *[change.path for change in allowed]])
-    if add.returncode != 0:
-        print(add.stderr.strip(), file=sys.stderr)
-        return add.returncode
+    already_staged_deletions = [change for change in allowed if change.status[0] == "D"]
+    deletions_to_stage = [change for change in allowed if change.status[0] != "D" and change.status[1] == "D"]
+    additions_or_updates = [change for change in allowed if change not in already_staged_deletions and change not in deletions_to_stage]
+    if additions_or_updates:
+        add = run_git(["add", "--", *[change.path for change in additions_or_updates]])
+        if add.returncode != 0:
+            print(add.stderr.strip(), file=sys.stderr)
+            return add.returncode
+    if deletions_to_stage:
+        add_deletions = run_git(["add", "-u", "--", *[change.path for change in deletions_to_stage]])
+        if add_deletions.returncode != 0:
+            print(add_deletions.stderr.strip(), file=sys.stderr)
+            return add_deletions.returncode
     completed = run_git(["commit", "-m", args.message])
     if completed.returncode != 0:
         print(completed.stdout.strip())
@@ -922,13 +1502,13 @@ def default_task_packages(packages: list[str] | None) -> list[str]:
     return values
 
 
-def render_task_index(task_name: str, packages: list[str]) -> str:
+def render_task_index(task_name: str, task_slug: str, packages: list[str]) -> str:
     package_lines = "\n".join(f"- `{package}`" for package in packages)
     return f"""# {task_name}
 
 ## Purpose
 
-Use this control surface only for complex work that spans multiple packages,
+Use this Work Packet only for complex work that spans multiple packages,
 branches, worktrees, agents, or handoff sessions. Routine single-session work
 should stay in `control/state.md`, `control/ledger.md`, and normal checkpoint
 commits.
@@ -939,6 +1519,11 @@ commits.
 - `events.jsonl` is append-only history for important state transitions.
 - Package Markdown files hold human-readable evidence, verification, risks, and
   blocker notes.
+- `brief.md` holds the user goal, acceptance criteria, and non-goals.
+- `context.jsonl` is the curated, stage-scoped list of project files an agent
+  must read before acting.
+- `promotion.md` is the one-time finish review for deciding which learnings
+  deserve a durable home.
 - `control/ledger.md` records durable project decisions and risks; it should not
   duplicate every package update.
 - chat transcripts, status panels, and final reports are secondary. If they
@@ -955,7 +1540,59 @@ Suggested states: `pending`, `in_progress`, `blocked`, `completed`,
 `integrated`, `finalized`, `canceled`.
 
 `99-finalize` should be marked `finalized` only after integration verification
-and cleanup evidence are recorded.
+and cleanup evidence are recorded. Before finalizing, complete the knowledge
+promotion review in `promotion.md`.
+
+## Work Packet Commands
+
+```bash
+python3 tools/project.py task context add {task_slug} --file <path> --reason <why> --stage plan
+python3 tools/project.py task activate {task_slug} --phase plan --next "<required action>"
+python3 tools/project.py task current
+python3 tools/project.py task deactivate
+```
+"""
+
+
+def render_task_brief(task_name: str) -> str:
+    return f"""# {task_name}
+
+## User Goal
+
+- Define the user-visible outcome before implementation.
+
+## Acceptance Criteria
+
+- [ ] Replace this placeholder with a verifiable outcome.
+
+## Non-Goals
+
+- Record explicit exclusions when they matter.
+"""
+
+
+def render_promotion_review() -> str:
+    return """# Knowledge Promotion Review
+
+Complete this once during finalization. Select only the destinations that have
+real future value; transient implementation details should not become project
+rules.
+
+## Classification
+
+- [ ] Promote to test / hook / lint
+- [ ] Promote to module README / spec
+- [ ] Record as ledger decision / risk
+- [ ] Keep task-local
+- [ ] Discard as transient
+
+## Candidates
+
+- None recorded yet.
+
+## Applied Updates
+
+- None.
 """
 
 
@@ -1020,7 +1657,7 @@ def task_init(args: argparse.Namespace) -> int:
         return 2
     task_root = ROOT / "control" / "tasks" / slug
     if task_root.exists():
-        print(f"task control surface already exists: {task_root.relative_to(ROOT)}", file=sys.stderr)
+        print(f"task Work Packet already exists: {task_root.relative_to(ROOT)}", file=sys.stderr)
         return 2
 
     packages = default_task_packages(args.package)
@@ -1028,7 +1665,10 @@ def task_init(args: argparse.Namespace) -> int:
     base_commit = git_head_or_pending()
 
     (task_root / "packages").mkdir(parents=True, exist_ok=False)
-    (task_root / "INDEX.md").write_text(render_task_index(task_name, packages), encoding="utf-8")
+    (task_root / "INDEX.md").write_text(render_task_index(task_name, slug, packages), encoding="utf-8")
+    (task_root / "brief.md").write_text(render_task_brief(task_name), encoding="utf-8")
+    (task_root / "context.jsonl").write_text("", encoding="utf-8")
+    (task_root / "promotion.md").write_text(render_promotion_review(), encoding="utf-8")
     (task_root / "status.tsv").write_text(
         TASK_STATE_HEADER + "\n" + "\n".join(status_row(package, base_commit, timestamp) for package in packages) + "\n",
         encoding="utf-8",
@@ -1045,8 +1685,133 @@ def task_init(args: argparse.Namespace) -> int:
     for package in packages:
         (task_root / "packages" / f"{package}.md").write_text(render_package_doc(package), encoding="utf-8")
 
-    print(f"Created complex task live state: {task_root.relative_to(ROOT)}")
+    print(f"Created complex task Work Packet: {task_root.relative_to(ROOT)}")
     print(f"Live state: {(task_root / 'status.tsv').relative_to(ROOT)}")
+    return 0
+
+
+def task_context_add(args: argparse.Namespace) -> int:
+    task_root = task_root_for_slug(args.slug)
+    if not task_root.is_dir():
+        print(f"task does not exist: control/tasks/{args.slug}", file=sys.stderr)
+        return 2
+    target, error = validate_context_file_path(args.file)
+    if error:
+        print(error, file=sys.stderr)
+        return 2
+    reason = args.reason.strip()
+    if not reason:
+        print("reason must be non-empty", file=sys.stderr)
+        return 2
+    entries, errors = load_task_context_entries(task_root)
+    if errors:
+        for item in errors:
+            print(item, file=sys.stderr)
+        return 2
+    relative = target.relative_to(ROOT.resolve()).as_posix() if target else args.file
+    if any(entry["file"] == relative and entry["stage"] == args.stage for entry in entries):
+        print(f"duplicate context entry for {relative} at stage {args.stage}", file=sys.stderr)
+        return 2
+    entry = {"file": relative, "reason": reason, "stage": args.stage}
+    manifest = task_root / "context.jsonl"
+    with manifest.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n")
+    print(f"Added {args.stage} context: {relative}")
+    return 0
+
+
+def task_context_list(args: argparse.Namespace) -> int:
+    task_root = task_root_for_slug(args.slug)
+    if not task_root.is_dir():
+        print(f"task does not exist: control/tasks/{args.slug}", file=sys.stderr)
+        return 2
+    entries, errors = load_task_context_entries(task_root)
+    if errors:
+        for item in errors:
+            print(item, file=sys.stderr)
+        return 2
+    requested_stage = "check" if args.stage == "handoff" else args.stage
+    for entry in entries:
+        if requested_stage and entry["stage"] != requested_stage:
+            continue
+        print(f"{entry['stage']}\t{entry['file']}\t{entry['reason']}")
+    return 0
+
+
+def git_private_root() -> Path | None:
+    completed = run_git(["rev-parse", "--git-common-dir"])
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    path = Path(completed.stdout.strip())
+    if not path.is_absolute():
+        path = ROOT / path
+    return path.resolve()
+
+
+def active_task_state_file() -> Path | None:
+    private_root = git_private_root()
+    if private_root is None:
+        return None
+    worktree_key = hashlib.sha256(str(ROOT.resolve()).encode("utf-8")).hexdigest()[:16]
+    return private_root / "project-seed" / "active-task" / f"{worktree_key}.json"
+
+
+def read_active_task_state() -> dict[str, str]:
+    path = active_task_state_file()
+    if path is None or not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {key: value for key, value in data.items() if isinstance(key, str) and isinstance(value, str)}
+
+
+def task_activate(args: argparse.Namespace) -> int:
+    task_root = task_root_for_slug(args.slug)
+    if not task_root.is_dir():
+        print(f"task does not exist: control/tasks/{args.slug}", file=sys.stderr)
+        return 2
+    state_path = active_task_state_file()
+    if state_path is None:
+        print("git repository is required for worktree-scoped active task state", file=sys.stderr)
+        return 2
+    next_action = args.next_action.strip()
+    if not next_action:
+        print("next action must be non-empty", file=sys.stderr)
+        return 2
+    state = {
+        "slug": args.slug,
+        "phase": args.phase,
+        "next": next_action,
+        "updated_at": now_iso(),
+    }
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Activated complex task: {args.slug} ({args.phase})")
+    return 0
+
+
+def task_current(_args: argparse.Namespace) -> int:
+    state = read_active_task_state()
+    slug = state.get("slug", "")
+    if not slug or not task_root_for_slug(slug).is_dir():
+        print("No active complex task.")
+        return 1
+    print(f"{slug}\t{state.get('phase', '')}\t{state.get('next', '')}")
+    return 0
+
+
+def task_deactivate(_args: argparse.Namespace) -> int:
+    state_path = active_task_state_file()
+    if state_path is None:
+        print("git repository is required for worktree-scoped active task state", file=sys.stderr)
+        return 2
+    if state_path.exists():
+        state_path.unlink()
+    print("Deactivated complex task.")
     return 0
 
 
@@ -1151,6 +1916,22 @@ def skill_copy_ignore(_: str, names: list[str]) -> set[str]:
     return ignored
 
 
+def skill_tree_digest(root: Path) -> str:
+    """Return a stable content digest for a portable skill directory."""
+    digest = hashlib.sha256()
+    if not root.is_dir():
+        return ""
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = path.relative_to(root).as_posix()
+        if relative == ".DS_Store" or any(part.startswith("._") for part in path.relative_to(root).parts):
+            continue
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def list_user_skills(args: argparse.Namespace) -> int:
     for profile, name, path in user_skill_entries(args.profile or ["all"]):
         status = "ok" if (path / "SKILL.md").is_file() else "missing"
@@ -1183,6 +1964,28 @@ def install_user_skills(args: argparse.Namespace) -> int:
             shutil.rmtree(destination)
         shutil.copytree(source, destination, ignore=skill_copy_ignore)
         print(f"installed {label}")
+    return 0
+
+
+def audit_user_skills(args: argparse.Namespace) -> int:
+    """Report whether installed skills match this seed's portable snapshot."""
+    entries = user_skill_entries(args.profile or ["recommended"])
+    targets = [("custom", Path(args.install_root))] if args.install_root else install_targets(args.target)
+    drift_found = False
+    for target_name, target_root in targets:
+        for profile, name, source in entries:
+            destination = target_root / name
+            if not destination.is_dir():
+                status = "missing"
+            elif skill_tree_digest(source) == skill_tree_digest(destination):
+                status = "synced"
+            else:
+                status = "drifted"
+            if status != "synced":
+                drift_found = True
+            print(f"{target_name}\t{profile}\t{name}\t{status}\t{destination}")
+    if args.strict and drift_found:
+        return 1
     return 0
 
 
@@ -1277,6 +2080,21 @@ def build_parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="initialize a copied template")
     init.add_argument("--name", default=ROOT.name)
     init.add_argument("--package-name", default=None)
+    init.add_argument("--brief", help="Markdown brief with target user, core problem, goals, and acceptance criteria")
+    init.add_argument("--target-user", help="primary user for this project")
+    init.add_argument("--core-problem", help="user problem this project should solve")
+    init.add_argument("--goal", action="append", help="project goal; repeat for multiple goals")
+    init.add_argument("--non-goal", action="append", help="explicit non-goal; repeat as needed")
+    init.add_argument(
+        "--acceptance-criterion",
+        action="append",
+        help="verifiable acceptance criterion; repeat as needed",
+    )
+    init.add_argument(
+        "--interactive",
+        action="store_true",
+        help="prompt only for missing target user, core problem, goal, and first acceptance criterion",
+    )
     init.add_argument("--no-git", action="store_true")
     init.add_argument(
         "--platform",
@@ -1311,6 +2129,20 @@ def build_parser() -> argparse.ArgumentParser:
     install_skills.add_argument("--force", action="store_true", help="replace existing target skills")
     install_skills.add_argument("--dry-run", action="store_true")
 
+    audit_skills = sub.add_parser(
+        "audit-user-skills",
+        help="compare installed skills with this seed's portable snapshot",
+    )
+    audit_skills.add_argument("--target", choices=["codex", "claude", "all"], default="codex")
+    audit_skills.add_argument("--install-root", help="compare against an explicit skills directory")
+    audit_skills.add_argument(
+        "--profile",
+        action="append",
+        choices=USER_SKILL_PROFILES,
+        help="skill profile to audit; repeatable",
+    )
+    audit_skills.add_argument("--strict", action="store_true", help="return non-zero if any skill is missing or drifted")
+
     configure_claude_cmd = sub.add_parser(
         "configure-claude",
         help="configure user-level Claude Code defaults for smoother new sessions",
@@ -1333,9 +2165,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     configure_claude_cmd.add_argument("--dry-run", action="store_true")
 
-    task = sub.add_parser("task", help="manage optional complex task live-state controls")
+    task = sub.add_parser("task", help="manage optional complex task Work Packets")
     task_sub = task.add_subparsers(dest="task_command", required=True)
-    task_init_cmd = task_sub.add_parser("init", help="create a minimal complex-task live state surface")
+    task_init_cmd = task_sub.add_parser("init", help="create a minimal complex-task Work Packet")
     task_init_cmd.add_argument("--name", required=True, help="human-readable task name")
     task_init_cmd.add_argument("--slug", help="directory slug under control/tasks/")
     task_init_cmd.add_argument(
@@ -1343,6 +2175,26 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         help="package id to seed in status.tsv; repeatable. Defaults to 01-main plus 99-finalize.",
     )
+    task_context_cmd = task_sub.add_parser("context", help="manage curated task context")
+    task_context_sub = task_context_cmd.add_subparsers(dest="context_command", required=True)
+    task_context_add_cmd = task_context_sub.add_parser("add", help="add a stage-scoped context file")
+    task_context_add_cmd.add_argument("slug", help="task directory slug")
+    task_context_add_cmd.add_argument("--file", required=True, help="repo-relative text file")
+    task_context_add_cmd.add_argument("--reason", required=True, help="why the agent must read this file")
+    task_context_add_cmd.add_argument("--stage", required=True, choices=TASK_CONTEXT_STAGES)
+    task_context_list_cmd = task_context_sub.add_parser("list", help="list curated task context")
+    task_context_list_cmd.add_argument("slug", help="task directory slug")
+    task_context_list_cmd.add_argument(
+        "--stage",
+        choices=TASK_PHASES,
+        help="show one stage only; handoff reuses check context",
+    )
+    task_activate_cmd = task_sub.add_parser("activate", help="set the active task for this worktree")
+    task_activate_cmd.add_argument("slug", help="task directory slug")
+    task_activate_cmd.add_argument("--phase", required=True, choices=TASK_PHASES)
+    task_activate_cmd.add_argument("--next", dest="next_action", required=True, help="next required action")
+    task_sub.add_parser("current", help="show the active task for this worktree")
+    task_sub.add_parser("deactivate", help="clear the active task for this worktree")
 
     governance = sub.add_parser("governance", help="manage optional governance lifecycle controls")
     governance_sub = governance.add_subparsers(dest="governance_command", required=True)
@@ -1378,11 +2230,25 @@ def main() -> int:
         return list_user_skills(args)
     if args.command == "install-user-skills":
         return install_user_skills(args)
+    if args.command == "audit-user-skills":
+        return audit_user_skills(args)
     if args.command == "configure-claude":
         return configure_claude(args)
     if args.command == "task":
         if args.task_command == "init":
             return task_init(args)
+        if args.task_command == "context":
+            if args.context_command == "add":
+                return task_context_add(args)
+            if args.context_command == "list":
+                return task_context_list(args)
+            parser.error(f"unknown context command {args.context_command}")
+        if args.task_command == "activate":
+            return task_activate(args)
+        if args.task_command == "current":
+            return task_current(args)
+        if args.task_command == "deactivate":
+            return task_deactivate(args)
         parser.error(f"unknown task command {args.task_command}")
     if args.command == "governance":
         if args.governance_command == "init":

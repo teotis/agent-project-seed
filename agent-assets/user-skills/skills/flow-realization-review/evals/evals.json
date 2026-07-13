@@ -1,0 +1,151 @@
+{
+  "skill_name": "flow-realization-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "用户说：这份项目全景报告对我掌握主流程帮助不大。请重新生成一份低理解成本、可视化、能审计典型流程中主干和分支处理是否遗漏的报告。",
+      "expected_output": "运行 flow-realization review，但报告应先用一句话说明工程 thesis 和用户价值，再输出主流程图谱、分支/状态矩阵、实现态与设计态边界、证据缺口和审计问题区；需要正式 artifact 时生成类似项目审计报告或典型流程审计图谱的 HTML。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Centers one representative user flow rather than a broad project overview."
+        },
+        {
+          "text": "Starts from project identity and user value before drilling into implementation status."
+        },
+        {
+          "text": "Includes branch handling and default behavior in a reviewable matrix or equivalent structure."
+        },
+        {
+          "text": "Separates implemented, designed-only, manual, missing, and authorization-required states."
+        },
+        {
+          "text": "Uses evidence IDs or equivalent evidence references to prevent designed-only branches from appearing implemented."
+        },
+        {
+          "text": "Provides questions or review prompts that let the user identify omissions or disagree with defaults."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "一个 agent 工作流已经有 package manifest、review HTML、audit log 和 package-status。package-status 显示 review-ready，但 risky actions not ready，因为缺 archive verification、decision manifest、dry-run 和 receipt。用户问这个设计是否真正落地。",
+      "expected_output": "判定为 needs-supplement：说明审阅闭环成立但风险执行未 ready；核心对象是 package/manifest；列出缺口并拆成补充任务、证据请求和待决策项。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not equate review-ready with execution-ready."
+        },
+        {
+          "text": "Names the package or manifest as the core object that carries approval, evidence, and recovery."
+        },
+        {
+          "text": "Classifies missing archive verification, decision manifest, dry-run, and receipt as readiness blockers for risky actions."
+        },
+        {
+          "text": "Separates review checkpoint, approval checkpoint, execution checkpoint, and recovery checkpoint gaps."
+        },
+        {
+          "text": "Packages the missing pieces as follow-up tasks or decisions rather than claiming completion."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "用户说：帮我做一个 user flow review，看看登录页从首页到注册页是否顺畅。没有工程落地、实现状态、证据缺口或 agent 流程问题。",
+      "expected_output": "不应默认运行完整 flow-realization-review；应把它识别为普通 UX/user journey review，给出轻量回答或建议 product-sense/html-response，而不是生成落地状态和任务包。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recognizes pure UX journey review as a near neighbor, not the full flow-realization workflow."
+        },
+        {
+          "text": "Does not invent implementation readiness, evidence ledgers, or task packages when the prompt only asks for page-flow smoothness."
+        },
+        {
+          "text": "Can still answer lightly or route to product-sense-refiner when product fit is the real issue."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "用户问：这个复杂导出契约已经实现了吗？agent 刚跑完测试准备说完成。问题是完成声明权限，而不是设计审阅。",
+      "expected_output": "路由到 done-claim-gate 或明确建议使用 done-claim-gate；不要用 flow-realization-review 替代完成声明门禁。若保留本 skill 视角，只输出实现路径和证据缺口 handoff。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recognizes final completion-claim risk and routes to done-claim-gate."
+        },
+        {
+          "text": "Does not treat tests passing as enough to say the user goal is complete."
+        },
+        {
+          "text": "Avoids expanding into a full flow-realization report when the immediate job is completion claim permission."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "用户要审一个新 skill 设计：它声称可以把会话材料变成可审阅报告和后续任务包。用户担心当前只有理念，没有真正流程、输入、输出、边界和补充机制。",
+      "expected_output": "审查该 skill 的用户目标、核心对象、典型触发流程、输入/输出契约、分支处理、实现状态和缺口；输出 design-gap / needs-supplement 判断及下一步补齐计划。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Checks the skill's recurring job, real inputs, required outputs, and near-neighbor exclusions."
+        },
+        {
+          "text": "Maps how the skill turns a user request into report, gap ledger, task package, or handoff."
+        },
+        {
+          "text": "Identifies missing flow, evidence, branch, or output-contract pieces instead of only improving wording."
+        },
+        {
+          "text": "Produces a concrete supplement plan for making the skill routeable and reusable."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "一个流程设计表里把容器递归展开、云端归档验证、恢复 manifest 都标成 implemented，但材料只有一份 ADR 和一张概念图，没有命令、测试、样例 artifact 或 receipt。用户问是否可以按 ready 推进。",
+      "expected_output": "执行 schema anti-leakage：把这些分支降级为 designed-only 或 evidence-gap，说明 claimed status 与 supported status 的差异，并按 review/approval/execution/recovery checkpoint 拆出补证或补实现任务。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Downgrades implemented/ready claims when evidence is only design-level."
+        },
+        {
+          "text": "Shows claimed status versus supported status or an equivalent contradiction record."
+        },
+        {
+          "text": "Requires command, test, artifact, receipt, or recovery evidence before execution-ready or ready."
+        },
+        {
+          "text": "Splits the resulting gaps by checkpoint type instead of using a generic TODO list."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "用户测试后说：这个 Skill 效果不佳。我真正想要的是参考上一轮 agent 给出的 HTML 文档，从用户意识、用户价值和流程分析出发，生成一份工程报告，帮助我检查顶层设计和主流程设计是否有缺陷。",
+      "expected_output": "把任务识别为 flow-realization-review 的产品化修正方向：正式输出应是工程顶层设计与主流程审计报告，而不是单纯 readiness 表。报告包含项目 thesis、用户价值、需求场景、顶层设计适配性、核心对象、主流程图谱、分支矩阵、风险门、实现/设计/授权边界、待决策看板、证据附录和可审计问题。",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Reframes the skill around top-level design and main-process defect detection."
+        },
+        {
+          "text": "Requires a user-value-first report structure rather than only implementation readiness."
+        },
+        {
+          "text": "Includes demand scenarios and top-level design fit before branch/status details."
+        },
+        {
+          "text": "Keeps schema anti-leakage as a supporting evidence rule, not the primary identity of the output."
+        },
+        {
+          "text": "Specifies an HTML/report artifact similar to a project audit report or typical-flow audit map."
+        }
+      ]
+    }
+  ]
+}

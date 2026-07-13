@@ -1,7 +1,7 @@
 interface:
   display_name: "Agent Task Planner"
-  short_description: "把工程需求快速转成轻量任务计划、agent prompts、验证和 checkpoint 路线"
-  default_prompt: "使用 $agent-task-planner 为这个工程需求做 repo-backed 轻量任务计划；先做需求入口判断，必要时只问一个会改变拆解、验收或执行权限的阻塞问题并给推荐答案，再判断 direct/single-agent/small-parallel/manual-pack/upgrade 路线，最后生成最小可执行任务包或明确退出路径。"
+  short_description: "用户显式调用时，把工程需求转成经过核查、依赖闭包可执行的轻量任务计划"
+  default_prompt: "使用 $agent-task-planner 为这个工程需求做 repo-backed 轻量任务计划，并用中文输出；保留必要技术术语、代码/命令/文件名、状态字段和原文证据。该 skill 仅支持用户显式调用，不接受 Claude/Codex agent active 自启用。先做需求入口判断和 raw claim 核查，把用户给的检查角度当作 seed examples，而不是穷尽清单，并根据当前 repo 证据、claim 类型、影响面和候选方案现场生成 problem-specific checks；检查当前证据、反证、fix-worthiness、可行性、solution-fit 与 integration target，并在生成 ready package 前给出 Plan/Package Proof Route（claim/worth/feasibility/solution-fit/verification/integration/falsifier）；用非绝对 Plan Fitness Score 辅助选择 lane 和 first package，不把评分表当门禁或默认输出；再判断 direct/single-agent/small-parallel/native-agent-controls/ledger-lite/manual-pack/upgrade 路线。只有包之间强依赖、多波次、长执行、高恢复/合并风险，且轻量 lane 无法保护 dependency closure、恢复和最终落地时才升级到 agent-orchestration-planner；如果应升级但 skill、runner 或授权不可用，选择 dependency-closed coarse package、ledger-lite 或 manual-pack，并记录缺失 capability 与 handoff。必要时只问一个会改变拆解、验收或执行权限的阻塞问题并给推荐答案。生成翻译、导出文件或报告时，完成定义必须包含文件已合入目标分支并可见，或记录未合入的 blocker 与下一步。"
 compatibility:
   canonical_format: "agent-skills"
   adapter_targets:

@@ -21,17 +21,16 @@ AI agents work better when they share the same operating context. This scaffold 
 
 | Feature | Description |
 | --- | --- |
-| Status Panel | Shows a compact Chinese entry/handoff snapshot: git state, recent worktrees/branches, open ledger items, risks, and next action |
-| Safe Commit | Whitelist-based commit command for agent-made changes |
-| Claude Code Project Hooks | Project-level `.claude/settings.json` enables the status panel and a guarded Stop-time local checkpoint commit |
+| Status Panel | Shows a compact Chinese entry/handoff snapshot, leading with the user goal, acceptance progress, evidence, gaps, and next decision when a delivery receipt exists |
+| Safe Commit | Path-allowlisted commit command that blocks disallowed artifacts and high-confidence secret patterns before staging |
+| Claude Code Project Hooks | Project-level `.claude/settings.json` enables the status panel and the same baseline-aware clean-checkpoint Stop gate as Codex |
 | Clean Checkpoint Gate | Project-level Codex hook blocks session stop when new tracked dirty changes are left uncheckpointed |
 | Unified Ledger | One structured record format for requests, decisions, sessions, risks, issues, and artifacts |
 | Health Check | Validates required files, entry-file sync, hook helpers, gitkeep files, imports, safety, and platform junk |
 | Agent Sync | Regenerates `CLAUDE.md` from `AGENTS.md` |
 | Portable User Skills | Bundles selected user-installed skills for fast Codex/Claude setup |
 | Claude Code Defaults | Configures user-level new sessions to `auto` permission review after requiring Claude Code v2.1.140 or newer |
-| Standard MCP Checks | Records Context7 as the default documentation MCP to verify on new machines |
-| Complex Task Live State | Optional `tools/project.py task init` command for multi-package work that needs a stronger source of truth than chat or reports |
+| Complex Task Work Packet | Optional `tools/project.py task init` command for cross-session or multi-package work, with intent, curated context, live state, evidence, and a knowledge-promotion review |
 | Governance Lifecycle | Optional `tools/project.py governance init` command for long-lived projects that need rule/script/report lifecycle tracking |
 | Utility Package | Small Python helpers for paths, atomic writes, env loading, API gating, records, manifests, QC, and review pages |
 | Multi-Agent Entry Points | Tool-specific files all point back to the same shared contract |
@@ -67,21 +66,6 @@ tracked dirt and no checkpoint commit removed it, Stop is blocked until the
 agent either creates a local checkpoint or explicitly reports why closeout is
 blocked. It does not auto-commit, push, delete, or rewrite files.
 
-## Standard MCP Checks
-
-Context7 is the standard documentation MCP to verify when setting up a new
-machine or copied project environment. It gives agents current library and
-framework documentation without putting project-specific secrets in this repo.
-
-```bash
-codex mcp get context7
-claude mcp get context7
-```
-
-If either command fails, fix the user-level MCP configuration outside this
-repository. Do not copy API keys, MCP tokens, or provider credentials into the
-project.
-
 ## Claude Code New-Session Defaults
 
 On new machines, use Claude Code v2.1.140 or newer, then run the project helper
@@ -103,7 +87,7 @@ This edits only the user-level Claude settings file and preserves existing
 `allow`/`deny` rules. The helper writes `permissions.defaultMode = "auto"` and
 refuses to write when it cannot verify that Claude Code is v2.1.140 or newer.
 
-## Complex Task Live State
+## Complex Task Work Packets
 
 Most projects should start with the lightweight default: `control/state.md` for
 current state, `control/ledger.md` for durable records, and local checkpoint
@@ -111,7 +95,7 @@ commits for auditability. Do not create a full task control surface for routine
 single-session work.
 
 When work becomes complex enough to span multiple packages, branches, worktrees,
-agents, or handoff sessions, create an explicit live-state surface:
+agents, or handoff sessions, create an explicit Work Packet:
 
 macOS/Linux:
 
@@ -129,11 +113,57 @@ py -3 tools/project.py task init --name "Complex Refactor" `
   --package 02-implementation
 ```
 
-This creates `control/tasks/<slug>/` with an `INDEX.md`, `status.tsv`,
-`events.jsonl`, and per-package evidence notes. In that folder, `status.tsv` is
-the live source of truth for package execution state; chat transcripts, status
-panels, and final reports are secondary and should be refreshed from the live
-state before deciding whether a complex task is complete.
+This creates `control/tasks/<slug>/` with:
+
+- `brief.md` for the user goal, acceptance criteria, and non-goals;
+- `context.jsonl` for the smallest stage-scoped set of project files an agent
+  must read, with a reason for every entry;
+- `status.tsv`, `events.jsonl`, and per-package evidence notes for live state;
+- `promotion.md` for the final decision about which learnings belong in a test,
+  hook, module document, ledger record, the task itself, or nowhere permanent.
+
+Add and inspect curated context without introducing another runtime dependency:
+
+```bash
+python3 tools/project.py task context add complex-refactor \
+  --file control/state.md \
+  --reason "Current project state and next action" \
+  --stage implement
+python3 tools/project.py task context list complex-refactor --stage implement
+```
+
+The `handoff` phase reuses `check` context because handoff should verify and
+explain the finished work rather than introduce a fourth manifest stage.
+
+The project health check validates every context entry: paths must stay inside
+the repository, point to an existing supported text file, include a reason, use
+`plan`, `implement`, or `check`, and avoid duplicate file/stage pairs.
+The shared agent reading order requires an active Work Packet's `brief.md` and
+stage-relevant context to be read before work begins, so the manifest is an
+operational input rather than passive documentation.
+
+Activate a Work Packet for the current git worktree when its phase and next
+required action should appear in the status panel:
+
+```bash
+python3 tools/project.py task activate complex-refactor \
+  --phase implement \
+  --next "Implement the first verified slice"
+python3 tools/project.py task current
+python3 tools/project.py task deactivate
+```
+
+Active-task state is git-private and worktree-scoped, so it is not committed or
+shared accidentally. In the task folder, `status.tsv` remains the live source
+of truth for package execution state; chat transcripts, status panels, and final
+reports are secondary projections. If `99-finalize` is marked `finalized`, the
+project health check requires at least one classification in `promotion.md`, so
+the finish review cannot remain an untouched template.
+
+Task directories created by older seed versions remain valid live-state
+surfaces. They become Work Packets only when one of the new packet files
+(`brief.md`, `context.jsonl`, or `promotion.md`) is present, which keeps upgrades
+from breaking existing task records.
 
 ## Governance Lifecycle
 
@@ -177,14 +207,17 @@ The bundle keeps skill packages in one flat directory:
 - `manifest.json`: profile and source metadata for installation decisions.
 
 The manifest at `agent-assets/user-skills/manifest.json` is the source of truth.
-Use the project tool to inspect or install the bundle. The default install
-profile is `recommended`; `all` installs every bundled skill.
+Use the project tool to inspect or install the bundle. The default `recommended`
+profile is intentionally small (implementation, diagnosis, tests, review, research,
+handoff, and clean closeout); `all` is the opt-in specialist snapshot. Audit an
+existing installation before replacing it with `--force`.
 
 macOS/Linux:
 
 ```bash
 python3 tools/project.py list-user-skills
 python3 tools/project.py install-user-skills --target codex
+python3 tools/project.py audit-user-skills --target codex --strict
 python3 tools/project.py configure-claude
 python3 tools/project.py install-user-skills --target all --profile all --force
 ```
@@ -194,6 +227,7 @@ Windows PowerShell:
 ```powershell
 py -3 tools/project.py list-user-skills
 py -3 tools/project.py install-user-skills --target codex
+py -3 tools/project.py audit-user-skills --target codex --strict
 py -3 tools/project.py configure-claude
 py -3 tools/project.py install-user-skills --target all --profile all --force
 ```
@@ -211,8 +245,8 @@ macOS/Linux:
 cp -r project_seed my-new-project
 cd my-new-project
 
-# 2. Initialize
-python3 tools/project.py init --name "My Project"
+# 2. Initialize from a goal brief (recommended)
+python3 tools/project.py init --name "My Project" --brief product-brief.md
 
 # 3. Verify
 make preflight
@@ -226,8 +260,8 @@ Windows PowerShell:
 Copy-Item -Recurse project_seed my-new-project
 Set-Location my-new-project
 
-# 2. Initialize
-py -3 tools/project.py init --name "My Project"
+# 2. Initialize from a goal brief (recommended)
+py -3 tools/project.py init --name "My Project" --brief product-brief.md
 
 # 3. Verify
 py -3 tools/project.py check
@@ -244,31 +278,39 @@ renames the Python package, activates local Claude settings, and writes
 manual project-specific editing. The health check rejects obvious template
 residue in project-facing files after initialization.
 
+Use a small Markdown brief to make the initialized project immediately usable:
+
+```markdown
+## Target User
+Independent researchers
+
+## Core Problem
+They lose decision context between research sessions.
+
+## Project Goals
+- Preserve decision context with each research artifact.
+
+## Acceptance Criteria
+- A researcher can recover a decision and its evidence in one view.
+```
+
+`init --brief product-brief.md` writes this intent into `AGENTS.md`,
+`control/state.md`, the initial ledger record, and `control/delivery_receipt.md`.
+The receipt is the default user-facing handoff surface; update its checkbox
+criteria, evidence, gaps, and next decision as work progresses. For a terminal
+prompt instead of a file, use `init --interactive`.
+
 ## Run a Problem-Solving Round
 
-Use this lightweight path when a user brings external material and wants an
-agent to analyze a problem, propose a solution, make the change, verify it, and
-hand off cleanly.
+`AGENTS.md` contains the authoritative adaptive contract. The minimum path is
+to read it plus the files directly involved. Read `control/state.md` or relevant
+ledger records only when current state or prior decisions constrain the task.
 
-1. Put user-provided material in `work/in/<task-slug>/` when it should be kept
-   with the project, or reference its existing path when it is already in the
-   repository.
-2. Ask the agent to read `AGENTS.md`, `control/state.md`, relevant recent
-   records in `control/ledger.md`, and the task input before proposing changes.
-3. Put durable analysis reports in `reports/<topic>/` when the task produces a
-   reusable conclusion. Keep final deliverables that should not be committed in
-   `work/out/`.
-4. Record only durable facts in `control/ledger.md`: requests, decisions, risks,
-   issues, sessions, and artifact links. Do not paste full chat logs or raw
-   private material into the ledger.
-5. Run `python3 tools/project.py check` plus the smallest task-specific tests
-   that prove the result. Use `py -3` equivalents on Windows.
-6. Create `control/tasks/<slug>/` with `python3 tools/project.py task init` only
-   when the work spans multiple packages, worktrees, agents, or handoff
-   sessions.
-7. Finish with this round's results, modified/new files, risk points, and
-   concrete next steps. If tracked files changed, close with a local checkpoint
-   commit unless the blocker is explicitly documented.
+Use `reports/<topic>/` for conclusions that will be reused or reviewed. When a
+task changes tracked files, run the project check and proportional tests, then
+close with a guarded local checkpoint or an explicit blocked handoff. Create a
+Work Packet only for work that actually crosses dependent packages, worktrees,
+agents, or handoff sessions.
 
 ## Directory Layout
 
@@ -318,13 +360,13 @@ platform-specific example: Windows uses `py -3`, while macOS/Linux uses
 `python3`. This project-level configuration is the default path for Claude Code:
 
 - `UserPromptSubmit`: inject the lightweight Chinese status panel.
-- `Stop`: run `tools/project.py commit` to create a guarded local checkpoint
-  commit when allowed changes are present.
+- `Stop`: block session exit when the current session leaves new tracked dirty
+  changes without a deliberate local checkpoint or a documented blocker.
 
-The Stop hook uses the same safe-commit allowlist as manual
-`python3 tools/project.py commit`. If there are no changes, it exits cleanly. If
-changes are unsafe or outside the allowlist, it refuses the commit instead of
-staging secrets, temp files, generated outputs, or unrelated paths.
+The Stop hook does not auto-commit. It records the session baseline on the first
+prompt, then refuses to exit only when new tracked dirt remains. Agents review,
+stage, and run `python3 tools/project.py commit` deliberately, so pre-existing
+user changes are not silently committed.
 
 User-level Claude/Codex hook setup is optional. Use it only when you want similar
 behavior outside repositories that carry this project-level configuration.
@@ -354,7 +396,7 @@ repository's absolute path:
 
 The notify script calls `tools/project.py commit` through the configured Python
 launcher, so it keeps the same allowlist and secret/temp/output protections as
-the Claude Code Stop hook. Run `python3 tools/hooks/panel_print.py` on
+the manual safe-commit command. Run `python3 tools/hooks/panel_print.py` on
 macOS/Linux or `py -3 tools/hooks/panel_print.py` on Windows whenever you want
 the same status panel printed in a terminal.
 
@@ -374,8 +416,11 @@ py -3 tools/panel.py --mode entry
 py -3 tools/panel.py --mode handoff
 ```
 
-The panel stays lightweight by reading only `AGENTS.md`, `control/state.md`,
-`control/ledger.md`, `src/`, and bounded git metadata commands. It does not scan
+When `control/delivery_receipt.md` exists, the panel puts the user goal,
+acceptance progress, evidence, remaining gaps, and user decision ahead of Git
+metadata. The panel stays lightweight by reading only `AGENTS.md`,
+`control/state.md`, `control/ledger.md`, `control/delivery_receipt.md`, `src/`,
+and bounded git metadata commands. It does not scan
 the full source tree, inspect large diffs, call networks, or invoke an LLM.
 
 For broader Codex App use across unrelated projects, a user-level

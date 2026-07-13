@@ -1,0 +1,7 @@
+interface:
+  display_name: "Public Release Sweep"
+  short_description: "公开发布前的安全与合规扫雷"
+  default_prompt: "使用 $public-release-sweep 审计项目公开发布安全；当用户明确要求公开发布、开源、public mirror、公开同步安全、OSS readiness，或当前任务需要判断仓库是否可公开时，agent 可主动调用；默认用中文交付私有审计报告、任务包和最终回复，保留必要技术术语、代码/命令/文件名、许可证名和原文证据；只在公开仓库内容、公开英文版本或用户明确要求时使用英文；本 skill 默认 analysis-only，不得在未获明确授权时执行历史重写、删除、提交、推送、发布或凭证操作。"
+
+policy:
+  allow_implicit_invocation: true

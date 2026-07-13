@@ -55,6 +55,24 @@ forbidden paths, dependencies, acceptance criteria, verification commands,
 expected evidence, and final status handoff instead of generating a full
 orchestration kit.
 
+If the user only needs durable package docs, owners, verification criteria,
+checkpoints, and a lightweight status ledger for human-driven progress, do not
+generate the full orchestration kit. Route to `agent-task-planner`'s
+`ledger-lite` / `manual-pack` lane, or keep the Task Package Contract as a
+manual execution package.
+
+Before generating a full kit, provide an **Execution Contract Proof Route**:
+need proof, projection proof, unlock proof, capability proof, landing proof,
+cleanup proof, and a falsifier or downgrade trigger. If the route does not
+close, do not compensate by generating more artifacts; downgrade to a lighter
+lane, ask one blocking decision, or create a validation package first.
+
+Use a non-gating **Orchestration Value Score** alongside the orchestration value
+test: durable state need, dependency unlock value, recovery value, integration
+value, runner value, and operator burden. The score supports the user decision
+between full kit, native agents, ledger-lite/manual-pack, or needs-user-decision;
+it does not replace hard invariants or justify a heavy control plane by itself.
+
 ## Core Contract
 
 An orchestration kit is a **tail-driven execution contract**. Package agents do
@@ -74,6 +92,13 @@ Context is loaded progressively by role and state:
   artifacts.
 - The runtime keeps its full recovery surface, but user-facing chat exposes only
   the smallest command set needed for the current state.
+- Durable analysis-only and planning-only outputs, including reports, plans,
+  task packages, HTML review surfaces, `FINAL_REPORT.md`, and coordinator
+  summaries, are documentation assets that should land on the mainline by
+  default after basic checks. `99-finalize` should merge them back to the
+  mainline and summarize them in the primary coordinator thread instead of
+  leaving them only on package branches, watches/sessions, temporary worktrees,
+  or worker threads, unless the INDEX records a specific isolation reason.
 - User-visible behavior, layout, copy, workflow, and visual-output packages use
   a **User-Visible Delta Ledger**: agents have bounded discretion for necessary
   small adjacent changes, but visible drift outside the target surface must be
@@ -142,10 +167,16 @@ Before generating artifacts:
 - Inspect enough local context to split work into concrete packages.
 - Check current git status.
 - Ensure every functional package has package id, allowed/forbidden paths, dependencies, acceptance criteria, verification commands, expected evidence, branch/worktree policy, and unlock conditions.
+- Complete the Execution Contract Proof Route before creating runtime artifacts. If it fails, downgrade to a lighter lane or ask one blocking decision instead of creating a hollow kit.
+- Use the Orchestration Value Score to compare full-kit value against native agents, direct execution, Task Package Contract, `ledger-lite`, and `manual-pack`.
 - Add a User-Visible Delta Ledger for packages that change user-facing behavior, layout, copy, workflow, or visual output; do not force that burden onto purely internal packages.
 - Run capability preflight: classify each package or gate as `autonomous`, `agent-verifiable substitute`, or `external-assist`.
 - Default to task packages that agents can complete by themselves. If real-device QA, human visual acceptance, external approval, credential entry, or another `external-assist` item is essential, cannot be ignored, and has no agent-verifiable substitute, stop before generating the kit and ask the user to approve the gate, change scope, or abort the orchestration.
 - Define landing strategy before launch: primary path, preapproved fallbacks, explicit non-goals, abort conditions, and independent merge candidates.
+- For packages that only create durable analysis or planning artifacts, use a
+  default `mainline-documentation-landing` path: merge approved docs/reports
+  outputs to mainline after privacy/sensitive-content, path, format/link, and
+  conflict checks pass.
 
 Use `references/planning_contract.md` for the detailed projection, capability,
 and landing/failure planning rules.
@@ -211,6 +242,11 @@ Core behavior:
 - `retry` accepts only `blocked`, `stale`, or `invalid`, preserves prior recovery context, and obeys the three-strike fingerprint breaker.
 - `doctor` checks consistency and runner/session health without launching work.
 - `99-finalize` runs only when all functional packages are `completed`, then verifies evidence, merges conservatively, reports outcome, and calls `cleanup --mainline <branch>` only after success. Cleanup must finish before `99-finalize` may be marked `finalized`.
+- For analysis-only or planning-only artifacts, `99-finalize` should land
+  durable docs/reports outputs on mainline by default and carry the summary back
+  to the coordinator thread; keep them isolated only for recorded blockers such
+  as sensitive content, unapproved publication, path violations, verification
+  failure, conflicts, or explicit user isolation.
 - `start-codex-app.sh` and `start-claude-code.sh` are thin wrappers: their default command runs `doctor --environment`, `start`, and `status`; other orchestration subcommands pass through to `orchestrate.sh`. They must not duplicate scheduling, state, finalize, or cleanup logic.
 
 ### 4. Output To User
@@ -220,10 +256,19 @@ After generating the kit, show only immediately actionable entry paths:
 - Mainline branch, integration branch, max parallel agents.
 - First wave packages and final package `99-finalize`.
 - Manual path: copy prompts from `launchers/agent-prompts.md`.
-- Script path: show the selected runner's primary wrapper only.
-  Codex primary output uses `start-codex-app.sh`, JSONL/thread-id inspection,
-  and `start-codex-app.sh resume <thread-id>`. Claude primary output uses
+- Script path: show the selected runner's primary wrapper only as the default,
+  while also providing the other platform's complete alternative-runner command.
+- Script path: show both platform launch commands. Mark the selected runner's
+  wrapper as primary, and show the other wrapper as the alternative runner with
+  a complete copy-paste launch command. Codex primary output uses `start-codex-app.sh`, JSONL/thread-id inspection, and `start-codex-app.sh resume <thread-id>`. Claude primary output uses
   `start-claude-code.sh` and `start-claude-code.sh agents`.
+- Script path: when Codex is primary, include a separate Claude Code alternative
+  block; when Claude Code is primary, include a separate Codex App / Codex runner
+  alternative block. Use explicit labels such as "Primary script path (Codex App
+  / Codex runner)", "Alternative runner (Claude Code)", "Primary script path
+  (Claude Code)", and "Alternative runner (Codex App / Codex runner)". Do not
+  collapse the alternative into prose, omit the `cd "<repo-root>"` line, or
+  replace the other platform command with bare `orchestrate.sh`.
 - Recovery commands are shown only when the current state requires them:
   `retry <package-id>` for `blocked`/`stale`/`invalid`, `doctor --environment`
   for runner setup, `collect-logs <package-id>` for diagnosis, `advance` for a
@@ -240,6 +285,8 @@ prefix such as `codex-thread:`.
 ## Guardrails
 
 - Do NOT use this skill unless the user explicitly asks for orchestration.
+- Do NOT generate a full kit when durable package docs plus lightweight status
+  tracking are enough; use `agent-task-planner` `ledger-lite` or `manual-pack`.
 - Do NOT make `orchestrate.sh` a long-running watcher.
 - Do NOT duplicate scheduling logic in package prompts; prompts only call `advance`.
 - Do NOT let package agents edit `INDEX.md`, another package status file, or `state.tsv` manually.
@@ -261,7 +308,9 @@ prefix such as `codex-thread:`.
 
 When the user only needs one to three manually executed packages, do not generate
 the full orchestration kit. Use the shared Task Package Contract to capture
-scope, acceptance criteria, and verification commands. Use
-`agent-orchestration-planner` when the user asks for a multi-agent orchestration
-control plane with durable state, dependency scheduling, recovery, and finalize
-behavior.
+scope, acceptance criteria, and verification commands. When the user needs
+durable package docs, owner/verification/checkpoint fields, and human-driven
+status tracking, prefer `agent-task-planner`'s `ledger-lite` / `manual-pack`
+lane. Use `agent-orchestration-planner` only when the user asks for a
+multi-agent orchestration control plane with durable scheduler state, dependency
+dispatch, recovery, runner wrappers, finalize behavior, or cleanup.

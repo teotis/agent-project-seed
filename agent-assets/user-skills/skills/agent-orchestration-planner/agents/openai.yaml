@@ -1,7 +1,7 @@
 interface:
   display_name: "Agent Orchestration Planner"
-  short_description: "生成项目内持久 DAG、状态账本和收口流程"
-  default_prompt: "使用 $agent-orchestration-planner 生成多 agent orchestration control plane；按用户/宿主平台选择 Codex 或 Claude runner，默认用中文交付 orchestration kit、状态说明、任务包和最终回复，保留必要英文命令、文件名和状态字段；该 skill 仅支持用户显式调用，不接受 Claude/Codex agent active 自启用。"
+  short_description: "生成经过 claim 证伪的项目内持久 DAG、状态账本和收口流程"
+  default_prompt: "使用 $agent-orchestration-planner 生成多 agent orchestration control plane；按用户/宿主平台选择 Codex 或 Claude runner，默认用中文交付 orchestration kit、状态说明、任务包和最终回复，保留必要英文命令、文件名和状态字段；生成 DAG 前，独立验证用户、sweep、handoff 或既有 package 中的 raw claim，检查当前证据、反证、值得执行、可行性、solution-fit、verification signal、integration visibility 和 falsifier；未验证的问题只能进入 discovery/validation、defer、reject 或 blocked，不能包装成 ready functional package；该 skill 仅支持用户显式调用，不接受 Claude/Codex agent active 自启用。"
 
 policy:
   allow_implicit_invocation: false

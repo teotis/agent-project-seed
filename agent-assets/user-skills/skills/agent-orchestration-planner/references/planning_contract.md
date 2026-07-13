@@ -25,6 +25,37 @@ Design rules:
 - When projections disagree, report the orchestration as invalid or blocked until repaired. Do not silently infer success from the most optimistic artifact.
 - A useful extension should pass a deformation test: adding one new state, runner, manual gate, failure class, or evidence channel should require bounded edits to the owning projection and its validators, not scattered changes across unrelated artifacts.
 
+### Execution Contract Proof Route
+
+Before generating a full orchestration kit, prove that a project-owned control plane is actually the right object. This route is mandatory for full kit generation and should be concise enough to fit in `INDEX.md`.
+
+| Step | Question |
+|---|---|
+| **Need proof** | Which requirement cannot be handled by native agents, direct execution, Task Package Contract, `ledger-lite`, or `manual-pack`? |
+| **Projection proof** | Which artifact owns each kind of information, and how will drift between `INDEX.md`, graph, state, events, package status, prompts, and final report be detected? |
+| **Unlock proof** | Why do dependency unlocks require scheduler truth, and why are only `completed` / `finalized` eligible to unlock downstream work? |
+| **Capability proof** | Are packages autonomous, agent-verifiable substitutes, or approved external-assist gates? Which work must not be auto-launched? |
+| **Landing proof** | How will the plan decide among `landed`, `landed-with-approved-fallback`, `ready-for-external-gate`, `failed-no-merge`, and independent merge candidates? |
+| **Cleanup proof** | What evidence is required before cleanup, and how does the kit avoid deleting resources not created or verified by this orchestration? |
+| **Falsifier** | What missing capability, projection mismatch, dependency shape, external gate, or landing risk would force downgrade or block kit generation? |
+
+If any proof item cannot close, do not compensate by generating more artifacts. Downgrade to a lighter lane, ask one blocking decision, or create a validation package first.
+
+### Orchestration Value Score
+
+Use this as decision support for the orchestration value test. It is not a total score, not a hard gate, and not permission to build a full kit when a hard invariant is missing.
+
+| Dimension | What to look for |
+|---|---|
+| **Durable state need** | Does scheduler truth need to survive sessions and drive future decisions? |
+| **Dependency unlock value** | Does a DAG actually control downstream dispatch or merge eligibility? |
+| **Recovery value** | Are retry, doctor, stale/invalid diagnosis, or failure fingerprints central to success? |
+| **Integration value** | Are per-package branches/worktrees, integration branch, finalize, and cleanup materially useful? |
+| **Runner value** | Do Codex/Claude wrappers solve a real runner or evidence-channel problem? |
+| **Operator burden** | Is the full kit less confusing and safer for the user than platform-native agents plus lightweight packages? |
+
+Expose the value decision in the user-facing output as a short recommendation: full kit, lighter lane, native agents, or needs-user-decision. Keep detailed scoring in `INDEX.md` or an appendix, not in the default chat answer.
+
 ## Workflow
 
 ### 1. Inspect Or Create Package Materials
@@ -36,10 +67,13 @@ Before generating artifacts:
 - Inspect enough local context to split work into concrete packages when package docs do not exist.
 - Check current git status.
 - Ensure every functional package has: Package ID, allowed/forbidden paths, dependencies, acceptance criteria, verification commands, expected evidence, branch/worktree policy, and unlock conditions.
+- Complete the Execution Contract Proof Route before creating runtime artifacts. If the route fails, choose a lighter lane or ask one blocking decision instead of creating a hollow kit.
+- Use the Orchestration Value Score to compare full kit value against native agents, direct execution, Task Package Contract, `ledger-lite`, and `manual-pack`.
 - Apply the Projection Model before adding custom status fields, generated files, runner modes, evidence channels, or manual gates. Name the owning projection and the drift rule for each addition.
 - Run a capability preflight before finalizing the graph: for every package, verification command, and acceptance criterion, identify whether Claude Code can execute it autonomously in the planned environment. Anything requiring a physical device, human visual judgment, external account approval, credential entry, proprietary console access, paid service approval, remote hardware, or user-only decision must not be assigned to an auto-launched functional package.
 - Default to task packages that agents can complete themselves. If an `external-assist` item is essential to the goal, cannot be ignored, and has no agent-verifiable substitute, stop before generating the output kit and ask the user to choose whether to approve the manual gate, change scope, or abort the orchestration.
 - Define a landing strategy before launching work: primary success path, preapproved fallback paths, explicit non-goals, abort conditions, and any packages that may remain valid as independent merge candidates if the main plan fails.
+- For analysis-only or planning-only packages whose durable output is a report, plan, task package, HTML review surface, or `FINAL_REPORT.md`, default the landing strategy to `mainline-documentation-landing`: after privacy/sensitive-content screening, path classification, format/link checks, and conflict checks pass, the artifact should be merged to the mainline and summarized in the primary coordinator thread. Do not leave these outputs marooned on a package branch, watch/session, temporary worktree, or worker thread unless the INDEX records a specific isolation reason.
 
 Planning-location search is not optional preamble. Check the repository's documented planning home first, such as `docs/plans/`, `codex/agent_plans/`, or any path named by AGENTS/CLAUDE/project docs. Recent package folders may already contain the problem statement, accepted constraints, prior attempts, failure evidence, and a package index that should be updated instead of replaced. If a relevant package exists, decide explicitly whether to amend it, create a follow-up package in the same folder, or start a new orchestration with links back to the prior one.
 
@@ -96,6 +130,7 @@ Every orchestration must declare:
 - **Independent merge candidates**: packages that can still be reviewed as standalone fixes if the main plan fails. Declare these before execution with why they are independent, their allowed paths, and their standalone verification.
 
 Default policy:
+- Analysis/planning artifact packages are merge-eligible documentation by default, not failed-plan leftovers, when they only touch approved docs/reports paths and pass privacy, sensitivity, format, link, and conflict checks.
 - If the main plan fails and no fallback is preapproved, the orchestration outcome is `failed-no-merge`.
 - If a preapproved fallback lands, the outcome is `landed-with-approved-fallback`, not plain success.
 - If code is complete but a declared external release gate remains, the outcome is `ready-for-external-gate`.

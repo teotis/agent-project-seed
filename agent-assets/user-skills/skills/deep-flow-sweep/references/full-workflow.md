@@ -363,6 +363,8 @@ When a structured package block exists, run:
 rtk python3 scripts/task_package_validator.py <report-or-package-file>
 ```
 
+This validator is a repo-local deterministic gate, not a hard dependency of a standalone skill copy. If the skill is copied without the repository `scripts/` directory or the script is unavailable, keep the Task Package Contract fields, Falsification Ledger, and Outcome Replay in the report, mark deterministic package validation as `missing evidence` / package contract gap, and require manual structural review before handoff or orchestration.
+
 ### 7. Produce Task Packages And Escalation Briefs
 
 Do not edit project files as part of this skill. Convert findings into precise packages that a later implementation pass can pick up.
@@ -541,7 +543,7 @@ A deep flow sweep is complete only when:
 - **Markdown is the source report**: generate `deep_flow_sweep_report_{YYYYMMDD}_{HHMM}.md` for formal sweeps. It must contain the sweep summary, flow map, scenarios, issues, task packages, verification ledger, external/deferred checks, and escalations in a compact shape suitable for follow-up agents.
 - **HTML is the review surface**: generate `deep_flow_sweep_report_{YYYYMMDD}_{HHMM}.html` from the same issue IDs, evidence, severity labels, task package IDs, and residual risks for every formal sweep. It must include a clickable section index with stable section IDs, and should include clickable finding-to-code navigation, color-coded severity, and collapsible sections for each dimension.
 - **No split conclusions**: HTML may visualize and filter, but it must not introduce judgments absent from Markdown.
-- **Package validation**: when task packages are emitted as YAML/JSON or fenced structured blocks, run `rtk python3 scripts/task_package_validator.py <markdown-report>` and report failures as package contract gaps.
+- **Package validation**: when task packages are emitted as YAML/JSON or fenced structured blocks, run `rtk python3 scripts/task_package_validator.py <markdown-report>` and report failures as package contract gaps. If the repo-local validator is unavailable, mark deterministic validation as `missing evidence`, preserve the structured contract fields, and require manual structural review before handoff.
 - **Parity check**: when both files exist, run `python3 <skill-dir>/scripts/report_pair_validator.py <markdown-report> <html-report>` to verify that structured finding IDs such as `DFS-*` and task IDs such as `TP-*` appear in both outputs.
 - **HTML preview**: provide the report path and clickable `file://` URL by default. Active browser opening is optional preview behavior only when the user asks or the environment is clearly GUI-capable.
 - **Fallback**: if HTML cannot be generated or opened, still deliver Markdown and state the limitation.

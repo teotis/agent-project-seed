@@ -63,6 +63,18 @@ def run_panel(project_root: Path) -> tuple[int, str]:
         return -1, ""
 
 
+def record_clean_checkpoint_baseline(project_root: Path) -> None:
+    command = [
+        sys.executable or "python3",
+        str(project_root / ".codex" / "hooks" / "clean_checkpoint_first.py"),
+        "session-start",
+    ]
+    try:
+        subprocess.run(command, cwd=str(project_root), capture_output=True, text=True, timeout=10)
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
+        log(f"clean-checkpoint baseline unavailable: {exc}")
+
+
 def panel_mode(payload: dict) -> str:
     value = payload.get("panel_mode") or payload.get("panelMode") or os.environ.get("PANEL_MODE", "")
     return value if value in {"entry", "handoff"} else "entry"
@@ -106,7 +118,10 @@ def main() -> int:
         log("project root not found, skipping")
         return 0
     mode = panel_mode(hook_input)
-    if mode != "handoff" and not is_first_prompt(hook_input, project_root):
+    first_prompt = is_first_prompt(hook_input, project_root)
+    if first_prompt:
+        record_clean_checkpoint_baseline(project_root)
+    if mode != "handoff" and not first_prompt:
         return 0
 
     os.environ["PANEL_MODE"] = mode

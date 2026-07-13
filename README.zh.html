@@ -104,13 +104,19 @@
 <table>
   <thead><tr><th>功能</th><th>说明</th></tr></thead>
   <tbody>
-    <tr><td>状态面板</td><td>中文展示进入/交接快照：Git 状态、近期 worktree/分支、open 记录、风险和下一步</td></tr>
-    <tr><td>安全提交</td><td>基于白名单的提交命令，适用于 Agent 产出的改动</td></tr>
+    <!-- BEGIN MANAGED CAPABILITIES -->
+    <tr><td>状态面板</td><td>中文展示进入/交接快照：优先呈现用户目标、验收进度、证据、缺口与下一决策；随后才是 Git、open 记录和风险</td></tr>
+    <tr><td>安全提交</td><td>基于路径白名单和高置信 secret 扫描的提交命令，在 staging 前拒绝敏感内容</td></tr>
+    <tr><td>Clean Checkpoint</td><td>只针对当前会话新增的 tracked 改动执行 Stop gate，保留用户已有脏改动并支持明确 blocked handoff</td></tr>
     <tr><td>统一账本</td><td>请求、决策、会话、风险、问题和产物共用一种结构化记录格式</td></tr>
     <tr><td>健康检查</td><td>验证必需文件、入口文件同步、hooks、gitkeep、包导入和平台垃圾文件</td></tr>
     <tr><td>Agent 同步</td><td>从共享规则重新生成 <code>CLAUDE.md</code></td></tr>
+    <tr><td>Work Packet</td><td>仅在跨包、worktree、Agent 或交接会话的复杂任务中启用 curated context、live state 和知识提升复核</td></tr>
+    <tr><td>Governance Lifecycle</td><td>面向长期项目的可选规则生命周期评审面，不会默认增加 hook 或强制流程</td></tr>
+    <tr><td>Portable User Skills</td><td>仓库本地保留 38 个 Skill 快照；默认推荐小型工程核心，专家能力显式启用</td></tr>
     <tr><td>工具包</td><td>Python 辅助模块：路径管理、原子写入、环境变量加载、API 门控、Record/Ledger/Manifest/QC、Review 页面</td></tr>
     <tr><td>多 Agent 入口</td><td>各工具专属文件统一指向同一份共享合约</td></tr>
+    <!-- END MANAGED CAPABILITIES -->
   </tbody>
 </table>
 

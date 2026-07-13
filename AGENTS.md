@@ -1,6 +1,8 @@
 # AGENTS.md
 
-This file is the shared source of truth for AI coding agents working in this repository.
+This file is the project-local source of truth for AI coding agents. It keeps
+the portable safety core inside the repository while allowing task-specific
+workflows to adapt to risk, scope, and active modes.
 
 ## Current Intent
 
@@ -9,47 +11,85 @@ This file is the shared source of truth for AI coding agents working in this rep
 
 ## Project overview
 
-A copy-and-use lightweight project scaffold. Ships with minimal structure for multi-agent collaboration. Python 3.9+, toolchain via `tools/project.py`.
+A copy-and-use lightweight project scaffold for agent-assisted work. Python
+3.9+, zero runtime dependencies, with optional Codex and Claude Code adapters.
 
-## How to work in this repository
+The five sections below classify rule hardness. They are not a five-step
+workflow.
 
-- Read this file before making changes.
-- Inspect nearby code before editing.
-- Prefer small, focused changes.
-- Do not invent commands, dependencies, or conventions.
-- Preserve existing project style unless there is a clear reason to change it.
+## Hard invariants
 
-### Reading order
+- **Authorization**: Do not push, publish, upload material, incur external cost,
+  or mutate an external system unless the user explicitly authorizes that
+  effect in the current session.
+- **External effect gate**: An external API call, material upload, or
+  cost-incurring operation requires both an explicitly enabled environment
+  setting and an explicit CLI flag or current-session user authorization. API
+  keys may come only from environment variables or `.env`.
+- **Large local rewrites**: A large-scale local rewrite requires explicit user
+  authorization, a bounded scope, and a rollback point. It does not require an
+  API environment flag when no external service is involved.
+- **Secrets and privacy**: Never commit `.env`, credentials, secrets, complete
+  chat logs, or raw private material. Do not copy them into the ledger or a
+  durable report.
+- **User work and reversibility**: Preserve pre-existing user changes. Do not
+  use destructive cleanup, broad restore/reset, or overwrite a drifted local
+  Skill without explicit approval.
+- **Truthful state and claims**: Do not treat a test, build, report, commit, or
+  chat summary as proof that the user goal is complete. Use the authoritative
+  state surface for the relevant scope and disclose unresolved gaps.
+- **Project independence**: Core authorization, privacy, integrity, and state
+  rules must remain usable from this repository alone. External Skills and
+  companion workflows may enhance the project but must not be runtime safety
+  dependencies.
 
-Before starting a task, read:
+## Mode contracts
 
-1. `AGENTS.md` (this file)
-2. `control/state.md`
-3. Recent records in `control/ledger.md` related to the task
-4. Files directly involved in the current task
+### Code-changing mode
 
-### Task completion
+Applies when tracked project files are intentionally changed.
 
-Every task completion must include:
+1. Inspect the relevant code and preserve unrelated dirty work.
+2. Make the smallest sensible change.
+3. Run `python3 tools/project.py check` (`py -3` on Windows) and the
+   smallest task-specific tests that prove the changed behavior.
+4. Review the relevant diff and stage only task-owned files.
+5. Close with a local checkpoint commit, or give an explicit blocked handoff
+   when a safe checkpoint is not possible.
+6. Do not push unless the user explicitly requests it.
 
-- This round's results
-- Modified/new files
-- Risk points
-- Suggested next steps
+Use `python3 tools/project.py commit --message "type: summary"` for the guarded
+local commit. It rejects disallowed paths and high-confidence secret patterns.
 
-If there are no new risks, explicitly write "No new risks found." Next steps must be concrete, actionable items.
+For a code-changing handoff, report the result, modified files, verification,
+risks, checkpoint status, and any concrete remaining action. Read-only answers
+and routine status reports may remain concise and should not manufacture empty
+risk or next-step sections.
 
-If the task produced a patch that was committed or otherwise merged into git, start the completion reply with the compact handoff status panel from `python3 tools/panel.py --mode handoff` on macOS/Linux or `py -3 tools/panel.py --mode handoff` on Windows, then summarize the change.
+### Active Work Packet mode
 
-### Ledger rule
+If `python3 tools/project.py task current` reports an active Work Packet:
 
-Requirements, decisions, risks, sessions, conflicts, and artifacts are appended to `control/ledger.md` as `Record` entries. Unified format:
+1. Read its `brief.md`.
+2. Read the files returned by
+   `python3 tools/project.py task context list <slug> --stage <phase>`.
+3. Treat `status.tsv` as live execution state; chat, panels, and reports are
+   secondary projections.
+4. Review `promotion.md` before marking `99-finalize` as `finalized`.
+
+Routine single-session work should not create a Work Packet. Use one when the
+work spans multiple dependent packages, worktrees, agents, or handoff sessions.
+
+### Durable record mode
+
+Append a `Record` to `control/ledger.md` only when a requirement, decision,
+risk, issue, session fact, or artifact link has demonstrated future value:
 
 ```text
 ## YYYY-MM-DDTHH:MM:SS - short title
 
 type: request | decision | session | risk | issue | artifact
-status: open | closed  # optional; use for active requests, risks, and issues
+status: open | closed
 tags: tag-a, tag-b
 
 summary:
@@ -62,85 +102,97 @@ links:
 - path/or/url
 ```
 
-Only record facts useful for the project's future. Do not save complete chat logs, keys, or raw private data. Use `status: open` for unfinished requests, risks, and issues that should appear in the status panel; switch to `status: closed` when they are done or no longer relevant.
+Use `status: open` only for unfinished requests, risks, and issues that should
+appear in the status panel. When a conflict cannot be resolved from an
+authoritative source, record an open `issue`; after the user or an authoritative
+file resolves it, append a `decision`. Never silently rewrite disagreement into
+the appearance of consensus.
 
-### Conflict rule
+### Initialization, governance, and release modes
 
-When conflicts cannot be auto-resolved, append `type: issue` to `control/ledger.md`. After the user or an authoritative file resolves it, append `type: decision`. Do not create the illusion of resolution by silently rewriting.
+- `tools/project.py init` is a one-way transition from seed template to project
+  workspace; review `control/init_manifest.md` after it runs.
+- Governance lifecycle tracking is opt-in. Generate `control/governance.md`
+  only for a sustained project that needs explicit keep/defer/retire review.
+- Publishing, production operations, data migration, and public release require
+  their own explicit authorization and task-specific verification. The normal
+  code-changing contract is not sufficient evidence for those modes.
 
-## Validation
+## User value priors
+
+- Keep the default path lightweight and upgrade process only when risk or task
+  complexity justifies it.
+- Prefer user-goal evidence over process completion signals.
+- Favor auditable, reversible work without silently expanding external effects.
+- Support solo-first work while preserving optional multi-agent capability.
+- Preserve cross-platform and project-local portability.
+- Prefer deleting workflow burden or repairing a boundary over adding another
+  standing governance layer.
+
+These are optimization directions, not closed templates. When priors conflict,
+explain the tradeoff and preserve the hard invariants.
+
+## Adaptive heuristics
+
+- Always read this file and the files directly involved in the task.
+- Read `control/state.md` when the task depends on current project status,
+  pending maintenance, or cross-session context.
+- Read relevant recent `control/ledger.md` records when prior requirements,
+  decisions, risks, conflicts, or artifacts may constrain the task.
+- Inspect nearby code before editing; prefer small, focused changes and preserve
+  existing style unless evidence supports a change.
+- Do not invent commands, dependencies, or conventions. Prefer project-provided
+  commands and the smallest verification that covers the changed behavior.
+- Use a durable report only when the conclusion will be reused, reviewed, or
+  handed off. Use `work/out/` for final artifacts that should not be committed
+  and `work/tmp/` for disposable files.
+- Escalate from a short response to a full handoff when there are tracked
+  changes, unresolved risk, cross-session state, or a meaningful user decision.
+
+## Examples and resources
+
+Common verification commands:
 
 ```bash
-# Project preflight check
-make preflight          # runs: python3 tools/project.py check
-
-# Run tests
-make test               # runs: python3 -m pytest
+make preflight          # python3 tools/project.py check
+make test               # python3 -m pytest
 ```
 
-Windows PowerShell equivalents:
+Windows PowerShell:
 
 ```powershell
 py -3 tools/project.py check
 py -3 -m pytest
 ```
 
-## Coding conventions
+Optional resources, not default workflow requirements:
 
-- Git is used by default. Before each logical task ends:
-  1. Run `python3 tools/project.py check` (`py -3 tools/project.py check` on Windows) or equivalent verification.
-  2. Review changes, commit only files relevant to this round.
-  3. Use `python3 tools/project.py commit --message "type: summary"` (`py -3 tools/project.py commit --message "type: summary"` on Windows) for assisted safe commits.
-  4. Do not commit `.env`, `work/tmp/`, formal outputs in `work/out/`, large caches, or secrets.
-  5. Do not push unless the user explicitly requests it.
-- Initialized projects include a project-level Codex clean-checkpoint hook in
-  `.codex/hooks.json`. It blocks Stop if the current session leaves new tracked
-  dirty changes beyond the session-start baseline; close out with a local
-  checkpoint commit or an explicit blocked handoff.
+- `control/tasks/<slug>/`: complex-task Work Packets.
+- `control/governance.md`: sustained governance review surface.
+- `control/delivery_receipt.md`: user-goal acceptance evidence after
+  goal-driven initialization.
+- `reports/`: durable analysis and review artifacts.
+- `agent-assets/user-skills/`: a local 38-Skill snapshot. The small
+  `recommended` profile is the normal bootstrap; the full `all` profile remains
+  locally available for explicit specialist use.
+- Data lifecycle tables, content pipelines, image queues, and HTML delivery
+  assets should be generated only when the copied project has that need.
 
-## Architecture notes
-
-```
-control/contract.md → deleted (content merged here)
-control/ledger.md   — Unified record ledger
-control/state.md    — Current state snapshot
-reports/            — Durable analysis reports and review artifacts
-work/in/            — Input materials
-work/out/           — Final artifacts and manifest
-work/tmp/           — Temporary files, not committed
-tools/project.py    — Initialization, preflight checks, sync, safe commits
-src/                — Minimal general-purpose utilities
-```
-
-### Optional capabilities
-
-The following do not have pre-built directories; generate them when needed:
-
-- data lifecycle: CSV/JSONL state tables, schema, sync scripts
-- complex task live state: generate `control/tasks/<slug>/status.tsv` with `python3 tools/project.py task init` (`py -3 tools/project.py task init` on Windows) when work spans multiple packages, worktrees, agents, or handoff sessions
-- content pipeline: draft/approved layering, publish gating, conflict resolution
-- image generation: provider, queue, manifest, cost gating
-- html delivery: Markdown + self-contained HTML dual delivery
-- governance lifecycle: generate `control/governance.md` with `python3 tools/project.py governance init` (`py -3 tools/project.py governance init` on Windows) when rules, verification scripts, reports, or agent workflows need explicit keep/defer/retire decisions
-
-## Generated files
-
-No auto-generated files in this scaffold project.
-
-## Security
-
-- Any external API call, cost-incurring operation, material upload, or large-scale rewrite must satisfy both:
-  - Environment variable explicitly enabled.
-  - CLI argument or explicit user authorization in this session.
-- API keys may only come from environment variables or `.env`.
-- `.env` is git-ignored, never commit it.
+Some files are generated or synchronized by project tools. `CLAUDE.md` is a
+thin generated adapter; initialization also creates or rewrites project-facing
+state and manifests. Do not hand-edit a generated projection when its source
+command should be used instead.
 
 ## Agent-specific adapters
 
-- Claude Code should read `CLAUDE.md`, which points back to this file.
-- Codex app should use this `AGENTS.md` as the shared project instruction file.
-- After modifying shared rules, run `python3 tools/project.py sync-agents` (`py -3 tools/project.py sync-agents` on Windows).
-- Portable user skills live under `agent-assets/user-skills/` and are governed by `agent-assets/user-skills/manifest.json`; after changing that bundle, run `python3 tools/project.py check` (`py -3 tools/project.py check` on Windows).
-- Context7 is the standard documentation MCP to verify for new environments with `codex mcp get context7` and `claude mcp get context7`.
-- Project-level Codex hooks in `.codex/hooks.json` provide the status panel and clean-checkpoint Stop gate after initialization.
-- For optional guarded end-of-turn commits in Codex, copy `.codex/config.example.toml` into `~/.codex/config.toml` on macOS/Linux, or `.codex/config.windows.example.toml` into `%USERPROFILE%\.codex\config.toml` on Windows, and update the absolute path.
+- Claude Code reads `CLAUDE.md`, which points back to this file. After changing
+  shared rules, run `python3 tools/project.py sync-agents` (`py -3` on Windows).
+- Codex uses this `AGENTS.md` directly and project hooks from
+  `.codex/hooks.json`.
+- Claude project permissions intentionally allow read-only Git inspection and
+  the guarded project commit command; mutating raw Git commands require normal
+  permission review.
+- MCP servers are optional, project-specific integrations. Add one only for a
+  concrete external-data or documentation need.
+- After changing the portable Skill bundle, run `python3 tools/project.py check`
+  and `python3 tools/project.py audit-user-skills` before a forced replacement.

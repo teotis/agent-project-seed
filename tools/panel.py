@@ -9,6 +9,8 @@ large diffs, call networks, or invoke an LLM.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import re
 import subprocess
 import sys
@@ -29,6 +31,15 @@ class LedgerRecord:
     type: str = ""
     status: str = ""
     summary: tuple[str, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class DeliveryReceipt:
+    goal: str = ""
+    acceptance: tuple[str, ...] = field(default_factory=tuple)
+    evidence: tuple[str, ...] = field(default_factory=tuple)
+    gaps: tuple[str, ...] = field(default_factory=tuple)
+    next_decision: tuple[str, ...] = field(default_factory=tuple)
 
 
 def read_agents_text() -> str:
@@ -117,6 +128,73 @@ def item_text(record: LedgerRecord) -> str:
     return record.summary[0] if record.summary else record.title
 
 
+def read_delivery_receipt() -> DeliveryReceipt | None:
+    path = ROOT / "control" / "delivery_receipt.md"
+    if not path.exists():
+        return None
+    section_names = {
+        "user goal": "goal",
+        "用户目标": "goal",
+        "acceptance criteria": "acceptance",
+        "验收标准": "acceptance",
+        "evidence": "evidence",
+        "证据": "evidence",
+        "remaining gaps": "gaps",
+        "剩余缺口": "gaps",
+        "user next decision": "next_decision",
+        "用户下一决策": "next_decision",
+    }
+    values: dict[str, list[str]] = {name: [] for name in section_names.values()}
+    current: str | None = None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", raw_line)
+        if heading:
+            current = section_names.get(heading.group(1).strip().casefold())
+            continue
+        if current is None:
+            continue
+        value = raw_line.strip()
+        if not value:
+            continue
+        values[current].append(value[2:].strip() if value.startswith("- ") else value)
+    return DeliveryReceipt(
+        goal=" ".join(values["goal"]),
+        acceptance=tuple(values["acceptance"]),
+        evidence=tuple(values["evidence"]),
+        gaps=tuple(values["gaps"]),
+        next_decision=tuple(values["next_decision"]),
+    )
+
+
+def delivery_receipt_lines() -> list[str]:
+    receipt = read_delivery_receipt()
+    if receipt is None:
+        return []
+    lines: list[str] = []
+    if receipt.goal:
+        lines.append(f"目标: {receipt.goal}")
+    if receipt.acceptance:
+        passed = sum(1 for item in receipt.acceptance if item.casefold().startswith("[x]"))
+        pending_evidence = not receipt.evidence or any("pending" in item.casefold() for item in receipt.evidence)
+        if passed < len(receipt.acceptance):
+            goal_status = "进行中"
+        elif pending_evidence:
+            goal_status = "验收已勾选，待补证据"
+        elif receipt.gaps:
+            goal_status = "验收已通过，仍有缺口"
+        else:
+            goal_status = "验收完成"
+        lines.append(f"目标状态: {goal_status}")
+        lines.append(f"验收: {passed}/{len(receipt.acceptance)} 已通过")
+    if receipt.evidence:
+        lines.append("证据: " + "；".join(receipt.evidence[:2]))
+    if receipt.gaps:
+        lines.append("缺口: " + "；".join(receipt.gaps[:2]))
+    if receipt.next_decision:
+        lines.append("用户决策: " + "；".join(receipt.next_decision[:2]))
+    return lines
+
+
 def dedupe_limited(values: list[str], *, seen: set[str] | None = None, limit: int = MAX_ITEMS_PER_GROUP) -> list[str]:
     seen_values = seen if seen is not None else set()
     result: list[str] = []
@@ -167,6 +245,99 @@ def run_git(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[st
         )
     except Exception:
         return None
+
+
+def active_task_state_file() -> Path | None:
+    result = run_git(["rev-parse", "--git-common-dir"])
+    if result is None or result.returncode != 0 or not result.stdout.strip():
+        return None
+    common_dir = Path(result.stdout.strip())
+    if not common_dir.is_absolute():
+        common_dir = ROOT / common_dir
+    worktree_key = hashlib.sha256(str(ROOT.resolve()).encode("utf-8")).hexdigest()[:16]
+    return common_dir.resolve() / "project-seed" / "active-task" / f"{worktree_key}.json"
+
+
+def read_active_task_state() -> dict[str, str]:
+    path = active_task_state_file()
+    if path is None or not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {key: value for key, value in data.items() if isinstance(key, str) and isinstance(value, str)}
+
+
+def first_unchecked_acceptance(brief: Path) -> str:
+    if not brief.is_file():
+        return ""
+    in_acceptance = False
+    for raw_line in brief.read_text(encoding="utf-8").splitlines():
+        heading = re.match(r"^#{1,6}\s+(.+?)\s*$", raw_line)
+        if heading:
+            in_acceptance = heading.group(1).strip().casefold() in {
+                "acceptance criteria",
+                "验收标准",
+                "验收条件",
+            }
+            continue
+        if in_acceptance:
+            match = re.match(r"^\s*-\s*\[\s\]\s+(.+?)\s*$", raw_line)
+            if match:
+                return match.group(1).strip()
+    return ""
+
+
+def first_pending_task_evidence(status: Path) -> str:
+    if not status.is_file():
+        return ""
+    lines = status.read_text(encoding="utf-8").splitlines()
+    if not lines:
+        return ""
+    header = lines[0].split("\t")
+    indexes = {name: index for index, name in enumerate(header)}
+    if "package_id" not in indexes:
+        return ""
+    complete_values = {"ok", "pass", "passed", "complete", "completed", "verified", "clean", "n/a"}
+    for raw_line in lines[1:]:
+        values = raw_line.split("\t")
+        if len(values) <= indexes["package_id"]:
+            continue
+        package = values[indexes["package_id"]]
+        for field in ("verification", "integration", "cleanup"):
+            index = indexes.get(field)
+            if index is None or index >= len(values):
+                continue
+            value = values[index].strip()
+            if value.casefold() not in complete_values:
+                return f"{package} {field} {value or 'missing'}"
+    return ""
+
+
+def active_task_lines() -> list[str]:
+    state = read_active_task_state()
+    slug = state.get("slug", "")
+    task_root = ROOT / "control" / "tasks" / slug
+    if not slug or not task_root.is_dir():
+        return []
+    title = slug
+    brief = task_root / "brief.md"
+    if brief.is_file():
+        match = re.search(r"^#\s+(.+?)\s*$", brief.read_text(encoding="utf-8"), re.MULTILINE)
+        if match:
+            title = match.group(1).strip()
+    lines = [f"复杂任务: {title} ({slug})"]
+    if state.get("phase"):
+        lines.append(f"阶段: {state['phase']}")
+    if state.get("next"):
+        lines.append(f"任务下一步: {state['next']}")
+    gap = first_unchecked_acceptance(brief) or first_pending_task_evidence(task_root / "status.tsv")
+    if gap:
+        lines.append(f"任务缺口: {gap}")
+    return lines
 
 
 def git_status_summary() -> str:
@@ -244,9 +415,13 @@ def generate_panel(mode: str = "entry") -> str:
     requests = open_items_by_type("request", seen=seen)
     risks = open_items_by_type("risk", "issue", seen=seen)
     next_actions = extract_next_actions(seen=seen)
+    receipt_lines = delivery_receipt_lines()
+    task_lines = active_task_lines()
 
     lines = [
-        f"[{project_name}] {mode_label} | {current_branch()} | {git_status_summary()}",
+        f"[{project_name}] {mode_label}",
+        *receipt_lines,
+        *task_lines,
         f"状态: {STATUS_LABELS[status]} | 记录: {records} | 包: {package}",
         f"Git: {worktree_summary()} | {branch_summary()} | 最近: {last_commit()}",
         "未完成: " + ("；".join(requests) if requests else "无标记 open 需求"),

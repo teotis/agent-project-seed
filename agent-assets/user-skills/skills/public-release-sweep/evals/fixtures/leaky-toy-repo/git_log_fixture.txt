@@ -1,0 +1,5 @@
+# Synthetic fixture: emulated `git log --format='%an <%ae>' | sort -u` output.
+# Used by public-release-sweep evals; not produced from a real git repo.
+Demo Engineer <demo.engineer@xiaomi.com>
+Demo Engineer <demo.engineer@qq.com>
+demo-bot <demo-bot@users.noreply.github.com>

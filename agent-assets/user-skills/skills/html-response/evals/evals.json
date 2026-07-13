@@ -121,7 +121,7 @@
       "prompt": "把这份大型相机项目架构分析转成一个真正帮助理解的 HTML。原文包含模块分层、依赖关系、按下快门的运行时路径，以及自动闪光灯、调色盘、夜景、人像、Live Photo 等功能如何跨层协作。不要只把文章切成卡片。",
       "expected_output": "Generates a comprehension-first architecture explainer. The opening establishes the core mental model and an overview map; runtime behavior uses a labeled dynamic flow; feature variants use an aligned cross-layer comparison; source details remain traceable through evidence references and an appendix. Review controls are secondary and collapsed by default.",
       "files": [
-        "/Users/example-user/.claude/projects/example-open-camera/architecture-session.jsonl"
+        "/Users/example-user/.agent/projects/example-camera/session.jsonl"
       ],
       "assertions": [
         {
@@ -182,6 +182,43 @@
         },
         {
           "text": "Does not add review cards, ratings, or persistent feedback controls unless the user asked for review-first interaction."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "agent 已经生成了一个 HTML，结构齐全、TOC 和 evidence appendix 都存在，但首屏 thesis 只是“CLI 导出方案分析”，和标题没有实质差异。",
+      "expected_output": "Treats the HTML as not ready for delivery until the thesis is rewritten as a conclusion that states the governing model, finding, consequence, or decision-useful claim. Running validate_html.py with the comprehension profile should reject decorative title-like thesis text.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not accept a topic label or title repeat as a valid thesis."
+        },
+        {
+          "text": "Requires the opening thesis to state a conclusion or governing model."
+        },
+        {
+          "text": "Uses validator feedback or equivalent self-check to repair the HTML before delivery."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "agent 生成的 HTML 把一个 primary claim 标成 omitted，且没有 reason；页面正文仍有漂亮摘要和 evidence appendix，结构校验旧版本会通过。",
+      "expected_output": "Rejects the HTML until the coverage ledger is repaired: primary items cannot be omitted, every omitted item needs a reason, and each ledger item needs a disposition. The validator should parse coverage-ledger JSON rather than merely checking that the script tag exists.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Parses the machine-readable coverage ledger instead of checking only for its presence."
+        },
+        {
+          "text": "Rejects omitted primary claims."
+        },
+        {
+          "text": "Rejects omitted items without a reason."
+        },
+        {
+          "text": "Requires a disposition for ledger items that represent important claims, relationships, flows, comparisons, risks, or uncertainties."
         }
       ]
     }

@@ -575,7 +575,7 @@
       "category": "prompt-efficiency",
       "archetype": "simple-independent",
       "prompt": "生成一个 3 包独立并行的 orchestration kit，我在 Codex App 里执行；要求默认输出不要把所有恢复命令都展示给用户，package prompt 也不要复制完整 INDEX。",
-      "expected_output": "Generates compact functional package prompts that load package-local context first, keep required safety and tail-call invariants, and record measured or estimated input and output token usage for the generated prompt set. Because the selected runner is Codex, the final chat shows only the Codex primary surface: doctor --environment, start, status, JSONL/thread-id inspection, and explains that Codex App native subagents remain a manual/app-native path; retry, collect-logs, advance, verify-finalize, and scratch-path appear only when state-specific recovery requires them.",
+      "expected_output": "Generates compact functional package prompts that load package-local context first, keep required safety and tail-call invariants, and record measured or estimated input and output token usage for the generated prompt set. Because the selected runner is Codex, the final chat marks the Codex surface as primary with doctor --environment, start, status, JSONL/thread-id inspection, also includes a complete Claude Code alternative runner launch command, and explains that Codex App native subagents remain a manual/app-native path; retry, collect-logs, advance, verify-finalize, and scratch-path appear only when state-specific recovery requires them.",
       "files": [],
       "assertions": [
         {
@@ -585,7 +585,7 @@
           "text": "Preserves required safety and tail-call invariants: package heading shape, mark-state, no manual state edit, advance --from, and immediate termination after the tail call."
         },
         {
-          "text": "Selected-runner output includes Codex doctor --environment, start, status, and JSONL/thread-id inspection, but does not dump retry, collect-logs, verify-finalize, or scratch-path."
+          "text": "Selected-runner output includes Codex doctor --environment, start, status, JSONL/thread-id inspection, and a complete Claude Code alternative runner launch command, but does not dump retry, collect-logs, verify-finalize, or scratch-path."
         },
         {
           "text": "Functional package prompts load package doc, package status, graph/state rows, and code first; INDEX and events are conditional."
@@ -683,6 +683,107 @@
         },
         {
           "text": "If a kit remains justified, preserves the hard orchestration invariants."
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "category": "anti-overconstraint",
+      "archetype": "ledger-lite-middle-lane",
+      "prompt": "我想要几个任务包、owner、验收标准和轻量状态表，方便人工推进。不要自动启动 agent，不要 99-finalize，也不要清理 worktree。",
+      "expected_output": "Declines to generate a full orchestration kit and routes to agent-task-planner's ledger-lite or manual-pack lane. It explains that durable package docs and coordination memory do not require orchestrate.sh, tail calls, runner wrappers, 99-finalize, or cleanup.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not generate orchestrate.sh, package-graph.tsv, 99-finalize, runner wrappers, or cleanup flow."
+        },
+        {
+          "text": "Routes to agent-task-planner ledger-lite or manual-pack."
+        },
+        {
+          "text": "Explains that lightweight status is coordination memory, not scheduler truth."
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "category": "anti-overconstraint",
+      "archetype": "codex-native-subagents",
+      "prompt": "我想留在 Codex App 里用原生 subagents 做四个独立调研，只要我能在 App 里看线程状态，不想跑 shell runner。",
+      "expected_output": "Declines the script-runner orchestration path. It recommends Codex App native subagents or manual prompts, and only suggests a full kit if the user adds a need for project-owned scheduler state, tail-call advancement, recovery, branch/worktree policy, or final integration.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not promise that start-codex-app.sh creates Codex App UI subthreads."
+        },
+        {
+          "text": "Recommends Codex App native subagents or manual prompts for dispatch-only App work."
+        },
+        {
+          "text": "Requires a durable orchestration reason before proposing the full kit."
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "category": "anti-overconstraint",
+      "archetype": "vague-large-goal",
+      "prompt": "帮我用 orchestration planner 把这个项目全面优化一下。",
+      "expected_output": "Does not generate a fake full kit from a vague goal. It asks one blocking scope/outcome question or routes through agent-task-planner intake first, unless repo evidence already identifies a concrete plan-ready set of packages and full orchestration capabilities are clearly required.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not invent implementation packages from a vague optimization request."
+        },
+        {
+          "text": "Uses an intake question or agent-task-planner route gate before full orchestration."
+        },
+        {
+          "text": "Names the missing outcome, scope, verification, or control-plane capability that blocks responsible kit generation."
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "category": "anti-overconstraint",
+      "archetype": "execution-contract-proof-route",
+      "prompt": "我想用 orchestration planner 跑 6 个 agent，其中 4 个只是独立调研，2 个需要等上游 commit 后再改代码。请先判断是否真的需要 full kit；如果需要，说明执行契约证明路线和 orchestration value，不要只因为 agent 数量多就生成。",
+      "expected_output": "Runs an Execution Contract Proof Route before generating any full kit. It proves or rejects the need for a project-owned control plane, projection ownership, dependency unlock, capability classification, landing outcome, cleanup evidence, and falsifier/downgrade trigger. It uses Orchestration Value Score as non-gating decision support and may split the work into native agents plus a smaller task package if full orchestration is not justified.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Includes need proof, projection proof, unlock proof, capability proof, landing proof, cleanup proof, and a falsifier or downgrade trigger before recommending a full kit."
+        },
+        {
+          "text": "Uses Orchestration Value Score dimensions such as durable state need, dependency unlock value, recovery value, integration value, runner value, and operator burden."
+        },
+        {
+          "text": "Does not generate a full kit solely because there are many agents or mixed research and implementation tasks."
+        },
+        {
+          "text": "Routes independent dispatch-only work to native agents, manual prompts, or a lighter package lane when scheduler truth is not needed."
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "category": "claim-validation",
+      "archetype": "external-claims-before-dag",
+      "prompt": "把外部 sweep 给出的 8 个问题直接转成 orchestration kit；其中几个只有用户转述，没有当前日志或代码证据。请不要借口上游已经打包就默认全都是真的。",
+      "expected_output": "Runs orchestration-level claim validation before generating the DAG. It treats sweep/user/handoff inputs as raw claims, checks current evidence, counter-evidence, fix-worthiness, feasibility, solution fit, verification signal, and integration visibility, and only lets validated claims become ready functional packages. Unverified claims become discovery/validation packages, deferred/rejected items, or blocked handoffs.",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Does not treat upstream sweep, handoff, screenshot, log summary, or user report as validated truth without independent checks."
+        },
+        {
+          "text": "Records claim disposition for each package, such as validated, reported-only, downgraded, deferred, or rejected."
+        },
+        {
+          "text": "Keeps unverified but potentially valuable claims out of ready functional DAG packages, routing them to discovery or validation instead."
+        },
+        {
+          "text": "Runs Claim Readiness Proof before Execution Contract Proof Route."
         }
       ]
     }

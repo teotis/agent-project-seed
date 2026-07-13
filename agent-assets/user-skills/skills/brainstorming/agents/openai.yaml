@@ -1,0 +1,7 @@
+interface:
+  display_name: "Superpowers Brainstorming"
+  short_description: "显式调用：把想法澄清成设计规格；不会自动触发后续 Superpowers 流程。"
+  default_prompt: "显式使用 $brainstorming，把想法澄清成设计规格；默认中文交付，保留必要英文术语、命令、文件名和代码标识；完成规格后停止，等待用户显式选择是否继续 $writing-plans。"
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Flow Realization Review"
+  short_description: "工程顶层设计与主流程审计：从用户价值、核心对象、流程分支和证据边界生成可审阅报告"
+  default_prompt: "使用 $flow-realization-review 审阅已有工程/agent/工具/skill 的顶层设计和主流程设计是否真正承接用户价值；默认用中文输出项目 thesis、用户价值、需求场景、主流程图谱、设计缺陷、实现边界、缺口清单、待决策队列和最终回复，保留必要技术术语、代码/命令/文件名、状态字段和原文证据；该 skill 仅支持用户显式调用，不接受 Claude/Codex agent active 自启用。"
+
+policy:
+  allow_implicit_invocation: false
