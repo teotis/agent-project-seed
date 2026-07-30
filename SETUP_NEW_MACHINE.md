@@ -38,6 +38,11 @@ After setup, follow the adaptive contract in `AGENTS.md`. The seed README gives
 the short problem-solving overview; this file stays focused on machine and
 platform setup. In particular, read state and ledger history only when relevant,
 and create a Work Packet only after the task crosses the complexity trigger.
+Enter an active Work Packet only when the current user request explicitly
+continues, resumes, or names it; an unrelated active marker is only background
+handoff context. Verification may create disposable local output, but handoff
+artifact generation and any deployment remain separate, explicitly authorized
+operations.
 
 ## Claude Code New-Session Defaults
 

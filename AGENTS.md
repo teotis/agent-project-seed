@@ -14,8 +14,22 @@ workflows to adapt to risk, scope, and active modes.
 A copy-and-use lightweight project scaffold for agent-assisted work. Python
 3.9+, zero runtime dependencies, with optional Codex and Claude Code adapters.
 
-The five sections below classify rule hardness. They are not a five-step
+## Rule Hardness Model
+
+The five sections below classify rule force. They are not a five-step
 workflow.
+
+1. **Hard invariants** protect authorization, privacy, user work, truthful
+   evidence, and project independence; they never weaken for convenience.
+2. **Mode contracts** apply only after their concrete trigger is present.
+3. **User value priors** guide judgment but are not rigid templates.
+4. **Adaptive heuristics** are reorderable or skippable methods for reaching
+   the current goal.
+5. **Examples and resources** are available references, not implied
+   authorization or default workflow.
+
+When these layers conflict, preserve hard invariants and apply only the mode
+contracts that the current task actually triggers.
 
 ## Hard invariants
 
@@ -68,7 +82,11 @@ risk or next-step sections.
 
 ### Active Work Packet mode
 
-If `python3 tools/project.py task current` reports an active Work Packet:
+Enter this mode only when the current user request explicitly continues,
+resumes, or names a Work Packet. An active marker from an unrelated task is a
+background handoff breadcrumb, not ownership of the current request.
+
+Once this mode is entered:
 
 1. Read its `brief.md`.
 2. Read the files returned by
@@ -79,6 +97,22 @@ If `python3 tools/project.py task current` reports an active Work Packet:
 
 Routine single-session work should not create a Work Packet. Use one when the
 work spans multiple dependent packages, worktrees, agents, or handoff sessions.
+
+### Verification, handoff artifact, and deployment modes
+
+- **Verification** checks a stated behavior or contract. It may create
+  disposable local output, but it does not itself allocate a version, create a
+  user handoff artifact, or change external state.
+- **Handoff artifact generation** intentionally creates a user-reviewable or
+  transferable result. It requires a current request for that output and stays
+  separate from deployment or publication.
+- **Deployment** makes a result active outside the project, such as publishing,
+  installing, uploading, or otherwise changing an external system. It requires
+  separate explicit authorization.
+
+Projects that repeatedly need stronger enforcement may add their own narrow
+manifest or gate. The seed deliberately does not create an artifact pipeline,
+review system, or deployment workflow by default.
 
 ### Durable record mode
 

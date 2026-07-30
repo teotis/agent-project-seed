@@ -5,6 +5,8 @@
 - Project uses a minimal scaffold: `control/`, `work/`, `tools/`, `src/`.
 - Shared rules are in `AGENTS.md`.
 - Requirements, decisions, risks, sessions, issues, and artifacts are recorded in `control/ledger.md`.
+- Work Packets are user-intent-triggered; verification, handoff artifact generation,
+  and deployment are distinct modes.
 
 ## Next Maintenance Action
 

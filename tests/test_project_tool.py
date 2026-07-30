@@ -22,7 +22,9 @@ def load_project_tool():
 def test_commit_allowlist_rejects_env_tmp_and_outputs():
     module = load_project_tool()
     changes = [
+        module.GitChange("??", "CONTEXT.md"),
         module.GitChange("??", "control/ledger.md"),
+        module.GitChange("??", "docs/adr/0001-delivery-boundary.md"),
         module.GitChange("??", ".codex/config.example.toml"),
         module.GitChange(" M", "SETUP_NEW_MACHINE.md"),
         module.GitChange(" M", "README.zh.html"),
@@ -35,7 +37,9 @@ def test_commit_allowlist_rejects_env_tmp_and_outputs():
     allowed, rejected = module.classify_changes(changes)
 
     assert [change.path for change in allowed] == [
+        "CONTEXT.md",
         "control/ledger.md",
+        "docs/adr/0001-delivery-boundary.md",
         ".codex/config.example.toml",
         "SETUP_NEW_MACHINE.md",
         "README.zh.html",
@@ -260,10 +264,15 @@ def test_init_rewrites_project_facing_docs_and_resets_seed_history(tmp_path):
     assert "governance init --profile sustained" in readme
     assert "Run a Problem-Solving Round" in readme
     assert "reports/<topic>/" in readme
+    assert "explicitly continues, resumes, or names it" in readme
+    assert "Keep Verification Separate from Delivery" in readme
+    assert "handoff artifact" in readme
+    assert "Enter this mode only when the current user request explicitly continues" in agents
     html = (target / "README.zh.html").read_text(encoding="utf-8")
     assert "<title>Customer Portal</title>" in html
     assert "Agent Project Seed" not in html
     assert "Work Packet" in html
+    assert "验证边界" in html
     assert not (target / "reports" / "user-value-architect").exists()
 
 
@@ -295,6 +304,8 @@ def test_seed_docs_include_windows_setup_commands():
         assert "bypassPermissions" not in text
     assert "reports/<topic>/" in readme
     assert "authoritative adaptive contract" in readme
+    assert "Keep Verification Separate from Delivery" in readme
+    assert "Verification may create disposable local output" in setup
     assert "follow the adaptive contract in `AGENTS.md`" in setup
     assert "1. Put user-provided material" not in setup
     assert "Copy-Item" in readme

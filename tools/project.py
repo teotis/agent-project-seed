@@ -62,6 +62,7 @@ MIN_CLAUDE_CODE_VERSION_TEXT = "v2.1.140"
 ALLOWED_PREFIXES = (
     "AGENTS.md",
     "CLAUDE.md",
+    "CONTEXT.md",
     "README.md",
     "README.zh.html",
     "SETUP_NEW_MACHINE.md",
@@ -73,6 +74,7 @@ ALLOWED_PREFIXES = (
     ".claude/",
     "agent-assets/",
     "control/",
+    "docs/",
     "reports/",
     "tools/",
     "src/",
@@ -112,6 +114,7 @@ README_ZH_CAPABILITY_ROWS = (
     '<tr><td>健康检查</td><td>验证必需文件、入口文件同步、hooks、gitkeep、包导入和平台垃圾文件</td></tr>',
     '<tr><td>Agent 同步</td><td>从共享规则重新生成 <code>CLAUDE.md</code></td></tr>',
     '<tr><td>Work Packet</td><td>仅在跨包、worktree、Agent 或交接会话的复杂任务中启用 curated context、live state 和知识提升复核</td></tr>',
+    '<tr><td>验证边界</td><td>验证可产生可丢弃本地输出；交付制品生成与发布、安装、上传等外部部署始终分离</td></tr>',
     '<tr><td>Governance Lifecycle</td><td>面向长期项目的可选规则生命周期评审面，不会默认增加 hook 或强制流程</td></tr>',
     '<tr><td>Portable User Skills</td><td>仓库本地保留 38 个 Skill 快照；默认推荐小型工程核心，专家能力显式启用</td></tr>',
     '<tr><td>工具包</td><td>Python 辅助模块：路径管理、原子写入、环境变量加载、API 门控、Record/Ledger/Manifest/QC、Review 页面</td></tr>',
@@ -1180,7 +1183,11 @@ A newly initialized agent-assisted project.
 
 `AGENTS.md` contains the authoritative adaptive contract. Read it plus the files directly involved. Consult `control/state.md` and relevant ledger records only when current state or prior decisions constrain the task.
 
-Use `reports/<topic>/` for reusable analysis. When tracked files change, run the project check and proportional tests, then close with a guarded local checkpoint or an explicit blocked handoff. Create a Work Packet only for work that crosses dependent packages, worktrees, agents, or handoff sessions.
+Use `reports/<topic>/` for reusable analysis. When tracked files change, run the project check and proportional tests, then close with a guarded local checkpoint or an explicit blocked handoff. Create a Work Packet only for work that crosses dependent packages, worktrees, agents, or handoff sessions. Enter one only when the current user request explicitly continues, resumes, or names it; a stale active marker is background handoff context, not an instruction to take over another task.
+
+## Keep Verification Separate from Delivery
+
+Verification may create disposable local output, but it does not allocate a version, create a handoff artifact, or make a result active outside the project. Generate a handoff artifact only when the current request asks for a user-reviewable or transferable result. Publishing, installation, upload, and other deployments remain separate external effects that require explicit authorization. Add a project-specific manifest or review surface only when a repeated project need justifies it.
 
 ## Useful Commands
 

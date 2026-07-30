@@ -310,7 +310,19 @@ Use `reports/<topic>/` for conclusions that will be reused or reviewed. When a
 task changes tracked files, run the project check and proportional tests, then
 close with a guarded local checkpoint or an explicit blocked handoff. Create a
 Work Packet only for work that actually crosses dependent packages, worktrees,
-agents, or handoff sessions.
+agents, or handoff sessions, and enter one only when the current user request
+explicitly continues, resumes, or names it. A stale active marker is background
+handoff context, not an instruction to take over another task.
+
+## Keep Verification Separate from Delivery
+
+Verification may create disposable local output, but it does not allocate a
+version, create a handoff artifact, or make a result active outside the
+project. Generate a handoff artifact only when the current request asks for a
+user-reviewable or transferable result. Publishing, installation, upload, and
+other deployments remain separate external effects that require explicit
+authorization. Add a project-specific manifest or review surface only when a
+repeated project need justifies it.
 
 ## Directory Layout
 

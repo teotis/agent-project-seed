@@ -164,3 +164,24 @@ links:
 - tools/project.py
 - tests/test_project_tool.py
 - agent-assets/user-skills/manifest.json
+
+## 2026-07-30T00:00:00+08:00 - Keep Work Packets intent-triggered and delivery states separate
+
+type: decision
+status: closed
+tags: workflow, work-packet, verification, delivery
+
+summary:
+- Enter a Work Packet only when the current user explicitly continues, resumes, or names it.
+- Keep verification, handoff artifact generation, and external deployment as separate modes.
+- Retain a lightweight seed: project-specific review surfaces or enforcement manifests remain opt-in.
+
+details:
+- An unrelated active Work Packet marker is background handoff context and must not take ownership of a new request.
+- Verification may produce disposable local output but cannot imply handoff artifact creation, publication, installation, upload, or other external state change.
+- The user accepted this boundary after a read-only comparison of current project practices.
+
+links:
+- AGENTS.md
+- CONTEXT.md
+- docs/adr/0001-intent-triggered-work-packets-and-delivery-states.md
